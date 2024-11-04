@@ -1,9 +1,6 @@
 package com.ssafy.enjoyTrip.api.attraction.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,12 +22,16 @@ public class AttractionList {
     private String image1;
     private String image2;
     private Integer mapLevel;
+    @Column(precision = 20, scale = 17)
     private BigDecimal latitude;
+    @Column(precision = 20, scale = 17)
     private BigDecimal longitude;
     private String tel;
     private String addr1;
     private String addr2;
+    @Column(length = 1000)
     private String homepage;
+    @Column(columnDefinition = "TEXT")
     private String overview;
 
     public AttractionList(Long attractionId, Long contentId, String title, Long contentTypeId, Long areaCode, Long siGunGuCode, String image1, String image2, Integer mapLevel, BigDecimal latitude, BigDecimal longitude, String tel, String addr1, String addr2) {

@@ -14,14 +14,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponents;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -32,14 +29,32 @@ public class SaveAttractionList {
     private final RestTemplate restTemplate;
 
     private static final String ATTRACTION_API_URL = "https://apis.data.go.kr/B551011/KorService1";
-    private static final int[] AREA_CODES = {1, 2, 3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35, 36, 37, 38, 39};
-    private static final int[] CONTENT_TYPE_IDS = {12, 14, 15, 25, 28, 32, 38, 39};
+    private static final int[] AREA_CODES = {1, 2, 3, 4, 5, 6, 7, 8, 31, 32, 33, 34, 35, 36, 37, 38, 39}; // 시/도 코드
+    private static final int[] CONTENT_TYPE_IDS = {12, 14, 15, 25, 28, 32, 38, 39}; // 카테고리
+    private static final int BATCH_SIZE = 500;
 
     @PostConstruct
     @Scheduled(cron = "0 0 12 * * *", zone = "Asia/Seoul")
     public void saveAttractionList() {
         log.info("Starting attraction data update...");
         List<AttractionList> attractions = new ArrayList<>();
+
+        try {
+            // 기본 데이터 저장
+            fetchAndSaveBasicData(attractions);
+
+            // 상세 정보는 필요한 경우에만 별도로 업데이트
+//            if (shouldUpdateDetails()) {
+//                updateDetailsAsync();
+//            }
+
+            log.info("Successfully completed basic attraction data save");
+        } catch (Exception e) {
+            log.error("Error occurred while saving attraction data: ", e);
+        }
+    }
+
+    private void fetchAndSaveBasicData(List<AttractionList> attractions) {
         long idCounter = 1;
 
         try {
@@ -50,12 +65,10 @@ public class SaveAttractionList {
                     String responseDataBody = fetchAttractionData(contentTypeId, areaCode);
                     List<AttractionList> areaAttractions = parseAttractionData(responseDataBody, idCounter);
 
-                    // 일단 기본 데이터만 저장
                     attractions.addAll(areaAttractions);
                     idCounter += areaAttractions.size();
 
-                    // 너무 많은 데이터가 쌓이는 것을 방지하기 위해 중간 저장
-                    if (attractions.size() > 1000) {
+                    if (attractions.size() > BATCH_SIZE) {
                         log.info("Batch saving {} attractions...", attractions.size());
                         attractionListRepository.saveAll(attractions);
                         log.info("Successfully saved batch of attractions");
@@ -66,21 +79,14 @@ public class SaveAttractionList {
                 }
             }
 
-            // 남은 데이터 저장
             if (!attractions.isEmpty()) {
                 log.info("Saving remaining {} attractions...", attractions.size());
                 attractionListRepository.saveAll(attractions);
                 log.info("Successfully saved remaining attractions");
             }
-
-            // 상세 정보는 비동기로 처리
-            log.info("Starting async update of attraction details...");
-            updateDetailsAsync();
-
-            log.info("Successfully completed basic attraction data save");
-
         } catch (Exception e) {
-            log.error("Error occurred while saving attraction data: ", e);
+            log.error("Error in fetchAndSaveBasicData: ", e);
+            throw new RuntimeException("Failed to fetch and save basic data", e);
         }
     }
 
@@ -108,31 +114,49 @@ public class SaveAttractionList {
     public void updateDetailsAsync() {
         try {
             log.info("Starting detail updates for attractions...");
-            List<AttractionList> allAttractions = attractionListRepository.findAll();
-            int totalCount = allAttractions.size();
-            int currentCount = 0;
+            List<AttractionList> attractionsNeedingUpdate = attractionListRepository.findByOverviewIsNullOrHomepageIsNull();
+            int totalCount = attractionsNeedingUpdate.size();
 
-            for (AttractionList attraction : allAttractions) {
-                try {
-                    String detailDataBody = fetchCommonData(attraction.getContentId(), attraction.getContentTypeId());
-                    updateAttractionWithDetail(attraction, detailDataBody);
-                    attractionListRepository.save(attraction);
+            if (totalCount == 0) {
+                log.info("No attractions need detail updates");
+                return;
+            }
 
-                    currentCount++;
-                    if (currentCount % 100 == 0) {
-                        log.info("Updated details for {}/{} attractions", currentCount, totalCount);
-                    }
+            for (int i = 0; i < attractionsNeedingUpdate.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, attractionsNeedingUpdate.size());
+                List<AttractionList> batch = attractionsNeedingUpdate.subList(i, end);
 
-                    Thread.sleep(50);
-                } catch (Exception e) {
-                    log.error("Error updating details for attraction {}: {}",
-                            attraction.getContentId(), e.getMessage());
-                }
+                updateBatchDetails(batch);
+
+                log.info("Updated details for batch {}/{}, size: {}",
+                        i + BATCH_SIZE, totalCount, batch.size());
+
+                Thread.sleep(100);
             }
 
             log.info("Successfully completed updating details for all attractions");
         } catch (Exception e) {
             log.error("Error in updateDetailsAsync: ", e);
+        }
+    }
+
+    private void updateBatchDetails(List<AttractionList> attractions) {
+        List<AttractionList> updatedAttractions = new ArrayList<>();
+
+        for (AttractionList attraction : attractions) {
+            try {
+                String detailDataBody = fetchCommonData(attraction.getContentId(), attraction.getContentTypeId());
+                updateAttractionWithDetail(attraction, detailDataBody);
+                updatedAttractions.add(attraction);
+
+                Thread.sleep(50);
+            } catch (Exception e) {
+                log.warn("Skipping attraction {}: {}", attraction.getContentId(), e.getMessage());
+            }
+        }
+
+        if (!updatedAttractions.isEmpty()) {
+            attractionListRepository.saveAll(updatedAttractions);
         }
     }
 
@@ -157,6 +181,11 @@ public class SaveAttractionList {
 
         ResponseEntity<String> responseData = restTemplate.getForEntity(url, String.class);
         return responseData.getBody();
+    }
+
+    private boolean shouldUpdateDetails() {
+        long countWithoutDetails = attractionListRepository.countByOverviewIsNullOrHomepageIsNull();
+        return countWithoutDetails > 0;
     }
 
     private void updateAttractionWithDetail(AttractionList attraction, String detailDataBody) {
@@ -228,7 +257,6 @@ public class SaveAttractionList {
         );
     }
 
-    // safe parsing methods remain the same...
     private Long safeParseLong(Object value) {
         if (value == null) return null;
         if (value instanceof Long) return (Long) value;
