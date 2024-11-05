@@ -12,4 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiSecretInfo {
     //누리집 api 요청 키
     private String serviceKey;
+
+    //gpt api 키
+    private String gptKey;
 }
