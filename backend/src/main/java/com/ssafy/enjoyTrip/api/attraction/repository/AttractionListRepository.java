@@ -13,11 +13,23 @@ public interface AttractionListRepository extends JpaRepository<AttractionList, 
     List<AttractionList> findByOverviewIsNullOrHomepageIsNull();
     long countByOverviewIsNullOrHomepageIsNull();
 
-    // 여러 제목으로 관광지 검색
-    @Query("SELECT a FROM ATTRACTION_LIST a WHERE a.title IN :titles")
-    List<AttractionList> findByTitleIn(@Param("titles") List<String> titles);
+    // 방법 1: REPLACE 함수 사용
+    @Query(value =
+            "SELECT * FROM attraction_list WHERE area_code = :areaCode " +
+                    "AND REPLACE(title, ' ', '') IN (:normalizedTitles)",
+            nativeQuery = true)
+    List<AttractionList> findByAreaCodeAndNormalizedTitles(
+            @Param("areaCode") Long areaCode,
+            @Param("normalizedTitles") List<String> normalizedTitles
+    );
 
-    // 또는 부분 일치 검색이 필요한 경우
-    @Query("SELECT a FROM ATTRACTION_LIST a WHERE LOWER(a.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    List<AttractionList> findByTitleContainingIgnoreCase(@Param("keyword") String keyword);
+    // 방법 2: LIKE를 사용한 유연한 검색
+    @Query(value =
+            "SELECT * FROM attraction_list WHERE area_code = :areaCode " +
+                    "AND REPLACE(LOWER(title), ' ', '') LIKE CONCAT('%', REPLACE(LOWER(:title), ' ', ''), '%') LIMIT 1",
+            nativeQuery = true)
+    List<AttractionList> findByAreaCodeAndTitleFlexible(
+            @Param("areaCode") Long areaCode,
+            @Param("title") String title
+    );
 }

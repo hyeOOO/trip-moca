@@ -17,6 +17,7 @@ public class AttractionList {
     private Long contentId;
     private String title;
     private Long contentTypeId;
+    @Column(name = "area_code")
     private Long areaCode;
     private Long siGunGuCode;
     private String image1;
