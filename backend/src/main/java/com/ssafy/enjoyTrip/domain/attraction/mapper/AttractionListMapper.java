@@ -1,7 +1,7 @@
-package com.ssafy.enjoyTrip.api.attraction.mapper;
+package com.ssafy.enjoyTrip.domain.attraction.mapper;
 
-import com.ssafy.enjoyTrip.api.attraction.dto.AttractionListResponseDto;
-import com.ssafy.enjoyTrip.api.attraction.entity.AttractionList;
+import com.ssafy.enjoyTrip.domain.attraction.dto.AttractionListResponseDto;
+import com.ssafy.enjoyTrip.domain.attraction.entity.AttractionList;
 import org.mapstruct.Mapper;
 
 import java.util.List;

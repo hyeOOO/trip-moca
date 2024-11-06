@@ -3,7 +3,7 @@ package com.ssafy.enjoyTrip.api.attraction.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ssafy.enjoyTrip.api.attraction.dto.AiPlanResponseDto;
 import com.ssafy.enjoyTrip.api.attraction.dto.DayPlanDto;
-import com.ssafy.enjoyTrip.api.attraction.dto.SidoCode;
+import com.ssafy.enjoyTrip.domain.attraction.dto.SidoCode;
 import com.ssafy.enjoyTrip.api.exception.AttractionServiceException;
 import com.ssafy.enjoyTrip.api.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;

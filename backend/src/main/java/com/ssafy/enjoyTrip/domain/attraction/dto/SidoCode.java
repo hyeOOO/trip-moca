@@ -1,4 +1,4 @@
-package com.ssafy.enjoyTrip.api.attraction.dto;
+package com.ssafy.enjoyTrip.domain.attraction.dto;
 
 import com.ssafy.enjoyTrip.api.exception.AttractionServiceException;
 import com.ssafy.enjoyTrip.api.exception.ErrorCode;

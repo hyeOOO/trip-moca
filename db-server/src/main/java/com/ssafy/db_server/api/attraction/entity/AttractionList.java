@@ -1,7 +1,6 @@
-package com.ssafy.enjoyTrip.api.attraction.entity;
+package com.ssafy.db_server.api.attraction.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -32,7 +31,7 @@ public class AttractionList {
     private String addr2;
     @Column(length = 1000)
     private String homepage;
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")  // TEXT -> LONGTEXT로 변경
     private String overview;
 
     public AttractionList(Long attractionId, Long contentId, String title, Long contentTypeId, Long areaCode, Long siGunGuCode, String image1, String image2, Integer mapLevel, BigDecimal latitude, BigDecimal longitude, String tel, String addr1, String addr2) {
