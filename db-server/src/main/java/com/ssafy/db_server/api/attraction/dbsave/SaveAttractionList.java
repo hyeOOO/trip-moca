@@ -1,8 +1,8 @@
-package com.ssafy.enjoyTrip.api.attraction.dbsave;
+package com.ssafy.db_server.api.attraction.dbsave;
 
-import com.ssafy.enjoyTrip.api.attraction.entity.AttractionList;
-import com.ssafy.enjoyTrip.api.attraction.repository.AttractionListRepository;
-import com.ssafy.enjoyTrip.api.config.OpenApiSecretInfo;
+import com.ssafy.db_server.api.attraction.entity.AttractionList;
+import com.ssafy.db_server.api.attraction.repository.AttractionListRepository;
+import com.ssafy.db_server.api.config.OpenApiSecretInfo;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,24 +37,38 @@ public class SaveAttractionList {
     @PostConstruct
     @Scheduled(cron = "0 0 12 * * *", zone = "Asia/Seoul")
     public void saveAttractionList() {
-        log.info("Starting attraction data update...");
+        Instant startTime = Instant.now();
+        log.info("Starting attraction data update at: {}", startTime);
         List<AttractionList> attractions = new ArrayList<>();
 
         try {
             fetchAndSaveBasicData(attractions);
             log.info("Successfully completed basic attraction data save");
+            // 기본 데이터 저장 완료 후 비동기로 상세 정보 업데이트 시작
+            updateDetailsAsync();
+            log.info("Started async detail update process");
         } catch (Exception e) {
             log.error("Error occurred while saving attraction data: ", e);
         }
+
+        Instant endTime = Instant.now();
+        Duration duration = Duration.between(startTime, endTime);
+        log.info("Total execution time: {} hours, {} minutes, {} seconds",
+                duration.toHours(),
+                duration.toMinutesPart(),
+                duration.toSecondsPart());
     }
 
     private void fetchAndSaveBasicData(List<AttractionList> attractions) {
         long idCounter = 1;
+        int totalProcessed = 0;
+        Instant batchStartTime = Instant.now();
 
         for (int contentTypeId : CONTENT_TYPE_IDS) {
             for (int areaCode : AREA_CODES) {
                 try {
                     log.info("Fetching data for contentTypeId: {} and areaCode: {}", contentTypeId, areaCode);
+                    Instant areaStartTime = Instant.now();
 
                     String responseDataBody = fetchAttractionData(contentTypeId, areaCode);
                     if (responseDataBody == null || responseDataBody.trim().isEmpty()) {
@@ -65,11 +81,17 @@ public class SaveAttractionList {
                     if (!areaAttractions.isEmpty()) {
                         attractions.addAll(areaAttractions);
                         idCounter += areaAttractions.size();
+                        totalProcessed += areaAttractions.size();
 
                         if (attractions.size() >= BATCH_SIZE) {
                             saveBatch(attractions);
                         }
                     }
+
+                    Instant areaEndTime = Instant.now();
+                    Duration areaDuration = Duration.between(areaStartTime, areaEndTime);
+                    log.info("Processed areaCode: {} and contentTypeId: {} in {} seconds, attractions found: {}",
+                            areaCode, contentTypeId, areaDuration.toSeconds(), areaAttractions.size());
 
                     Thread.sleep(100);
                 } catch (Exception e) {
@@ -84,6 +106,14 @@ public class SaveAttractionList {
         if (!attractions.isEmpty()) {
             saveBatch(attractions);
         }
+
+        Instant batchEndTime = Instant.now();
+        Duration totalDuration = Duration.between(batchStartTime, batchEndTime);
+        log.info("Total attractions processed: {}, Total processing time: {} hours, {} minutes, {} seconds",
+                totalProcessed,
+                totalDuration.toHours(),
+                totalDuration.toMinutesPart(),
+                totalDuration.toSecondsPart());
     }
 
     private String fetchAttractionData(int contentTypeId, int areaCode) {
@@ -267,6 +297,9 @@ public class SaveAttractionList {
 
     @Async
     public void updateDetailsAsync() {
+        Instant startTime = Instant.now();
+        log.info("Starting detail updates for attractions at: {}", startTime);
+
         try {
             log.info("Starting detail updates for attractions...");
             List<AttractionList> attractionsNeedingUpdate = attractionListRepository.findByOverviewIsNullOrHomepageIsNull();
@@ -281,15 +314,23 @@ public class SaveAttractionList {
                 int end = Math.min(i + BATCH_SIZE, attractionsNeedingUpdate.size());
                 List<AttractionList> batch = attractionsNeedingUpdate.subList(i, end);
 
+                Instant batchStartTime = Instant.now();
                 updateBatchDetails(batch);
+                Instant batchEndTime = Instant.now();
 
-                log.info("Updated details for batch {}/{}, size: {}",
-                        i + BATCH_SIZE, totalCount, batch.size());
+                Duration batchDuration = Duration.between(batchStartTime, batchEndTime);
+                log.info("Updated details for batch {}/{}, size: {}, time taken: {} seconds",
+                        i + BATCH_SIZE, totalCount, batch.size(), batchDuration.toSeconds());
 
                 Thread.sleep(100);
             }
 
-            log.info("Successfully completed updating details for all attractions");
+            Instant endTime = Instant.now();
+            Duration totalDuration = Duration.between(startTime, endTime);
+            log.info("Successfully completed updating details for all attractions. Total time: {} hours, {} minutes, {} seconds",
+                    totalDuration.toHours(),
+                    totalDuration.toMinutesPart(),
+                    totalDuration.toSecondsPart());
         } catch (Exception e) {
             log.error("Error in updateDetailsAsync: {}", e.getMessage());
         }
@@ -368,6 +409,16 @@ public class SaveAttractionList {
             JSONObject detailItem = (JSONObject) itemArray.get(0);
             String homepage = (String) detailItem.get("homepage");
             String overview = (String) detailItem.get("overview");
+
+            // 데이터 길이 로깅 추가
+            if (homepage != null) {
+                log.debug("Homepage length for contentId {}: {} characters",
+                        attraction.getContentId(), homepage.length());
+            }
+            if (overview != null) {
+                log.debug("Overview length for contentId {}: {} characters",
+                        attraction.getContentId(), overview.length());
+            }
 
             attraction.setHomepage(homepage);
             attraction.setOverview(overview);
