@@ -14,12 +14,13 @@ import java.util.List;
 public interface AttractionRepository extends JpaRepository<AttractionList, Long> {
     // 기본 검색 - 시도/구군 정보 포함
     @Query("SELECT DISTINCT a FROM ATTRACTION_LIST a " +
+            "LEFT JOIN FETCH a.contentType c " +
             "LEFT JOIN FETCH a.sido s " +
             "LEFT JOIN FETCH a.gugun g " +
-            "WHERE (:areaCode IS NULL OR a.areaCode = :areaCode) " +
+            "WHERE (:contentTypeId IS NULL OR a.contentTypeId = :contentTypeId) " +
+            "AND (:areaCode IS NULL OR a.areaCode = :areaCode) " +
             "AND (:siGunGuCode IS NULL OR a.siGunGuCode = :siGunGuCode) " +
-            "AND (:title IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
-            "AND (:contentTypeId IS NULL OR a.contentTypeId = :contentTypeId)")
+            "AND (:title IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :title, '%'))) ")
     List<AttractionList> searchAttractions(
             @Param("areaCode") Long areaCode,
             @Param("siGunGuCode") Long siGunGuCode,
@@ -31,8 +32,8 @@ public interface AttractionRepository extends JpaRepository<AttractionList, Long
     @Query("SELECT COUNT(a) FROM ATTRACTION_LIST a " +
             "WHERE (:areaCode IS NULL OR a.areaCode = :areaCode) " +
             "AND (:siGunGuCode IS NULL OR a.siGunGuCode = :siGunGuCode) " +
-            "AND (:title IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
-            "AND (:contentTypeId IS NULL OR a.contentTypeId = :contentTypeId)")
+            "AND (:contentTypeId IS NULL OR a.contentTypeId = :contentTypeId) " +
+            "AND (:title IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :title, '%'))) ")
     long countAttractions(
             @Param("areaCode") Long areaCode,
             @Param("siGunGuCode") Long siGunGuCode,
@@ -44,8 +45,8 @@ public interface AttractionRepository extends JpaRepository<AttractionList, Long
     @Query("SELECT a FROM ATTRACTION_LIST a " +
             "WHERE (:areaCode IS NULL OR a.areaCode = :areaCode) " +
             "AND (:siGunGuCode IS NULL OR a.siGunGuCode = :siGunGuCode) " +
-            "AND (:title IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :title, '%'))) " +
-            "AND (:contentTypeId IS NULL OR a.contentTypeId = :contentTypeId)")
+            "AND (:contentTypeId IS NULL OR a.contentTypeId = :contentTypeId) " +
+            "AND (:title IS NULL OR LOWER(a.title) LIKE LOWER(CONCAT('%', :title, '%'))) " )
     Page<AttractionList> searchAttractionsWithPaging(
             @Param("areaCode") Long areaCode,
             @Param("siGunGuCode") Long siGunGuCode,
@@ -66,6 +67,7 @@ public interface AttractionRepository extends JpaRepository<AttractionList, Long
 
     // 이미지가 있는 관광지만 조회
     @Query("SELECT a FROM ATTRACTION_LIST a " +
+            "LEFT JOIN FETCH a.contentType c " +
             "LEFT JOIN FETCH a.sido s " +
             "LEFT JOIN FETCH a.gugun g " +
             "WHERE a.areaCode = :areaCode " +

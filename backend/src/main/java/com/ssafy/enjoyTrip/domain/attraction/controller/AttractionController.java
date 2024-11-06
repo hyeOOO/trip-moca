@@ -25,7 +25,6 @@ public class AttractionController {
     public ResponseEntity<Page<AttractionListResponseDto>> searchAttractions(
             @ModelAttribute AttractionSearchRequestDto searchRequest,
             Pageable pageable) {
-        System.out.println("hi");
         return ResponseEntity.ok(
                 attractionService.searchAttractions(searchRequest, pageable)
         );

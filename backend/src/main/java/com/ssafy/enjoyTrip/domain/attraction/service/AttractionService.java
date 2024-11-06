@@ -1,13 +1,11 @@
 package com.ssafy.enjoyTrip.domain.attraction.service;
 
-import com.ssafy.enjoyTrip.domain.attraction.dto.AttractionListResponseDto;
-import com.ssafy.enjoyTrip.domain.attraction.dto.AttractionSearchRequestDto;
-import com.ssafy.enjoyTrip.domain.attraction.dto.GugunListResponseDto;
-import com.ssafy.enjoyTrip.domain.attraction.dto.SidoListResponseDto;
+import com.ssafy.enjoyTrip.domain.attraction.dto.*;
 import com.ssafy.enjoyTrip.domain.attraction.entity.AttractionList;
 import com.ssafy.enjoyTrip.domain.attraction.entity.GugunList;
 import com.ssafy.enjoyTrip.domain.attraction.entity.SidoList;
 import com.ssafy.enjoyTrip.domain.attraction.repository.AttractionRepository;
+import com.ssafy.enjoyTrip.domain.attraction.repository.ContentTypeRepository;
 import com.ssafy.enjoyTrip.domain.attraction.repository.GugunRepository;
 import com.ssafy.enjoyTrip.domain.attraction.repository.SidoRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,8 +23,14 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AttractionService {
     private final AttractionRepository attractionRepository;
+    private final ContentTypeRepository contentTypeRepository;
     private final SidoRepository sidoRepository;
     private final GugunRepository gugunRepository;
+
+    // 컨텐츠 타입 리스트 조회
+    public List<ContentTypeListResponseDto> getAllContentTypeList(){
+        return ContentTypeListResponseDto.fromEntities(contentTypeRepository.findAll());
+    }
 
     // 전체 지역 리스트 조회
     public List<SidoListResponseDto> getAllAreaList(){

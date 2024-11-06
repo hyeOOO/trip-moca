@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class AttractionTitleDto {
-    private String title; // 관광지명
+    private String title;
 }

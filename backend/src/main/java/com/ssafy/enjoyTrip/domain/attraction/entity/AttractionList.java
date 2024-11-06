@@ -15,6 +15,8 @@ public class AttractionList {
     private Long attractionId;
     private Long contentId;
     private String title;
+
+    @Column(name = "content_type_id", insertable = false, updatable = false)
     private Long contentTypeId;
 
     // area_code 컬럼을 위한 필드
@@ -23,6 +25,10 @@ public class AttractionList {
 
     @Column(name = "si_gun_gu_code", insertable = false, updatable = false)
     private Long siGunGuCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "content_type_id", referencedColumnName = "content_type_id")
+    private ContentTypeList contentType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "area_code", referencedColumnName = "sido_code")
@@ -77,6 +83,8 @@ public class AttractionList {
     }
 
     // 편의 메서드
+    public String getContentTypeName() { return contentType != null ? contentType.getContentTypeName() : null; }
+
     public String getSidoName() {
         return sido != null ? sido.getSidoName() : null;
     }

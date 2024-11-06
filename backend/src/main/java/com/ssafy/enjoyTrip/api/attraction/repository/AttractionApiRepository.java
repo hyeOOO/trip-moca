@@ -10,7 +10,6 @@ import java.util.List;
 
 @Repository
 public interface AttractionApiRepository extends JpaRepository<AttractionList, Long> {
-    // 방법 1: REPLACE 함수 사용
     @Query(value =
             "SELECT * FROM attraction_list WHERE area_code = :areaCode " +
                     "AND REPLACE(title, ' ', '') IN (:normalizedTitles)",
@@ -20,7 +19,6 @@ public interface AttractionApiRepository extends JpaRepository<AttractionList, L
             @Param("normalizedTitles") List<String> normalizedTitles
     );
 
-    // 방법 2: LIKE를 사용한 유연한 검색
     @Query(value =
             "SELECT a.* FROM attraction_list a " +
                     "LEFT JOIN sido_list s ON a.area_code = s.sido_code " +

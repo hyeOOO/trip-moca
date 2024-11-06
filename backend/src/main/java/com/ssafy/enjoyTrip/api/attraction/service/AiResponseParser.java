@@ -21,7 +21,7 @@ public class AiResponseParser {
         try {
             return objectMapper.readValue(cleanedResponse, AiPlanResponseDto.class);
         } catch (JsonProcessingException e) {
-            // JSON 문법 오류가 있는 경우 추가 정제 시도
+
             String fixedJson = fixJsonSyntax(cleanedResponse);
             log.debug("Attempting to parse fixed JSON: {}", fixedJson);
             return objectMapper.readValue(fixedJson, AiPlanResponseDto.class);
