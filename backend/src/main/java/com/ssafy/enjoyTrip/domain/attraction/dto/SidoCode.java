@@ -1,7 +1,7 @@
 package com.ssafy.enjoyTrip.domain.attraction.dto;
 
-import com.ssafy.enjoyTrip.api.exception.AttractionServiceException;
-import com.ssafy.enjoyTrip.api.exception.ErrorCode;
+import com.ssafy.enjoyTrip.api.attraction.exception.AttractionServiceException;
+import com.ssafy.enjoyTrip.global.exception.ErrorCode;
 
 import java.util.stream.Stream;
 

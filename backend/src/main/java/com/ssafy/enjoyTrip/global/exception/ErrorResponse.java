@@ -1,5 +1,7 @@
-package com.ssafy.enjoyTrip.api.exception;
+package com.ssafy.enjoyTrip.global.exception;
 
+import com.ssafy.enjoyTrip.api.attraction.exception.AttractionServiceException;
+import com.ssafy.enjoyTrip.domain.member.exception.UnauthorizedException;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,4 +21,14 @@ public class ErrorResponse {
                 .timestamp(LocalDateTime.now())
                 .build();
     }
+
+    public static ErrorResponse from(UnauthorizedException e) {
+        return ErrorResponse.builder()
+                .code(e.getErrorCode().getCode())
+                .message(e.getMessage())
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+
 }

@@ -70,7 +70,7 @@ public interface AttractionRepository extends JpaRepository<AttractionList, Long
             "LEFT JOIN FETCH a.contentType c " +
             "LEFT JOIN FETCH a.sido s " +
             "LEFT JOIN FETCH a.gugun g " +
-            "WHERE a.areaCode = :areaCode " +
+                "WHERE a.areaCode = :areaCode " +
             "AND a.image1 IS NOT NULL")
     List<AttractionList> findByAreaCodeWithImages(@Param("areaCode") Long areaCode);
 

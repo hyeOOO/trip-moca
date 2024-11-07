@@ -1,4 +1,6 @@
-package com.ssafy.enjoyTrip.api.exception;
+package com.ssafy.enjoyTrip.api.attraction.exception;
+
+import com.ssafy.enjoyTrip.global.exception.ErrorCode;
 
 public class AttractionServiceException extends RuntimeException{
     private final ErrorCode errorCode;

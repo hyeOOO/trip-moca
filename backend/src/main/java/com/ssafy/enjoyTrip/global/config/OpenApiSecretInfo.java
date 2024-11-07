@@ -1,4 +1,4 @@
-package com.ssafy.enjoyTrip.api.config;
+package com.ssafy.enjoyTrip.global.config;
 
 import lombok.Getter;
 import lombok.Setter;
