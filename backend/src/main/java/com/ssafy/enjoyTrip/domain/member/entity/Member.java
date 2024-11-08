@@ -1,5 +1,6 @@
 package com.ssafy.enjoyTrip.domain.member.entity;
 
+import com.ssafy.enjoyTrip.domain.member.dto.MemberUpdateRequest;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -67,5 +68,23 @@ public class Member {
 
     public boolean matchPassword(String rawPassword, PasswordEncoder passwordEncoder) {
         return passwordEncoder.matches(rawPassword, this.password);
+    }
+
+    public void update(MemberUpdateRequest request, PasswordEncoder passwordEncoder) {
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            this.password = passwordEncoder.encode(request.getPassword());
+        }
+        if (request.getMemberName() != null) {
+            this.memberName = request.getMemberName();
+        }
+        if (request.getEmail() != null) {
+            this.email = request.getEmail();
+        }
+        if (request.getPhone() != null) {
+            this.phone = request.getPhone();
+        }
+        if (request.getBirthDate() != null) {
+            this.birthDate = request.getBirthDate();
+        }
     }
 }

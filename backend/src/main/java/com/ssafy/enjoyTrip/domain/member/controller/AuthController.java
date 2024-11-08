@@ -8,6 +8,8 @@ import com.ssafy.enjoyTrip.global.exception.ErrorCode;
 import com.ssafy.enjoyTrip.global.jwt.JwtTokenProvider;
 import com.ssafy.enjoyTrip.global.jwt.TokenInfo;
 import io.jsonwebtoken.JwtException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Authentication", description = "로그인 관련 API입니다.")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
 
+    @Operation(summary = "회원가입", description = "회원정보 입력 후 회원가입을 위한 API 입니다.(토큰 검사X)")
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@Valid @RequestBody MemberSignupRequest request) {
         authService.signup(request);
@@ -67,11 +71,13 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "로그인", description = "아이디와 비밀번호로 로그인하는 API 입니다.(토큰 검사X)")
     @PostMapping("/login")
     public ResponseEntity<TokenInfo> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @Operation(summary = "로그아웃", description = "레디스의 리프레시 키를 삭제하는 로그아웃 API 입니다.(토큰 검사O)")
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
         String memberId = userDetails.getUsername();
