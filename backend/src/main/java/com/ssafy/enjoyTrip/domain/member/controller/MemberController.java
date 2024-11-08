@@ -4,11 +4,14 @@ import com.ssafy.enjoyTrip.domain.member.dto.MemberResponseDto;
 import com.ssafy.enjoyTrip.domain.member.dto.MemberUpdateRequest;
 import com.ssafy.enjoyTrip.domain.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
+@Tag(name = "Member", description = "회원 관리 관련 API 입니다")
 @RestController
 @RequestMapping("/domain/member")
 @RequiredArgsConstructor

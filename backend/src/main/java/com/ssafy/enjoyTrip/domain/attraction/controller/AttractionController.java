@@ -22,16 +22,19 @@ public class AttractionController {
     private final AttractionService attractionService;
 
     @Operation(summary = "지역 리스트 조회", description = "전체 지역 조회를 위한 API입니다.")
+    @GetMapping("/find/area")
     public ResponseEntity<List<SidoListResponseDto>> getAreaList(){
         return ResponseEntity.ok(attractionService.getAllAreaList());
     }
 
     @Operation(summary = "컨텐츠 타입(카테고리) 조회", description = "전체 컨텐츠 타입(카테고리) 조회를 위한 API입니다.")
+    @GetMapping("/find/content")
     public ResponseEntity<List<ContentTypeListResponseDto>> getContentTypeList(){
         return ResponseEntity.ok(attractionService.getAllContentTypeList());
     }
 
     @Operation(summary = "시/군/구 조회", description = "전국 시/군/구 조회를 위한 API입니다.")
+    @GetMapping("/find/gungu")
     public ResponseEntity<List<GugunListResponseDto>> getGugunList(){
         return ResponseEntity.ok(attractionService.getAllGugunList());
     }
