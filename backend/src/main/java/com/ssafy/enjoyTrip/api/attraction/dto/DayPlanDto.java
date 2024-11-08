@@ -1,5 +1,6 @@
 package com.ssafy.enjoyTrip.api.attraction.dto;
 
+import com.ssafy.enjoyTrip.domain.attraction.dto.AttractionListResponseDto;
 import lombok.Data;
 
 import java.util.List;

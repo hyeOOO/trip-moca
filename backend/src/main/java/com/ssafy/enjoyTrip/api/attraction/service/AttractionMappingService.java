@@ -1,10 +1,10 @@
 package com.ssafy.enjoyTrip.api.attraction.service;
 
-import com.ssafy.enjoyTrip.api.attraction.dto.AttractionListResponseDto;
+import com.ssafy.enjoyTrip.api.attraction.repository.AttractionApiRepository;
+import com.ssafy.enjoyTrip.domain.attraction.dto.AttractionListResponseDto;
 import com.ssafy.enjoyTrip.api.attraction.dto.AttractionTitleDto;
 import com.ssafy.enjoyTrip.api.attraction.dto.DayPlanDto;
-import com.ssafy.enjoyTrip.api.attraction.entity.AttractionList;
-import com.ssafy.enjoyTrip.api.attraction.repository.AttractionListRepository;
+import com.ssafy.enjoyTrip.domain.attraction.entity.AttractionList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AttractionMappingService {
-    private final AttractionListRepository attractionListRepository;
+    private final AttractionApiRepository attractionListRepository;
 
     public List<DayPlanDto> mapAttractionDetails(Long areaCode, List<DayPlanDto> plans) {
         for (DayPlanDto dayPlan : plans) {
@@ -25,24 +25,15 @@ public class AttractionMappingService {
                     .map(title -> title.replaceAll("\\s+", ""))  // 띄어쓰기 제거
                     .collect(Collectors.toList());
 
-//            List<AttractionListResponseDto> attractionDetails = attractionListRepository
-//                    .findByAreaCodeAndNormalizedTitles(areaCode, attractionTitles)
-//                    .stream()
-//                    .map(AttractionListResponseDto::fromEntity)
-//                    .collect(Collectors.toList());
-
-            // 정확한 매칭으로 찾지 못한 경우 유연한 검색 시도
-//            if (attractionDetails.isEmpty()) {
-                List<AttractionList> flexibleResults = new ArrayList<>();
-                for (String title : attractionTitles) {
-                    flexibleResults.addAll(
-                            attractionListRepository.findByAreaCodeAndTitleFlexible(areaCode, title)
-                    );
-                }
+            List<AttractionList> flexibleResults = new ArrayList<>();
+            for (String title : attractionTitles) {
+                flexibleResults.addAll(
+                        attractionListRepository.findByAreaCodeAndTitleFlexible(areaCode, title)
+                );
+            }
             List<AttractionListResponseDto> attractionDetails = flexibleResults.stream()
-                        .map(AttractionListResponseDto::fromEntity)
-                        .collect(Collectors.toList());
-//            }
+                    .map(AttractionListResponseDto::fromEntity)
+                    .collect(Collectors.toList());
 
             dayPlan.setAttractionDetails(attractionDetails);
         }

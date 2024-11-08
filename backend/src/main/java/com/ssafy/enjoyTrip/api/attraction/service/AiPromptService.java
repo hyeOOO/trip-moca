@@ -8,7 +8,6 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.stereotype.Service;
 
-// 프롬프트 처리
 @Service
 @RequiredArgsConstructor
 public class AiPromptService {
