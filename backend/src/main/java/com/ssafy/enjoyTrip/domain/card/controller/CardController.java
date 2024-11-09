@@ -5,6 +5,7 @@ import com.ssafy.enjoyTrip.domain.card.dto.LocationRequest;
 import com.ssafy.enjoyTrip.domain.card.entity.Card;
 import com.ssafy.enjoyTrip.domain.card.mapper.CardListMapper;
 import com.ssafy.enjoyTrip.domain.card.service.CardService;
+import com.ssafy.enjoyTrip.global.annotation.CurrentMemberId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class CardController {
     }
 
     @Operation(summary = "전체 카드 리스트 조회", description = "전체 카드 리스트 조회를 위한 API입니다.")
-    @GetMapping("/cards")
+    @GetMapping("/list")
     public ResponseEntity<List<CardListResponseDto>> getCardList() {
         List<Card> cards = cardService.getAllCards();
         List<CardListResponseDto> dtoList = cards.stream()
@@ -44,8 +45,8 @@ public class CardController {
     }
 
     @Operation(summary = "유저가 가지고 있는 카드 조회", description = "유저가 가지고 있는 카드 리스트 조회를 위한 API입니다.")
-    @GetMapping("/{memberId}/card")
-    public ResponseEntity<List<CardListResponseDto>> getUserCardList(@PathVariable String memberId) {
+    @GetMapping("/user-card")
+    public ResponseEntity<List<CardListResponseDto>> getUserCardList(@CurrentMemberId String memberId) {
         List<Card> userCards = cardService.getUserCards(memberId);
         List<CardListResponseDto> dtoList = userCards.stream()
                 .map(this::convertToDto)
@@ -54,9 +55,9 @@ public class CardController {
     }
 
     @Operation(summary = "유저의 카드 획득", description = "유저가 일정 지역에 도착했을 때 카드 획득을 위한 API입니다.")
-    @PostMapping("/{memberId}/location")
+    @PostMapping("/get-card")
     public ResponseEntity<CardListResponseDto> checkLocationAndGetCard(
-            @PathVariable String memberId,  // Long에서 String으로 변경
+            @CurrentMemberId String memberId,
             @RequestBody LocationRequest location) {
         Card card = cardService.processUserLocation(location, memberId);
         return card != null ?
