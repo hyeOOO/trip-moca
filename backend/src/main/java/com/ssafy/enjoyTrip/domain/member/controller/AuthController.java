@@ -79,9 +79,9 @@ public class AuthController {
 
     @Operation(summary = "로그아웃", description = "레디스의 리프레시 키를 삭제하는 로그아웃 API 입니다.(토큰 검사O)")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
         String memberId = userDetails.getUsername();
         authService.logout(memberId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("로그아웃 성공");
     }
 }
