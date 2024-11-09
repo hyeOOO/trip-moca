@@ -20,6 +20,7 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(2002, "가입되지 않은 아이디입니다"),
     INVALID_PASSWORD(2003, "비밀번호가 일치하지 않습니다");
 
+
     private final int code;
     private final String defaultMessage;
 }
