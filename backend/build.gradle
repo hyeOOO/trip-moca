@@ -38,6 +38,7 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 	// Map Struct
 	implementation 'org.mapstruct:mapstruct:1.5.3.Final'
+	// AI
 	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 	//security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
