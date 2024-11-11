@@ -33,10 +33,11 @@ export default {
 
 <style>
 .second-section {
+  margin-top: 200px;
   font-family: "EliceDigitalBaeum_Regular";
   text-align: center;
   width: 100%;
-  min-height: 100vh; /* 화면 전체 높이를 채우도록 설정 */
+  min-height: 100%; /* 화면 전체 높이를 채우도록 설정 */
   padding: 20px 100px;
 }
 
@@ -70,7 +71,7 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* 카드가 화면 크기에 맞춰 늘어나도록 설정 */
   gap: 20px;
   width: 100%;
-  height: 100vh; /* 뷰포트의 전체 높이를 차지하도록 설정 */
+  height: 100%; /* 뷰포트의 전체 높이를 차지하도록 설정 */
   padding: 10px;
   margin: 0;
   box-sizing: border-box;
@@ -78,6 +79,7 @@ export default {
 
 /* 카드 크기를 설정 */
 .character-card {
+  align-self: center;
   background-color: white;
   border-radius: 10px;
   display: flex;

@@ -1,4 +1,4 @@
-<template>
+\<template>
   <!-- 메인 콘텐츠 영역 -->
   <div class="background">
     <navBar />
@@ -69,9 +69,27 @@
       </div>
     </div>
   </div>
+  <div v-intersect class="fade-in-section">
+    <firstContent />
+  </div>
+  <div v-intersect class="fade-in-section">
+    <secondContent />
+  </div>
+  <div v-intersect class="fade-in-section">
+    <thirdContent />
+  </div>
+  <div v-intersect class="fade-in-section">
+    <fourthContent />
+  </div>
 </template>
 
+
+
 <script>
+import firstContent from "@/views/mainPage/firstContent.vue";
+import secondContent from "@/views/mainPage/secondContent.vue";
+import thirdContent from "@/views/mainPage/thirdContent.vue";
+import fourthContent from "@/views/mainPage/fourthContent.vue";
 import region from "@/assets/data/region.js";
 import navBar from "@/components/navBar.vue";
 
@@ -86,31 +104,25 @@ export default {
   },
   components: {
     navBar: navBar,
+    firstContent: firstContent,
+    secondContent: secondContent,
+    thirdContent: thirdContent,
+    fourthContent: fourthContent,
   },
-  methods: {
-    handleSearch() {
-      if (!this.searchQuery.trim()) {
-        alert("검색어를 입력해주세요!!");
-        return;
-      }
-      // 검색 로직 구현
-      // 예시: groupList에서 검색
-      this.searchResults = this.groupList.filter(
-        (item) =>
-          item.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-          item.description
-            .toLowerCase()
-            .includes(this.searchQuery.toLowerCase())
-      );
-      console.log("검색어:", this.searchQuery);
-      console.log("검색 결과:", this.searchResults);
-
-      // 검색 결과 페이지로 이동하거나 결과를 표시하는 로직 추가
-      // 예시: 라우터를 사용한 페이지 이동
-      this.$router.push({
-        path: "/search",
-        query: { q: this.searchQuery },
-      });
+  directives: {
+    intersect: {
+      mounted(el) {
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            if (entry.isIntersecting) {
+              el.classList.add("visible");
+              observer.unobserve(el);
+            }
+          },
+          { threshold: 0.1 }
+        );
+        observer.observe(el);
+      },
     },
   },
 };
@@ -123,12 +135,12 @@ export default {
   height: 100vh;
   overflow: hidden;
   margin: 0;
-  background-image: url("@/assets/image/main.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   background-color: rgba(0, 0, 0, 0.3);
   z-index: 0;
+  animation: carousel 30s infinite; 
 }
 .background::before {
   content: "";
@@ -145,7 +157,6 @@ export default {
   );
   z-index: 1;
 }
-
 .main-section {
   position: relative;
   height: 85%;
@@ -165,7 +176,6 @@ export default {
 }
 
 .box2 {
-  /* justify-self: center; */
   margin-left: 140px;
   align-self: center;
   background: rgba(0, 0, 0, 0.5);
@@ -178,7 +188,6 @@ export default {
 
 .search-group {
   align-content: center;
-  /* display: flex; */
   gap: 10px;
   margin-bottom: 10px;
 }
@@ -193,7 +202,51 @@ export default {
 }
 
 .text2 {
-  font-family: "EliceDigitalBaeum_Bold";
+  font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
+}
+
+/* 페이드 인 효과 */
+.fade-in-section {
+  margin-top: 120px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 2s ease-out, transform 2s ease-out;
+}
+.fade-in-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+input[type=date]::-webkit-datetime-edit-text {
+    -webkit-appearance: none;
+    display: none;
+}
+input[type=date]::-webkit-datetime-edit-month-field{
+    -webkit-appearance: none;
+    display: none;
+}
+input[type=date]::-webkit-datetime-edit-day-field {
+    -webkit-appearance: none;
+    display: none;
+}
+input[type=date]::-webkit-datetime-edit-year-field {
+    -webkit-appearance: none;
+    display: none;
+}
+/* 캐러셀 */
+@keyframes carousel {
+  0% {
+    background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
+  }
+  33% {
+    background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gwanganBridge.jpg");
+  }
+  66% {
+    background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/damyang-3381419_1280.jpg");
+  }
+  100% {
+    background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
+  }
 }
 </style>
