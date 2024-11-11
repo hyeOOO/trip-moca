@@ -233,6 +233,9 @@ export default {
   outline: none;
   background-color: white;
 }
+.search-input::placeholder {
+  color: #515151;
+}
 
 .search-btn {
   position: absolute;

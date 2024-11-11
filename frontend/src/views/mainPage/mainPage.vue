@@ -46,13 +46,13 @@
             </div>
             <div>
               <p class="text2">인원 수</p>
-              <input type="number" class="form-input" />
+              <input type="number" class="form-input" min="0"/>
             </div>
             <div>
               <p class="text2">지역(선택)</p>
               <select
                 v-model="result"
-                style="text-align: center; width: 395px; height: 42px"
+                style="text-align: center; width: 395px; height: 42px; border: 1px solid #FFFFFF;"
               >
                 <option
                   v-for="(region, index) in 지역"
@@ -185,7 +185,15 @@ export default {
   border-radius: 20px;
   display: inline-block;
 }
-
+.search-submit {
+  width: 395px;
+  height: 56px;
+  border-radius: 8px;
+  background: #ecb27b;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 40px;
+}
 .search-group {
   align-content: center;
   gap: 10px;
@@ -217,23 +225,8 @@ export default {
   opacity: 1;
   transform: translateY(0);
 }
+/* 출발일자, 도착일자 부분 년-월-일 없애기 */
 
-input[type=date]::-webkit-datetime-edit-text {
-    -webkit-appearance: none;
-    display: none;
-}
-input[type=date]::-webkit-datetime-edit-month-field{
-    -webkit-appearance: none;
-    display: none;
-}
-input[type=date]::-webkit-datetime-edit-day-field {
-    -webkit-appearance: none;
-    display: none;
-}
-input[type=date]::-webkit-datetime-edit-year-field {
-    -webkit-appearance: none;
-    display: none;
-}
 /* 캐러셀 */
 @keyframes carousel {
   0% {
