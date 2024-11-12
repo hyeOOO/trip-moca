@@ -1,14 +1,14 @@
 <template>
-  <div class="menu-container" ref="menuContainer" @click.stop>  
-    <button class="menu-button" @click.stop="toggleMenu">   
+  <div class="menu-container" ref="menuContainer" @click.stop>
+    <button class="menu-button" @click.stop="toggleMenu">
       <i class="fi fi-rr-menu-burger icon"></i>
     </button>
     <button class="user-button" @click="goToMyPage">
       <i class="fi fi-rr-user icon"></i>
     </button>
 
-    <div v-show="showMenu" class="dropdown-menu">  
-      <button @click="signin">로그인</button>
+    <div v-show="showMenu" class="dropdown-menu">
+      <button @click="handleOpenLoginModal">로그인</button>
       <button @click="signup">회원가입</button>
       <button @click="logout">로그아웃</button>
     </div>
@@ -16,47 +16,36 @@
 </template>
 
 <script>
+import { inject } from "vue";
 export default {
+  setup() {
+    const { openLoginModal } = inject("modalControl");
+
+    return {
+      openLoginModal,
+    };
+  },
   data() {
     return {
       showMenu: false,
     };
   },
-  mounted() {
-    // 이벤트 리스너 수정
-    window.addEventListener('click', this.closeMenu);
-  },
-  beforeUnmount() {
-    window.removeEventListener('click', this.closeMenu);
-  },
   methods: {
     toggleMenu() {
-      console.log('toggleMenu called'); // 디버깅용
       this.showMenu = !this.showMenu;
     },
-    // closeMenu(event) {
-    //   if (this.$refs.menuContainer && !this.$refs.menuContainer.contains(event.target)) {
-    //     this.showMenu = false;
-    //   }
-    //   const menuContainer = this.$el.querySelector('.menu-container');
-    //   if (!menuContainer.contains(event.target)) {
-    //     this.showMenu = false;
-    //   }
-    // },
-    goToMyPage() {
-      this.$router.push({ name: "MyPage" });
+    handleOpenLoginModal() {
+      this.openLoginModal(); // inject된 함수 사용
+      this.showMenu = false;
     },
-    login() {
-      console.log("로그인 클릭됨");
-    },
-    signUp() {
+    signup() {
       console.log("회원가입 클릭됨");
     },
     logout() {
       console.log("로그아웃 클릭됨");
     },
-    onClickMoveLoginPage() {
-      this.$router.push("/LoginPage");
+    goToMyPage() {
+      this.$router.push({ name: "MyPage" });
     },
   },
 };
@@ -138,5 +127,4 @@ export default {
 .icon {
   color: white;
 }
-
 </style>

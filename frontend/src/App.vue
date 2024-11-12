@@ -1,18 +1,38 @@
 <template>
   <div>
     <router-view />
+    <login-modal v-model="showLoginModal" />
   </div>
   <footInfo />
 </template>
 
 <script>
+import { ref, provide } from "vue";
 import footInfo from "@/components/footInfo.vue";
- 
+import LoginModal from "@/components/loginModal.vue";
+
 export default {
   name: "App",
   data() {},
   components: {
-    footInfo: footInfo,
+    footInfo,
+    LoginModal,
+  },
+  setup() {
+    const showLoginModal = ref(false);
+
+    const openLoginModal = () => {
+      showLoginModal.value = true;
+    };
+
+    // provide를 통해 모달 컨트롤 함수 제공
+    provide("modalControl", {
+      openLoginModal,
+    });
+
+    return {
+      showLoginModal,
+    };
   },
 };
 </script>
@@ -40,13 +60,58 @@ body {
   src: url("assets/fonts/Pretendard-Light.ttf");
 }
 
+@font-face {
+  font-family: "Pretendard-Black";
+  src: url("assets/fonts/Pretendard-Black.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-Bold";
+  src: url("assets/fonts/Pretendard-Bold.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-ExtraBold";
+  src: url("assets/fonts/Pretendard-ExtraBold.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-ExtraLight";
+  src: url("assets/fonts/Pretendard-ExtraLight.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-Medium";
+  src: url("assets/fonts/Pretendard-Medium.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-Regular";
+  src: url("assets/fonts/Pretendard-Regular.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-SemiBold";
+  src: url("assets/fonts/Pretendard-SemiBold.ttf");
+}
+
+@font-face {
+  font-family: "Pretendard-Thin";
+  src: url("assets/fonts/Pretendard-Thin.ttf");
+}
 // .form-input {
 //   padding: 10px;
 //   border: none;
 //   border-radius: 5px;
 //   background: white;
 // }
-
+body.modal-open {
+  overflow: hidden;
+  padding-right: 17px;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
 .search-submit {
   width: 401px;
   height: 56px;
