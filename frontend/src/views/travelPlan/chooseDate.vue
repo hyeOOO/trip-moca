@@ -1,35 +1,72 @@
 <template>
-  <div class="choose-date">
-    <!-- Left panel with step instructions and date inputs -->
-    <div class="panel">
-      <h2>{{ name }}</h2>
-      <p class="date-range">2024.12.05(목) - 2024.12.08(일)</p>
+  <div class="layout-container">
+    <navBar />
 
-      <div class="step">
-        <h3>STEP 1 날짜 선택</h3>
-        <label>출발 일자</label>
-        <input type="date" v-model="startDate" />
+    <div class="content-wrapper" :class="{ collapsed: isCollapsed }">
+      <div class="steps-sidebar">
+        <div class="steps-nav">
+          <div
+            class="step"
+            :class="{ active: !isCollapsed }"
+            @click="openMiddleSection"
+          >
+            <div class="step-number">STEP 1</div>
+            <div class="step-title">날짜 선택</div>
+          </div>
+
+          <!-- router-link를 div로 변경 -->
+          <div class="step" @click="checkDateAndNavigate">
+            <div class="step-number">STEP 2</div>
+            <div class="step-title">장소 선택</div>
+          </div>
+
+          <router-link to="/make-plan" class="step">
+            <div class="step-number">STEP 3</div>
+            <div class="step-title">계획 생성</div>
+          </router-link>
+        </div>
       </div>
 
-      <div class="step">
-        <h3>STEP 2 장소 선택</h3>
-        <label>도착 일자</label>
-        <input type="date" v-model="endDate" />
+      <div class="middle-section">
+        <div class="toggle-button" @click="toggleCollapse">
+          <i class="fa-solid fa-arrow-left"></i>
+        </div>
+
+        <div class="header">
+          <h2>{{ name }}</h2>
+          <p v-if="formattedDateRange" class="date-range">
+            {{ formattedDateRange }}
+          </p>
+        </div>
+
+        <div class="date-form">
+          <div class="input-group">
+            <label>출발 일자</label>
+            <input type="date" v-model="startDate" class="date-input" />
+          </div>
+
+          <div class="input-group">
+            <label>도착 일자</label>
+            <input type="date" v-model="endDate" class="date-input" />
+          </div>
+
+          <button @click="savePlan" class="save-button">저장</button>
+        </div>
       </div>
 
-      <div class="step">
-        <h3>STEP 3 계획 생성</h3>
-        <button @click="savePlan">저장</button>
-      </div>
+      <div class="map-container" ref="tmap"></div>
     </div>
-
-    <!-- Right panel with TMap -->
-    <div class="map-container" ref="tmap"></div>
   </div>
 </template>
-    
-  <script>
+
+<script>
+import navBar from "@/components/navBar.vue";
+
 export default {
+  name: "ChooseDate",
+  components: {
+    navBar,
+  },
   props: {
     name: {
       type: String,
@@ -48,34 +85,71 @@ export default {
       required: true,
     },
   },
-
-  //   props: {
-  //     name: String,
-  //     id: String,
-  //     latitude: {
-  //       type: Number,
-  //       default: 37.5666805, // 서울 기본값
-  //     },
-  //     longitude: {
-  //       type: Number,
-  //       default: 126.9784147, // 서울 기본값
-  //     },
-  //   },
   data() {
     return {
       startDate: "",
       endDate: "",
       map: null,
-      markers: [], // 마커들을 저장할 배열
-      polylines: [], // 폴리라인들을 저장할 배열
+      markers: [],
+      polylines: [],
+      formattedDateRange: "",
+      isCollapsed: false,
     };
   },
   watch: {
-    // latitude나 longitude가 변경될 때 지도 중심 업데이트
     latitude: "updateMapCenter",
     longitude: "updateMapCenter",
   },
   methods: {
+    // 새로 추가된 메소드
+    checkDateAndNavigate() {
+      if (!this.startDate || !this.endDate) {
+        alert('날짜를 먼저 선택해 주세요!');
+        return;
+      }
+      
+      const formattedStart = this.formatDate(this.startDate);
+      const formattedEnd = this.formatDate(this.endDate);
+      this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
+      
+      this.$router.push({
+        path: `/choosePlace/${this.name}`,
+        query: {
+          startDate: this.startDate,
+          endDate: this.endDate,
+          formattedDateRange: this.formattedDateRange,
+          id: this.id
+        }
+      });
+    },
+
+    toggleCollapse() {
+      this.isCollapsed = true;
+      setTimeout(() => {
+        this.updateMapSize();
+      }, 300);
+    },
+
+    openMiddleSection() {
+      if (this.isCollapsed) {
+        this.isCollapsed = false;
+        setTimeout(() => {
+          this.updateMapSize();
+        }, 300);
+      }
+    },
+
+    formatDate(dateString) {
+      const date = new Date(dateString);
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const dayOfWeek = days[date.getDay()];
+
+      return `${year}.${month}.${day}(${dayOfWeek})`;
+    },
+
     initializeMap() {
       try {
         if (!window.Tmapv2) {
@@ -83,24 +157,27 @@ export default {
           return;
         }
 
-        // TMap 초기화
         const option = {
           center: new window.Tmapv2.LatLng(this.latitude, this.longitude),
           width: "100%",
           height: "100%",
-          zoom: 12,
+          zoom: 11,
         };
 
-        // 기존 지도 제거
         if (this.map) {
           this.clearMap();
         }
 
         this.map = new window.Tmapv2.Map(this.$refs.tmap, option);
+
+        setTimeout(() => {
+          window.dispatchEvent(new Event("resize"));
+        }, 200);
       } catch (error) {
         console.error("지도 초기화 중 오류 발생:", error);
       }
     },
+
     updateMapCenter() {
       if (this.map && window.Tmapv2) {
         try {
@@ -109,117 +186,244 @@ export default {
             this.longitude
           );
           this.map.setCenter(newCenter);
-          this.map.setZoom(12);
+          this.map.setZoom(11);
         } catch (error) {
           console.error("지도 중심 업데이트 중 오류 발생:", error);
         }
       }
     },
+
     clearMap() {
-      // 기존 마커들 제거
       this.markers.forEach((marker) => marker.setMap(null));
       this.markers = [];
 
-      // 기존 폴리라인들 제거
       this.polylines.forEach((polyline) => polyline.setMap(null));
       this.polylines = [];
 
-      // 지도 객체 제거
       if (this.map) {
         this.map.destroy();
         this.map = null;
       }
     },
+
     savePlan() {
-      alert(`Plan saved for dates: ${this.startDate} to ${this.endDate}`);
+      if (!this.startDate || !this.endDate) {
+        alert('출발 일자와 도착 일자를 모두 선택해주세요.');
+        return;
+      }
+      
+      const formattedStart = this.formatDate(this.startDate);
+      const formattedEnd = this.formatDate(this.endDate);
+      this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
+      
+      this.$router.push({
+        path: `/choosePlace/${this.name}`,
+        query: {
+          startDate: this.startDate,
+          endDate: this.endDate,
+          formattedDateRange: this.formattedDateRange,
+          id: this.id
+        }
+      });
     },
-    sendIdToBackend(id) {
-      fetch("백엔드_URL", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      })
-        .then((response) => response.json())
-        .then((data) => console.log(data))
-        .catch((error) => console.error("Error:", error));
+
+    updateMapSize() {
+      if (this.map) {
+        this.map.resize();
+      }
     },
   },
   mounted() {
-    // 컴포넌트 마운트 시 지도 초기화
-    this.$nextTick(() => {
+    setTimeout(() => {
       this.initializeMap();
-    });
+    }, 100);
+
+    window.addEventListener("resize", this.updateMapSize);
   },
   beforeUnmount() {
-    // 컴포넌트 제거 시 지도 정리
     this.clearMap();
+    window.removeEventListener("resize", this.updateMapSize);
   },
 };
 </script>
-  
-  <style scoped>
-.choose-date {
+
+<style scoped>
+.layout-container {
   display: flex;
-  width: 100%;
+  flex-direction: column;
   height: 100vh;
+  overflow: hidden;
 }
 
-.panel {
-  width: 300px;
-  padding: 20px;
-  background-color: #fff;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+.content-wrapper {
+  display: grid;
+  grid-template-columns: 200px 320px 1fr;
+  height: calc(100vh - 64px - 56px);
+  overflow: hidden;
+  transition: grid-template-columns 0.3s ease;
 }
 
-.panel h2 {
+.content-wrapper.collapsed {
+  grid-template-columns: 200px 0 1fr;
+}
+
+/* Left sidebar styles */
+.steps-sidebar {
+  background: white;
+  padding: 24px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #eee;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.steps-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.step:hover,
+.step.active {
+  background-color: #f5f5f5;
+}
+
+.step-number {
+  font-size: 14px;
+  font-weight: bold;
+  color: #f57c00;
+  margin-bottom: 4px;
+}
+
+.step-title {
+  font-size: 16px;
+}
+
+/* Middle section styles */
+.middle-section {
+  position: relative;
+  background: white;
+  padding: 24px;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  border-right: 1px solid #eee;
+  height: 100%;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  min-width: 0;
+}
+
+.content-wrapper.collapsed .middle-section {
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.toggle-button {
+  position: absolute;
+  top: 20px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+.toggle-button:hover {
+  transform: scale(1.1);
+}
+
+.toggle-button i {
+  font-size: 18px;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.toggle-button:hover i {
+  color: #f57c00;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.header h2 {
   font-size: 24px;
-  margin-bottom: 10px;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
 
 .date-range {
   color: #f57c00;
-  margin-bottom: 20px;
+  font-size: 14px;
 }
 
-.step {
-  margin-bottom: 15px;
+.input-group {
+  margin-bottom: 16px;
 }
 
-.step h3 {
-  font-size: 16px;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.step label {
+.input-group label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
 }
 
-.step input[type="date"] {
+.date-input {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  background-color: #fff;
+  transition: all 0.3s ease;
 }
 
-button {
+.date-input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
+}
+
+.date-input:hover {
+  border-color: #bbb;
+}
+
+.save-button {
   width: 100%;
-  padding: 10px;
-  color: #fff;
+  padding: 12px;
   background-color: #333;
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
 }
 
-button:hover {
+.save-button:hover {
   background-color: #555;
 }
 
 .map-container {
-  flex-grow: 1;
+  position: relative;
+  width: 100%;
   height: 100%;
-  background-color: #e0f7fa;
 }
 </style>

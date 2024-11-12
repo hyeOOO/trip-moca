@@ -1,13 +1,14 @@
 <template>
-  <div>
+  <div class="app-container"> <!-- 클래스 추가 -->
     <router-view />
+    <footInfo />
   </div>
-  <footInfo />
 </template>
+
 
 <script>
 import footInfo from "@/components/footInfo.vue";
- 
+
 export default {
   name: "App",
   data() {},
@@ -18,6 +19,11 @@ export default {
 </script>
 
 <style lang="scss">
+// .app-container {
+//   display: flex;
+//   flex-direction: column;
+//   min-height: 100vh;
+// }
 /* 전체 설정 */
 body {
   margin: 0;
@@ -38,24 +44,5 @@ body {
 @font-face {
   font-family: "Pretendard-Light";
   src: url("assets/fonts/Pretendard-Light.ttf");
-}
-
-// .form-input {
-//   padding: 10px;
-//   border: none;
-//   border-radius: 5px;
-//   background: white;
-// }
-
-.search-submit {
-  width: 401px;
-  height: 56px;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: #ecb27b;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
 }
 </style>

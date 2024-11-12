@@ -12,13 +12,13 @@ input[type="date"] {
   margin-bottom: 20px;
 
   /* Date field placeholder text removal */
-  &::-webkit-datetime-edit-text,
-  &::-webkit-datetime-edit-month-field,
-  &::-webkit-datetime-edit-day-field,
-  &::-webkit-datetime-edit-year-field {
-    -webkit-appearance: none;
-    display: none;
-  }
+  // &::-webkit-datetime-edit-text,
+  // &::-webkit-datetime-edit-month-field,
+  // &::-webkit-datetime-edit-day-field,
+  // &::-webkit-datetime-edit-year-field {
+  //   -webkit-appearance: none;
+  //   display: none;
+  // }
 
   /* Calendar icon styling */
   &::-webkit-calendar-picker-indicator {

@@ -41,7 +41,7 @@
   background: white;
   padding: 40px 20px 120px 20px;
   border-top: 1px solid #D9D9D9;
-  margin-top: 200px;
+  /* margin-top: 40px; */
 }
 
 .footer-content {

@@ -78,10 +78,11 @@ export default {
     };
   },
   computed: {
-    isDarkRoute() {
-      return this.$route.path === "/travelPlan";
-    },
+  isDarkRoute() {
+    // 메인 페이지('/')가 아닌 모든 경로에서 dark 모드 (검은색) 적용
+    return this.$route.path !== '/';
   },
+},
   components: {
     navLogin: navLogin,
   },
