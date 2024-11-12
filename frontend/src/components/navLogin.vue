@@ -134,4 +134,9 @@ export default {
     right: -10px;
   }
 }
+
+.icon {
+  color: white;
+}
+
 </style>
