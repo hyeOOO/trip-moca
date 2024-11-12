@@ -72,8 +72,8 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "아이디와 비밀번호로 로그인하는 API 입니다.(토큰 검사X)")
     @PostMapping("/login")
-    public ResponseEntity<TokenInfo> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request).getAccessToken());
     }
 
     @Operation(summary = "로그아웃", description = "레디스의 리프레시 키를 삭제하는 로그아웃 API 입니다.(토큰 검사O)")
