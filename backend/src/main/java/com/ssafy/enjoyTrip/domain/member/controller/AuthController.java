@@ -38,11 +38,10 @@ public class AuthController {
         return ResponseEntity.ok("회원가입이 완료되었습니다.");
     }
 
-
+    @Operation(summary = "액세스토큰 재발급", description = "만료된 액세스토큰에서 사용자 ID 값을 뽑아내어 리프레시 토큰 검증 후 재발급")
     @PostMapping("/refresh")
     public ResponseEntity<TokenInfo> refresh(
-            @RequestHeader("Authorization") String accessToken,
-            @RequestHeader("Refresh-Token") String refreshToken) {
+            @RequestHeader("Authorization") String accessToken) {
 
         try {
             // Bearer 제거
@@ -56,8 +55,8 @@ public class AuthController {
                 throw new UnauthorizedException(ErrorCode.TOKEN_NOT_FOUND, "저장된 리프레시 토큰이 없습니다.");
             }
 
-            if (!refreshToken.equals(savedRefreshToken)) {
-                throw new UnauthorizedException(ErrorCode.INVALID_REFRESH_TOKEN, "리프레시 토큰이 일치하지 않습니다.");
+            if(!jwtTokenProvider.validateToken(savedRefreshToken)){
+                throw new UnauthorizedException(ErrorCode.EXPIRED_TOKEN, "만료된 토큰입니다.");
             }
 
             // 새 토큰 발급
