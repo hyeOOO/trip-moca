@@ -8,7 +8,7 @@
         <img src="@/assets/image/mail_icon.png" />
         <p class="info-top-text">HW&SW@ssafy.com</p>
       </div>
-      <navLogin />
+      <navLogin :is-dark-route="isDarkRoute" />
     </div>
     <!-- 구분선 -->
     <div :class="['top-division-line', { 'dark-line': isDarkRoute }]"></div>
