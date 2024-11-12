@@ -103,8 +103,8 @@ export default {
   display: flex;
   gap: 80px;
   z-index: 2;
-  font-family: "EliceDigitalBaeum_Bold";
-  font-size: 16px;
+  font-family: "EliceDigitalBaeum_BOLD";
+  font-size: 18px;
   font-weight: 300;
   padding: 15px;
 }
@@ -232,6 +232,9 @@ export default {
 .search-input:focus {
   outline: none;
   background-color: white;
+}
+.search-input::placeholder {
+  color: #515151;
 }
 
 .search-btn {
