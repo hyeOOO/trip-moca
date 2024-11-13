@@ -1,9 +1,7 @@
-<!-- DestinationGallery.vue -->
 <template>
-  <div class="planBackground">
+  <div class="DestinationBackground">
     <navBar />
     <div class="container mx-auto px-4 py-8">
-      <!-- 상단 검색 섹션 -->
       <h1 class="text-3xl font-bold text-center mb-8">
         지금 당장 생각나는 곳은?
       </h1>
@@ -35,14 +33,15 @@
       <!-- 도시 그리드 -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div
-          v-for="destination in destinations"
+          v-for="destination in filteredDestinations"
           :key="destination.id"
           class="group cursor-pointer"
+          @click="selectDestination(destination)"
         >
           <div class="relative overflow-hidden rounded-lg shadow-lg">
             <img
               :src="destination.image"
-              :alt="destination.name"
+              :alt="destination.nameKo"
               class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
             />
             <div
@@ -62,45 +61,41 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
+import DestinationGalleryData from "@/assets/data/DestinationGalleryData.js";
+
 export default {
   name: "DestinationGallery",
   data() {
     return {
+      destinations: DestinationGalleryData,
       searchQuery: "",
-      destinations: [
-        {
-          id: 1,
-          nameKo: "제주",
-          nameEn: "Jeju",
-          image: require('@/assets/image/jeju.png')
-        },
-        {
-          id: 2,
-          nameKo: "부산",
-          nameEn: "Busan",
-          image: require('@/assets/image/busan.png')
-        },
-        {
-          id: 3,
-          nameKo: "강릉",
-          nameEn: "Gangneung",
-          image: require('@/assets/image/gangneung.png')
-        },
-        {
-          id: 4,
-          nameKo: "경주",
-          nameEn: "Gyeongju",
-          image: require('@/assets/image/gyeongju.png')
-        },
-      ],
     };
   },
+  computed: {
+    filteredDestinations() {
+      return this.destinations.filter((destination) => {
+        const search = this.searchQuery.toLowerCase();
+        return (
+          destination.nameKo.toLowerCase().includes(search) ||
+          destination.nameEn.toLowerCase().includes(search)
+        );
+      });
+    },
+  },
   components: {
-    navBar: navBar,
+    navBar,
+  },
+  methods: {
+    selectDestination(destination) {
+      this.$router.push({
+        name: "chooseDate",
+        params: { name: destination.nameKo },
+        query: { id: destination.id },
+      });
+    },
   },
 };
 </script>
 
 <style scoped>
-/* 추가적인 스타일링이 필요한 경우 여기에 작성 */
 </style>

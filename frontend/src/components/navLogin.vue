@@ -1,16 +1,15 @@
 <template>
   <div class="menu-container" ref="menuContainer" @click.stop>
     <button class="menu-button" @click.stop="toggleMenu">
-      <i class="fi fi-rr-menu-burger icon"></i>
+      <i :class="['fi fi-rr-menu-burger icon', { 'dark-icon': isDarkRoute }]" ></i>
     </button>
     <button class="user-button" @click="goToMyPage">
-      <i class="fi fi-rr-user icon"></i>
+      <i :class="['fi fi-rr-user icon', { 'dark-icon': isDarkRoute }]" ></i>
     </button>
 
     <div v-show="showMenu" class="dropdown-menu">
       <button @click="handleOpenLoginModal">로그인</button>
       <button @click="signup">회원가입</button>
-      <button @click="logout">로그아웃</button>
     </div>
   </div>
 </template>
@@ -18,6 +17,12 @@
 <script>
 import { inject } from "vue";
 export default {
+  props: {
+    isDarkRoute: {
+      type: Boolean,
+      default: false
+    }
+  },
   setup() {
     const { openLoginModal } = inject("modalControl");
 
@@ -30,7 +35,16 @@ export default {
       showMenu: false,
     };
   },
+  mounted() {
+    window.addEventListener('click', this.closeMenu);
+  },
+  beforeUnmount() {
+    window.removeEventListener('click', this.closeMenu);
+  },
   methods: {
+    closeMenu() {
+      this.showMenu = false;
+    },
     toggleMenu() {
       this.showMenu = !this.showMenu;
     },
@@ -80,7 +94,11 @@ export default {
 
 .icon {
   font-size: 20px;
-  color: #333;
+  color: white;
+}
+
+.dark-icon {
+  color: black; /* Dark route에서 아이콘 색상을 검정색으로 설정 */
 }
 
 .dropdown-menu {
@@ -122,9 +140,5 @@ export default {
   .dropdown-menu {
     right: -10px;
   }
-}
-
-.icon {
-  color: white;
 }
 </style>

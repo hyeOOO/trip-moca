@@ -31,9 +31,8 @@ export default {};
   box-sizing: border-box;
 }
 
-
 .third-title {
-   display: flex;
+  display: flex;
   text-align: center;
   font-size: 40px;
   margin-bottom: 0px;
@@ -55,5 +54,4 @@ export default {};
   border-radius: 10px;
   margin-top: 40px;
 }
-
 </style>

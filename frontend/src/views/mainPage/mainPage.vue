@@ -1,4 +1,4 @@
-\<template>
+<template>
   <!-- 메인 콘텐츠 영역 -->
   <div class="background">
     <navBar />
@@ -46,13 +46,18 @@
             </div>
             <div>
               <p class="text2">인원 수</p>
-              <input type="number" class="form-input" min="0"/>
+              <input type="number" class="form-input" min="0" />
             </div>
             <div>
               <p class="text2">지역(선택)</p>
               <select
                 v-model="result"
-                style="text-align: center; width: 395px; height: 42px; border: 1px solid #FFFFFF;"
+                style="
+                  text-align: center;
+                  width: 395px;
+                  height: 42px;
+                  border: 1px solid #ffffff;
+                "
               >
                 <option
                   v-for="(region, index) in 지역"
@@ -140,7 +145,7 @@ export default {
   background-position: center;
   background-color: rgba(0, 0, 0, 0.3);
   z-index: 0;
-  animation: carousel 30s infinite; 
+  animation: carousel 30s infinite;
 }
 .background::before {
   content: "";
