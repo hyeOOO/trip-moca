@@ -38,11 +38,10 @@ public class AuthController {
         return ResponseEntity.ok("회원가입이 완료되었습니다.");
     }
 
-
+    @Operation(summary = "액세스토큰 재발급", description = "만료된 액세스토큰에서 사용자 ID 값을 뽑아내어 리프레시 토큰 검증 후 재발급")
     @PostMapping("/refresh")
     public ResponseEntity<TokenInfo> refresh(
-            @RequestHeader("Authorization") String accessToken,
-            @RequestHeader("Refresh-Token") String refreshToken) {
+            @RequestHeader("Authorization") String accessToken) {
 
         try {
             // Bearer 제거
@@ -56,8 +55,8 @@ public class AuthController {
                 throw new UnauthorizedException(ErrorCode.TOKEN_NOT_FOUND, "저장된 리프레시 토큰이 없습니다.");
             }
 
-            if (!refreshToken.equals(savedRefreshToken)) {
-                throw new UnauthorizedException(ErrorCode.INVALID_REFRESH_TOKEN, "리프레시 토큰이 일치하지 않습니다.");
+            if(!jwtTokenProvider.validateToken(savedRefreshToken)){
+                throw new UnauthorizedException(ErrorCode.EXPIRED_TOKEN, "만료된 토큰입니다.");
             }
 
             // 새 토큰 발급
@@ -73,15 +72,15 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "아이디와 비밀번호로 로그인하는 API 입니다.(토큰 검사X)")
     @PostMapping("/login")
-    public ResponseEntity<TokenInfo> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request).getAccessToken());
     }
 
     @Operation(summary = "로그아웃", description = "레디스의 리프레시 키를 삭제하는 로그아웃 API 입니다.(토큰 검사O)")
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
         String memberId = userDetails.getUsername();
         authService.logout(memberId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("로그아웃 성공");
     }
 }

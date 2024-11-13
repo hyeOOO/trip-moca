@@ -1,0 +1,80 @@
+input[type="date"] {
+  border: 1px solid #FFFFFF;
+  position: relative;
+  width: 100%;
+  padding: 10px;
+  background: url("@/assets/image/calander.png") no-repeat right 10px center / 20px auto;
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 100%;
+  margin-bottom: 20px;
+
+  /* Date field placeholder text removal */
+  // &::-webkit-datetime-edit-text,
+  // &::-webkit-datetime-edit-month-field,
+  // &::-webkit-datetime-edit-day-field,
+  // &::-webkit-datetime-edit-year-field {
+  //   -webkit-appearance: none;
+  //   display: none;
+  // }
+
+  /* Calendar icon styling */
+  &::-webkit-calendar-picker-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 195%;
+    height: 100%;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+  }
+
+  /* Custom placeholder */
+  &::before {
+    content: attr(placeholder);
+    width: 100%;
+    height: 100%;
+  }
+
+  &:valid::before {
+    display: none;
+  }
+}
+
+input[type="number"] {
+  border: 1px solid #FFFFFF;
+  position: relative;
+  width: 100%;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+  font-size: 100%;
+  margin-bottom: 20px;
+}
+
+/* Styles for select and option elements */
+option {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: white;
+  font-size: 100%;
+}
+
+select {
+  border: none;
+  position: relative;
+  width: 100px;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  box-shadow: 2px 2px 7px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+  font-size: 100%;
+  margin-bottom: 20px;
+}
