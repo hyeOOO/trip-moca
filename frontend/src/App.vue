@@ -1,11 +1,10 @@
 <template>
-  <div> 
+  <div>
     <router-view />
     <login-modal v-model="showLoginModal" />
   </div>
   <footInfo />
 </template>
-
 
 <script>
 import { ref, provide } from "vue";
@@ -16,13 +15,29 @@ export default {
   name: "App",
   data() {},
   components: {
-    footInfo: footInfo,
+    footInfo,
+    LoginModal,
+  },
+  setup() {
+    const showLoginModal = ref(false);
+
+    const openLoginModal = () => {
+      showLoginModal.value = true;
+    };
+
+    // provide를 통해 모달 컨트롤 함수 제공
+    provide("modalControl", {
+      openLoginModal,
+    });
+
+    return {
+      showLoginModal,
+    };
   },
 };
 </script>
 
 <style lang="scss">
-
 /* 전체 설정 */
 body {
   margin: 0;
@@ -44,6 +59,7 @@ body {
   font-family: "Pretendard-Light";
   src: url("assets/fonts/Pretendard-Light.ttf");
 }
+
 @font-face {
   font-family: "Pretendard-Black";
   src: url("assets/fonts/Pretendard-Black.ttf");
