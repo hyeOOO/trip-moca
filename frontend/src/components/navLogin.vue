@@ -8,19 +8,27 @@
     </button>
 
     <div v-show="showMenu" class="dropdown-menu">
-      <button @click="signin">로그인</button>
+      <button @click="handleOpenLoginModal">로그인</button>
       <button @click="signup">회원가입</button>
     </div>
   </div>
 </template>
 
 <script>
+import { inject } from "vue";
 export default {
   props: {
     isDarkRoute: {
       type: Boolean,
       default: false
     }
+  },
+  setup() {
+    const { openLoginModal } = inject("modalControl");
+
+    return {
+      openLoginModal,
+    };
   },
   data() {
     return {
@@ -34,23 +42,24 @@ export default {
     window.removeEventListener('click', this.closeMenu);
   },
   methods: {
+    closeMenu() {
+      this.showMenu = false;
+    },
     toggleMenu() {
       this.showMenu = !this.showMenu;
     },
-    goToMyPage() {
-      this.$router.push({ name: "MyPage" });
+    handleOpenLoginModal() {
+      this.openLoginModal(); // inject된 함수 사용
+      this.showMenu = false;
     },
-    login() {
-      console.log("로그인 클릭됨");
-    },
-    signUp() {
+    signup() {
       console.log("회원가입 클릭됨");
     },
     logout() {
       console.log("로그아웃 클릭됨");
     },
-    onClickMoveLoginPage() {
-      this.$router.push("/LoginPage");
+    goToMyPage() {
+      this.$router.push({ name: "MyPage" });
     },
   },
 };
