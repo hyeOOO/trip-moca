@@ -97,29 +97,44 @@ export default {
     };
   },
   watch: {
-    latitude: "updateMapCenter",
-    longitude: "updateMapCenter",
+    startDate: {
+      handler: "updateFormattedDateRange",
+      immediate: true,
+    },
+    endDate: {
+      handler: "updateFormattedDateRange",
+      immediate: true,
+    },
   },
   methods: {
-    // 새로 추가된 메소드
+    updateFormattedDateRange() {
+      if (this.startDate && this.endDate) {
+        const formattedStart = this.formatDate(this.startDate);
+        const formattedEnd = this.formatDate(this.endDate);
+        this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
+      } else {
+        this.formattedDateRange = "";
+      }
+    },
+    
     checkDateAndNavigate() {
       if (!this.startDate || !this.endDate) {
-        alert('날짜를 먼저 선택해 주세요!');
+        alert("날짜를 먼저 선택해 주세요!");
         return;
       }
-      
+
       const formattedStart = this.formatDate(this.startDate);
       const formattedEnd = this.formatDate(this.endDate);
       this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
-      
+
       this.$router.push({
         path: `/choosePlace/${this.name}`,
         query: {
           startDate: this.startDate,
           endDate: this.endDate,
           formattedDateRange: this.formattedDateRange,
-          id: this.id
-        }
+          id: this.id,
+        },
       });
     },
 
@@ -208,22 +223,22 @@ export default {
 
     savePlan() {
       if (!this.startDate || !this.endDate) {
-        alert('출발 일자와 도착 일자를 모두 선택해주세요.');
+        alert("출발 일자와 도착 일자를 모두 선택해주세요.");
         return;
       }
-      
+
       const formattedStart = this.formatDate(this.startDate);
       const formattedEnd = this.formatDate(this.endDate);
       this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
-      
+
       this.$router.push({
         path: `/choosePlace/${this.name}`,
         query: {
           startDate: this.startDate,
           endDate: this.endDate,
           formattedDateRange: this.formattedDateRange,
-          id: this.id
-        }
+          id: this.id,
+        },
       });
     },
 

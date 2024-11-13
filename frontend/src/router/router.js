@@ -53,11 +53,11 @@ const routes = [
     }),
   },
   {
-    path: "/choosePlace/:name",  // URL 파라미터로 변경
+    path: "/choosePlace/:name",
     name: "choosePlace",
     component: choosePlace,
     props: (route) => ({
-      name: route.params.name,  // URL 파라미터에서 name 가져오기
+      name: route.params.name,
       startDate: route.query.startDate || '',
       endDate: route.query.endDate || '',
       formattedDateRange: route.query.formattedDateRange || '',
