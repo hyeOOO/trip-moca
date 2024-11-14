@@ -13,7 +13,11 @@
             <div class="step-title">날짜 선택</div>
           </div>
 
-          <div class="step active">
+          <div
+            class="step"
+            :class="{ active: isStep2Active }"
+            @click="toggleStep2"
+          >
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
@@ -27,14 +31,20 @@
 
       <!-- Middle Section -->
       <div class="middle-section">
-        <div class="toggle-button" @click="toggleCollapse">
-          <i class="fa-solid fa-arrow-left"></i>
+        <div class="toggle-button left" @click="toggleCollapse">
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isCollapsed,
+              'fa-arrow-right': isCollapsed,
+            }"
+          ></i>
         </div>
 
         <div class="header">
-          <h2>{{ initialName }}</h2>
-          <p v-if="initialFormattedDateRange" class="date-range">
-            {{ initialFormattedDateRange }}
+          <h2>{{ name }}</h2>
+          <p v-if="localFormattedDateRange" class="date-range">
+            {{ localFormattedDateRange }}
           </p>
         </div>
 
@@ -44,8 +54,13 @@
               type="text"
               v-model="searchQuery"
               placeholder="여행지를 검색하세요"
+              @keyup.enter="handleSearch"
             />
-            <i class="fa-solid fa-search"></i>
+            <i
+              class="fa-solid fa-search"
+              @click="handleSearch"
+              style="cursor: pointer"
+            ></i>
           </div>
         </div>
 
@@ -61,27 +76,36 @@
               <img :src="getImageUrl(place.image1)" :alt="place.title" />
             </div>
             <div class="place-info">
-              <div class="place-header">
-                <h3>{{ place.title }}</h3>
-                <label class="checkbox-container">
-                  <input
-                    type="checkbox"
-                    :checked="isPlaceSelected(place)"
-                    @change="togglePlace(place)"
-                  />
-                  <span class="checkmark"></span>
-                </label>
-              </div>
-              <p>{{ place.addr1 }}</p>
+              <h3 class="place-title">{{ place.title }}</h3>
+              <p class="place-address">{{ place.addr1 }}</p>
+            </div>
+            <div class="checkbox-wrapper">
+              <input
+                type="checkbox"
+                :id="'place-' + place.attractionId"
+                :checked="isPlaceSelected(place)"
+                @change="togglePlace(place)"
+                class="round-checkbox"
+              />
+              <label
+                :for="'place-' + place.attractionId"
+                class="round-checkbox-label"
+              ></label>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right Section -->
+      <!-- Right Section 부분 -->
       <div class="right-section">
-        <div class="toggle-button" @click="toggleRightSection">
-          <i class="fa-solid fa-arrow-left"></i>
+        <div class="toggle-button left" @click="toggleRightSection">
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isRightCollapsed,
+              'fa-arrow-right': isRightCollapsed,
+            }"
+          ></i>
         </div>
 
         <div class="header">
@@ -93,8 +117,6 @@
             v-for="(dayPlaces, index) in selectedPlacesByDay"
             :key="index"
             class="day-section"
-            @dragover.prevent
-            @drop="onDrop($event, index)"
           >
             <div class="day-header">
               <h3>{{ index + 1 }}일차 {{ formatDate(getTripDate(index)) }}</h3>
@@ -104,7 +126,7 @@
             </div>
 
             <div
-              v-if="dayPlaces.length === 0"
+              v-if="!dayPlaces || dayPlaces.length === 0"
               class="empty-day"
               @dragover.prevent
               @drop="onDrop($event, index)"
@@ -115,28 +137,30 @@
             <draggable
               v-else
               v-model="selectedPlacesByDay[index]"
+              :group="{ name: 'places' }"
+              item-key="attractionId"
               class="day-places"
-              group="places"
               @change="updateMarkers"
             >
-              <div
-                v-for="place in dayPlaces"
-                :key="place.attractionId"
-                class="selected-place"
-              >
-                <div class="place-image">
-                  <img :src="getImageUrl(place.image1)" :alt="place.title" />
+              <template #item="{ element }">
+                <div class="selected-place">
+                  <div class="place-image">
+                    <img
+                      :src="getImageUrl(element.image1)"
+                      :alt="element.title"
+                    />
+                  </div>
+                  <div class="place-info">
+                    <h4>{{ element.title }}</h4>
+                    <button
+                      @click="removePlace(index, element)"
+                      class="remove-button"
+                    >
+                      <i class="fa-solid fa-times"></i>
+                    </button>
+                  </div>
                 </div>
-                <div class="place-info">
-                  <h4>{{ place.title }}</h4>
-                  <button
-                    @click="removePlace(index, place)"
-                    class="remove-button"
-                  >
-                    <i class="fa-solid fa-times"></i>
-                  </button>
-                </div>
-              </div>
+              </template>
             </draggable>
           </div>
         </div>
@@ -149,8 +173,7 @@
 </template>
 
 <script>
-import { reactive } from 'vue';
-import draggable from "vuedraggable";
+import { VueDraggable } from 'vue-draggable-next';
 import navBar from "@/components/navBar.vue";
 import testData from "@/assets/data/testData.js";
 
@@ -158,22 +181,22 @@ export default {
   name: "ChoosePlace",
   components: {
     navBar,
-    draggable,
+    draggable: VueDraggable,
   },
   props: {
-    initialName: {
+    name: {
       type: String,
       required: true,
     },
-    initialFormattedDateRange: {
+    formattedDateRange: {
       type: String,
       required: true,
     },
-    initialStartDate: {
+    startDate: {
       type: String,
       required: true,
     },
-    initialEndDate: {
+    endDate: {
       type: String,
       required: true,
     },
@@ -186,36 +209,24 @@ export default {
       required: true,
     },
   },
+
   data() {
     return {
-      name: this.initialName,
-      startDate: this.initialStartDate,
-      endDate: this.initialEndDate,
-      formattedDateRange: this.initialFormattedDateRange,
+      localStartDate: this.startDate,
+      localEndDate: this.endDate,
+      localFormattedDateRange: this.formattedDateRange,
       searchQuery: "",
       places: testData,
-      selectedPlacesByDay: reactive({}),
       markers: [],
       isCollapsed: false,
       isRightCollapsed: false,
       tmap: null,
       currentDayIndex: 0,
+      isStep2Active: true,
+      selectedPlacesByDay: {},
     };
   },
-  watch: {
-    initialName(newVal) {
-      this.name = newVal;
-    },
-    initialStartDate(newVal) {
-      this.startDate = newVal;
-    },
-    initialEndDate(newVal) {
-      this.endDate = newVal;
-    },
-    initialFormattedDateRange(newVal) {
-      this.formattedDateRange = newVal;
-    },
-  },
+
   computed: {
     filteredPlaces() {
       if (!this.searchQuery) return this.places;
@@ -227,13 +238,42 @@ export default {
       );
     },
     numberOfDays() {
-      if (!this.startDate || !this.endDate) return 0;
-      const start = new Date(this.startDate);
-      const end = new Date(this.endDate);
+      if (!this.localStartDate || !this.localEndDate) return 0;
+      const start = new Date(this.localStartDate);
+      const end = new Date(this.localEndDate);
       return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     },
   },
+
   methods: {
+    handleSearch() {
+      if (!this.searchQuery.trim()) return;
+      // 추가 검색 로직 구현하는곳
+    },
+
+    goToDateSelection() {
+      this.$router.push({
+        name: "chooseDate",
+        query: {
+          name: this.name,
+          startDate: this.localStartDate,
+          endDate: this.localEndDate,
+        },
+      });
+    },
+
+    toggleStep2() {
+      this.isStep2Active = !this.isStep2Active;
+      if (!this.isStep2Active) {
+        this.isCollapsed = true;
+        this.isRightCollapsed = true;
+      } else {
+        this.isCollapsed = false;
+        this.isRightCollapsed = false;
+      }
+      this.updateMapSize();
+    },
+
     isPlaceSelected(place) {
       return Object.values(this.selectedPlacesByDay).some(
         (dayPlaces) =>
@@ -271,10 +311,12 @@ export default {
 
     togglePlace(place) {
       const currentDay = this.getCurrentDay();
-      if (this.isPlaceSelected(place)) {
-        Object.keys(this.selectedPlacesByDay).forEach((day) => {
+      const isSelected = this.isPlaceSelected(place);
+
+      if (isSelected) {
+        Object.keys(this.selectedPlacesByDay).forEach(day => {
           this.selectedPlacesByDay[day] = this.selectedPlacesByDay[day].filter(
-            (p) => p.attractionId !== place.attractionId
+            p => p.attractionId !== place.attractionId
           );
         });
       } else {
@@ -288,10 +330,10 @@ export default {
 
     onDrop(event, dayIndex) {
       const place = JSON.parse(event.dataTransfer.getData("text/plain"));
-
-      Object.keys(this.selectedPlacesByDay).forEach((day) => {
+      
+      Object.keys(this.selectedPlacesByDay).forEach(day => {
         this.selectedPlacesByDay[day] = this.selectedPlacesByDay[day].filter(
-          (p) => p.attractionId !== place.attractionId
+          p => p.attractionId !== place.attractionId
         );
       });
 
@@ -302,32 +344,54 @@ export default {
       this.updateMarkers();
     },
 
-    removePlace(day, place) {
-      const index = this.selectedPlacesByDay[day].findIndex(
-        (p) => p.attractionId === place.attractionId
-      );
-      if (index > -1) {
-        this.selectedPlacesByDay[day].splice(index, 1);
+    removePlace(dayIndex, place) {
+      if (this.selectedPlacesByDay[dayIndex]) {
+        this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[dayIndex].filter(
+          p => p.attractionId !== place.attractionId
+        );
+        this.updateMarkers();
       }
-      this.updateMarkers();
     },
 
-    clearDay(day) {
-      this.selectedPlacesByDay[day] = [];
+    clearDay(dayIndex) {
+      this.selectedPlacesByDay[dayIndex] = [];
       this.updateMarkers();
     },
 
     getTripDate(dayIndex) {
-      if (!this.startDate) return "";
-      const date = new Date(this.startDate);
+      if (!this.localStartDate) return "";
+      const date = new Date(this.localStartDate);
       date.setDate(date.getDate() + dayIndex);
       return date;
     },
 
-    formatDate(date) {
-      if (!date) return "";
+    formatDate(dateString) {
+      if (!dateString) return "";
+      const date = new Date(dateString);
       const days = ["일", "월", "화", "수", "목", "금", "토"];
-      return `(${days[date.getDay()]})`;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const dayOfWeek = days[date.getDay()];
+
+      if (arguments.length > 1 || dateString instanceof Date) {
+        return `(${days[date.getDay()]})`;
+      }
+      return `${year}.${month}.${day}(${dayOfWeek})`;
+    },
+
+    toggleCollapse() {
+      this.isCollapsed = !this.isCollapsed;
+      setTimeout(() => {
+        this.updateMapSize();
+      }, 300);
+    },
+
+    toggleRightSection() {
+      this.isRightCollapsed = !this.isRightCollapsed;
+      setTimeout(() => {
+        this.updateMapSize();
+      }, 300);
     },
 
     clearMap() {
@@ -414,15 +478,15 @@ export default {
       }
     },
   },
+
   mounted() {
     this.initializePlacesByDay();
-
     setTimeout(() => {
       this.initializeMap();
     }, 100);
-
     window.addEventListener("resize", this.updateMapSize);
   },
+
   beforeUnmount() {
     this.clearMap();
     window.removeEventListener("resize", this.updateMapSize);
@@ -463,11 +527,35 @@ export default {
 .middle-section,
 .right-section {
   background: white;
-  padding: 24px;
+  padding: 10px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   border-right: 1px solid #eee;
   height: 100%;
   overflow-y: auto;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.content-wrapper.collapsed .middle-section,
+.content-wrapper.right-collapsed .right-section {
+  padding: 0;
+  width: 0;
+}
+
+/* Header styles */
+.header {
+  margin-bottom: 24px;
+}
+
+.header h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.date-range {
+  color: #f57c00;
+  font-size: 14px;
 }
 
 /* Navigation styles */
@@ -519,12 +607,25 @@ export default {
   font-size: 14px;
 }
 
+.search-box input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
+}
+
 .search-box i {
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
   color: #666;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.3s ease;
+}
+
+.search-box i:hover {
+  color: #f57c00;
 }
 
 /* Place items */
@@ -532,20 +633,47 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
-.place-item,
-.selected-place {
-  display: flex;
-  padding: 12px;
+.places-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.places-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.places-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.places-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.place-item {
+  display: grid;
+  grid-template-columns: 4fr 5fr 1fr;
+  align-items: center;
+  background: white;
   border: 1px solid #eee;
   border-radius: 8px;
-  gap: 12px;
+  transition: all 0.3s ease;
 }
 
+.place-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Place components */
 .place-image {
-  width: 100px;
-  height: 100px;
+  width: 100%;
   overflow: hidden;
   border-radius: 4px;
 }
@@ -557,29 +685,135 @@ export default {
 }
 
 .place-info {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 4px;
 }
 
-/* Headers */
-.header {
-  margin-bottom: 24px;
-  padding-right: 40px;
-}
-
-.header h2 {
-  font-size: 20px;
-  font-weight: bold;
+.place-title {
+  font-size: 16px;
+  font-weight: 600;
   color: #333;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Checkbox styles */
+.checkbox-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.round-checkbox {
+  display: none;
+}
+
+.round-checkbox-label {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.round-checkbox-label:hover {
+  border-color: #f57c00;
+}
+
+.round-checkbox:checked + .round-checkbox-label {
+  background-color: #f57c00;
+  border-color: #f57c00;
+}
+
+.round-checkbox:checked + .round-checkbox-label::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border-radius: 50%;
+}
+
+/* Day section */
+.day-section {
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 5px;
+  margin-bottom: 16px;
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.day-header h3 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f57c00;
+  margin: 0;
+}
+
+.empty-day {
+  text-align: center;
+  padding: 20px;
+  background: #fff;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  color: #666;
+}
+
+.day-places {
+  background: #fff;
+  border-radius: 8px;
+  min-height: 100px;
+  padding: 8px;
+  margin-top: 8px;
+}
+
+.day-places.dragover {
+  background-color: #f5f5f5;
+  border: 2px dashed #f57c00;
+}
+
+.selected-places::-webkit-scrollbar {
+  width: 8px;
+}
+
+.selected-places::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.selected-places::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.selected-places::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* Buttons */
 .toggle-button {
   position: absolute;
   top: 20px;
-  right: 10px;
+  right: 24px;
   width: 32px;
   height: 32px;
   display: flex;
@@ -587,12 +821,20 @@ export default {
   justify-content: center;
   cursor: pointer;
   z-index: 100;
-  background-color: transparent;
-  transition: transform 0.3s ease;
+  background-color: white;
+  border: 1px solid #eee;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.toggle-button:hover {
+  background-color: #f5f5f5;
+  transform: scale(1.1);
 }
 
 .toggle-button i {
-  font-size: 18px;
+  font-size: 16px;
   color: #666;
   transition: color 0.3s ease;
 }
@@ -601,134 +843,26 @@ export default {
   color: #f57c00;
 }
 
-/* Right section toggle button */
-.right-section .toggle-button {
-  transform: rotate(180deg);
-}
-
-.middle-section .toggle-button:hover {
-  transform: scale(1.1);
-}
-
-.right-section .toggle-button:hover {
-  transform: scale(1.1) rotate(180deg);
-}
-
-.select-button,
 .clear-button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.3s ease;
-}
-
-.select-button {
-  align-self: flex-end;
-  background-color: #f57c00;
-  color: white;
-}
-
-.select-button:hover {
-  background-color: #ef6c00;
-}
-
-.clear-button {
-  background-color: #f5f5f5;
-  color: #666;
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .clear-button:hover {
   background-color: #e0e0e0;
 }
 
-.remove-button {
-  padding: 4px;
-  background: none;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.remove-button:hover {
-  color: #f44336;
-}
-
-/* Day section */
-.day-section {
-  margin-bottom: 24px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.day-section.active {
-  border: 2px solid #f57c00;
-}
-
-.day-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.day-header h3 {
-  font-size: 16px;
-  font-weight: bold;
-  color: #f57c00;
-}
-
-.empty-day {
-  text-align: center;
-  padding: 20px;
-  color: #666;
-  font-size: 14px;
-  background-color: #fff;
-  border-radius: 4px;
-  border: 1px dashed #ddd;
-}
-
-.day-places {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 /* Map */
 .map-container {
   width: 100%;
   height: 100%;
-}
-
-.place-item {
-  cursor: move;
-}
-
-.empty-day {
-  border: 2px dashed #ddd;
-  background-color: #f9f9f9;
-  padding: 20px;
-  text-align: center;
-  color: #666;
-  border-radius: 8px;
-}
-
-.day-places {
-  min-height: 50px;
-  padding: 8px;
-}
-
-.selected-place {
-  transition: transform 0.2s;
-}
-
-.selected-place:hover {
-  transform: translateX(4px);
 }
 </style>

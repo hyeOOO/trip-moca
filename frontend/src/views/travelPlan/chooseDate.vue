@@ -7,8 +7,8 @@
         <div class="steps-nav">
           <div
             class="step"
-            :class="{ active: !isCollapsed }"
-            @click="openMiddleSection"
+            :class="{ active: isStep1Active }"
+            @click="toggleStep1"
           >
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
@@ -94,6 +94,7 @@ export default {
       polylines: [],
       formattedDateRange: "",
       isCollapsed: false,
+      isStep1Active: true,
     };
   },
   watch: {
@@ -116,7 +117,7 @@ export default {
         this.formattedDateRange = "";
       }
     },
-    
+
     checkDateAndNavigate() {
       if (!this.startDate || !this.endDate) {
         alert("날짜를 먼저 선택해 주세요!");
@@ -128,7 +129,10 @@ export default {
       this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
 
       this.$router.push({
-        path: `/choosePlace/${this.name}`,
+        name: "choosePlace",
+        params: {
+          name: this.name,
+        },
         query: {
           startDate: this.startDate,
           endDate: this.endDate,
@@ -145,13 +149,16 @@ export default {
       }, 300);
     },
 
-    openMiddleSection() {
-      if (this.isCollapsed) {
+    toggleStep1() {
+      this.isStep1Active = !this.isStep1Active;
+      if (!this.isStep1Active) {
+        this.isCollapsed = true;
+      } else {
         this.isCollapsed = false;
-        setTimeout(() => {
-          this.updateMapSize();
-        }, 300);
       }
+      setTimeout(() => {
+        this.updateMapSize();
+      }, 300);
     },
 
     formatDate(dateString) {
@@ -275,7 +282,7 @@ export default {
   grid-template-columns: 200px 320px 1fr;
   height: calc(100vh - 64px - 56px);
   overflow: hidden;
-  transition: grid-template-columns 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .content-wrapper.collapsed {
@@ -306,7 +313,7 @@ export default {
   text-decoration: none;
   color: inherit;
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .step:hover,
