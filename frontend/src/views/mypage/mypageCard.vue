@@ -1,62 +1,26 @@
 <template>
   <div class="mypage-card">
     <div class="grid-container">
-      <div class="grid-item" v-for="(item, index) in items" :key="index">
-        <div class="card-image" :style="{ backgroundImage: `url(${item.imgPath})` }"></div>
+      <div class="grid-item" v-for="card in mypageStore.totalCards" :key="card.cardId">
+        <div class="card-image" :class="{ 'grayscale': !isUserCard(card.cardId) }"
+          :style="{ backgroundImage: `url(${card.image1})` }">
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: "mypageCard",
-  data() {
-    return {
-      items: [
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/hamo.png",
-          location: "제주",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/boogie.png",
-          location: "서울",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/boogie.png",
-          location: "부산",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/hamo.png",
-          location: "제주",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/hamo.png",
-          location: "제주",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/hamo.png",
-          location: "제주",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/hamo.png",
-          location: "제주",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/hamo.png",
-          location: "제주",
-        },
-      ],
-    };
-  },
-};
+<script setup>
+import { useMypageStore } from '@/store/mypageStore'
+
+const mypageStore = useMypageStore()
+
+const isUserCard = (cardId) => {
+  return mypageStore.userCards.some(userCard => userCard.cardId === cardId)
+}
 </script>
 
 <style scoped>
-.mypage-card {
-  padding: 20px 0;
-}
-
 /* 스크롤바 스타일링 */
 .mypage-card::-webkit-scrollbar {
   width: 8px;
@@ -84,7 +48,8 @@ export default {
 }
 
 .grid-item {
-  aspect-ratio: 1; /* 1:1 비율 유지 */
+  aspect-ratio: 1;
+  /* 1:1 비율 유지 */
   width: 100%;
 }
 
@@ -98,9 +63,15 @@ export default {
   cursor: pointer;
 }
 
+.grayscale {
+  filter: brightness(40%) grayscale(80%);
+}
+
 .card-image:hover {
   transform: scale(1.05);
 }
+
+
 
 /* 반응형 그리드 */
 @media (max-width: 1400px) {

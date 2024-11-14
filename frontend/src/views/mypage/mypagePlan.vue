@@ -3,14 +3,14 @@
     <div class="grid-container">
       <div class="grid-item" v-for="(item, index) in items" :key="index">
         <div class="card shadow-sm">
-          <span class="img" :style="{ backgroundImage: `url(${item.imgPath})` }"></span>
+          <span class="img" :style="{ backgroundImage: `url(${item.planProfileImg})` }"></span>
           <div class="card-body">
             <font-awesome-icon :icon="['fas', 'location-dot']" :style="{ color: '#ECB27B' }" />
-            <span class="location">{{ item.location }}</span>
+            <span class="location">{{ item.sidoName }}</span>
             <p class="card-text">
-              <span class="title">{{ item.title }}</span>
+              <span class="title">{{ item.planTitle }}</span>
             </p>
-            <p class="dates">{{ item.dates }}</p>
+            <p class="dates">{{ item.startDate }} ~ {{ item.endDate }}</p>
           </div>
         </div>
       </div>
@@ -19,34 +19,18 @@
 </template>
 
 <script>
+import { useMypageStore } from '@/store/mypageStore'
+import { storeToRefs } from 'pinia'
+
 export default {
-  name: "mypagePlan",
-  data() {
+  setup() {
+    const mypageStore = useMypageStore()
+    const { userPlans } = storeToRefs(mypageStore)
+
     return {
-      items: [
-        {
-          imgPath:
-            "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/jeju-island-sunset.jpg",
-          location: "제주",
-          title: "귤 조 아",
-          dates: "2024.12.05~2024.12.08",
-        },
-        {
-          imgPath:
-            "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gyeongbok-palace-5771324_1280.jpg",
-          location: "서울",
-          title: "서울 여행",
-          dates: "2024.12.10~2024.12.12",
-        },
-        {
-          imgPath: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png",
-          location: "부산",
-          title: "부산 여행",
-          dates: "2024.12.15~2024.12.17",
-        },
-      ],
-    };
-  },
+      items: userPlans
+    }
+  }
 };
 </script>
 
@@ -111,7 +95,7 @@ export default {
 }
 
 .card-text {
-  margin: 0;
+  margin: 10px 0px 0px 10px;
 }
 
 .location {
@@ -138,7 +122,7 @@ export default {
 .dates {
   font-size: 15px;
   font-family: "Pretendard-Regular";
-  margin: 0 0 30px 0;
+  margin: 0 0 30px 10px;
   color: #777777;
 }
 

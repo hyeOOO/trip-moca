@@ -1,5 +1,6 @@
 package com.ssafy.enjoyTrip.domain.plan.entity;
 
+import com.ssafy.enjoyTrip.domain.attraction.entity.SidoList;
 import com.ssafy.enjoyTrip.domain.member.entity.Member;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanUpdateRequest;
 import jakarta.persistence.*;
@@ -26,6 +27,9 @@ public class Plan {
 
     private String planTitle;
 
+    @Column(name="area_code", nullable = false, insertable = false, updatable = false)
+    private Long areaCode;
+
     @Column(name = "member_id", nullable = false)
     private String memberId;
 
@@ -35,6 +39,12 @@ public class Plan {
 
     @Enumerated(EnumType.STRING)
     private PlanStatus status; // 여행계획 상태(작성중, 여행확정, 여행완료, 취소)
+
+    private String planProfileImg;
+
+    @ManyToOne(fetch =  FetchType.LAZY)
+    @JoinColumn(name = "area_code", referencedColumnName = "sido_code", insertable = false, updatable = false )
+    private SidoList area;
 
     @ManyToOne(fetch =  FetchType.LAZY)
     @JoinColumn(name = "member_id", referencedColumnName = "member_id", insertable = false, updatable = false )
@@ -47,13 +57,15 @@ public class Plan {
     private LocalDateTime updatedAt; // 계획 수정일 자동 생성
 
     @Builder
-    public Plan(String planTitle, String memberId, LocalDate startDate, LocalDate endDate) { // 계획 생성일과 계획 상태를 초기화하기 위한 생성자
+    public Plan(String planTitle, Long areaCode, String memberId, LocalDate startDate, LocalDate endDate, String planProfileImg) { // 계획 생성일과 계획 상태를 초기화하기 위한 생성자
         this.planTitle = planTitle;
+        this.areaCode = areaCode;
         this.memberId = memberId;
         this.startDate = startDate;
         this.endDate = endDate;
         this.createDate = LocalDateTime.now();
         this.status = PlanStatus.DRAFT;
+        this.planProfileImg = planProfileImg;
     }
 
     // 전체 정보 수정을 위한 메서드
@@ -69,6 +81,10 @@ public class Plan {
         }
         if (request.getStatus() != null) {
             this.status = request.getStatus();
+        }
+
+        if(request.getPlanProfileImg() != null){
+            this.planProfileImg = request.getPlanProfileImg();
         }
     }
 
