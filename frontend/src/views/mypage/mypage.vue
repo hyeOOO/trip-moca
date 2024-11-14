@@ -7,30 +7,34 @@
     <div class="profile-container">
       <div class="mypage-contents">
         <div class="user-info">
-          <h2>phw5883</h2>
+          <h2>{{ memberId }}</h2>
           <div class="meter orange nostripes">
             <span ref="progressBar" :style="progressStyle"></span>
           </div>
           <div class="user-info-card">
-            <span>8</span>
-            <span>개 카드 수집</span>
+            <span>{{ userCards.length }}</span>
+            <span>개 카드 수집({{ userCards.length }} / {{ totalCards.length }})</span>
           </div>
         </div>
 
         <div class="mypage-header">
-          <button @click="setActiveTab('plan')">
-            <span>나의 여행 계획 </span>
-            <span>3</span>
-          </button>
-          <button @click="setActiveTab('card')">
-            <span>보유 카드 </span>
-            <span>8</span>
-          </button>
-          <hr :class="{ 'slide-card': activeTab === 'card' }" />
+          <router-link to="/mypage/plan" custom v-slot="{ navigate }">
+            <button @click="navigate">
+              <span>나의 여행 계획 </span>
+              <span>3</span>
+            </button>
+          </router-link>
+          <router-link to="/mypage/card" custom v-slot="{ navigate }">
+            <button @click="navigate">
+              <span>보유 카드 </span>
+              <span>{{ userCards.length }}</span>
+            </button>
+          </router-link>
+          <hr :class="{ 'slide-card': $route.path === '/mypage/card' }" />
         </div>
 
         <div class="mypage-body">
-          <div></div>
+          <router-view></router-view>
         </div>
       </div>
     </div>
@@ -39,6 +43,8 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
+import { useAuthStore } from "@/store/auth";
+import api from "@/plugins/axios";
 
 export default {
   components: {
@@ -47,9 +53,12 @@ export default {
   data() {
     return {
       currentWidth: 0,
-      targetWidth: 33.3, // 목표 너비 퍼센트
+      targetWidth: 0, // API 응답에 따라 계산될 값
       animationStarted: false,
-      activeTab: "plan", // 추가: 현재 활성화된 탭 상태
+      activeTab: "plan", // 활성화된 탭
+      totalCards: [], // 전체 카드 목록
+      userCards: [], // 사용자 보유 카드 목록
+      memberId: "", // 사용자 ID
     };
   },
   computed: {
@@ -65,20 +74,42 @@ export default {
     setActiveTab(tab) {
       this.activeTab = tab;
     },
-  },
-  mounted() {
-    // mounted 훅에서 애니메이션 시작
-    this.$nextTick(() => {
-      if (!this.animationStarted) {
-        this.animationStarted = true;
-        // 시작시 너비 0으로 설정
-        this.currentWidth = 0;
-        // 약간의 지연 후 목표 너비로 애니메이션
-        setTimeout(() => {
-          this.currentWidth = this.targetWidth;
-        }, 100);
+    async fetchCardData() {
+      try {
+        // 전체 카드 목록 조회
+        const totalCardsResponse = await api.get("/domain/card/list");
+        console.log("전체 카드 응답:", totalCardsResponse.data);
+        this.totalCards = totalCardsResponse.data;
+
+        const userCardsResponse = await api.get("/domain/card/user-card");
+        console.log("유저 카드 응답:", userCardsResponse.data);
+        this.userCards = userCardsResponse.data;
+
+        // 진행률 계산 (전체 카드 수가 0이 아닌 경우에만)
+        if (this.totalCards.length > 0) {
+          const progressPercentage = (this.userCards.length / this.totalCards.length) * 100;
+          this.targetWidth = progressPercentage;
+
+          if (!this.animationStarted) {
+            this.animationStarted = true;
+            this.currentWidth = 0;
+            setTimeout(() => {
+              this.currentWidth = this.targetWidth;
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error("카드 데이터 조회 실패:", error);
       }
-    });
+    },
+    initUserData() {
+      const authStore = useAuthStore();
+      this.memberId = authStore.memberId;
+    },
+  },
+  async mounted() {
+    this.initUserData(); // 사용자 정보 초기화
+    await this.fetchCardData(); // 카드 데이터 조회
   },
 };
 </script>
@@ -86,12 +117,13 @@ export default {
 <style scoped>
 .mypage {
   position: relative;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   margin: 0;
+  padding-bottom: 100px; /* footer 높이만큼 여백 추가 */
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
+  background-attachment: fixed; /* 이 속성을 추가하여 배경 이미지 고정 */
   z-index: 0;
   background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
 }
@@ -111,7 +143,8 @@ export default {
   position: relative;
   background-color: white;
   padding: 6rem 2rem 2rem 2rem;
-  height: 100vh;
+  min-height: calc(100vh - 210px); /* footer 높이를 고려하여 수정 */
+  max-height: calc(100vh - 110px); /* 최대 높이 설정 */
   top: 110px;
   padding-left: 200px;
   padding-right: 200px;
@@ -162,6 +195,17 @@ export default {
 }
 .white-content {
   margin-top: 3rem;
+}
+
+/* mypage-contents도 수정 */
+.mypage-contents {
+  height: auto; /* 내용물 크기에 맞춰서 자동으로 크기 조절 */
+  min-height: 100%;
+}
+.mypage-body {
+  height: calc(100vh - 500px); /* 상단 여백과 footer를 고려한 높이 */
+  overflow-y: auto; /* 스크롤 추가 */
+  margin-top: 20px;
 }
 
 .profile-icon {
@@ -244,5 +288,24 @@ export default {
   100% {
     background-position: 50px 50px;
   }
+}
+
+/* 스크롤바 스타일링 - mypage-body에 적용 */
+.mypage-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mypage-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.mypage-body::-webkit-scrollbar-thumb {
+  background: #ecb27b;
+  border-radius: 4px;
+}
+
+.mypage-body::-webkit-scrollbar-thumb:hover {
+  background: #dca06a;
 }
 </style>

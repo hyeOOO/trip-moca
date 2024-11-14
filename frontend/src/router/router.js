@@ -4,6 +4,10 @@ import Login from "@/views/login/loginPage.vue";
 import DestinationGallery from "@/views/travelPlan/DestinationGallery.vue";
 import choosePlace from "@/views/travelPlan/choosePlace.vue";
 import Mypage from "@/views/mypage/mypage.vue";
+import MypagePlan from "@/views/mypage/mypagePlan.vue";
+import MypageCard from "@/views/mypage/mypageCard.vue";
+import { useAuthStore } from "@/store/auth";
+import { showLoginModalFlag } from "@/eventBus";
 
 // 도시별 좌표 정보
 function getLatLng(cityName) {
@@ -70,15 +74,54 @@ const routes = [
   {
     path: "/mypage",
     component: Mypage,
+    meta: { requiresAuth: true }, // 인증 필요 표시
+    children: [
+      {
+        path: "",
+        redirect: "/mypage/plan",
+      },
+      {
+        path: "plan",
+        component: MypagePlan,
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "card",
+        component: MypageCard,
+        meta: { requiresAuth: true },
+      },
+    ],
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior() {
+  scrollBehavior(to, from) {
+    // savedPosition 매개변수 제거
+    if (to.path.startsWith("/mypage") && from.path.startsWith("/mypage")) {
+      return false;
+    }
     return { top: 0 };
   },
+});
+
+// 네비게이션 가드 추가
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  const isAuthenticated = authStore.isAuthenticated;
+
+  // 인증이 필요한 페이지에 접근하려 할 때
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      showLoginModalFlag.value = true; // 로그인 모달 표시
+      next("/");
+    } else {
+      next();
+    }
+  } else {
+    next(); // 인증이 필요없는 페이지는 그냥 진행
+  }
 });
 
 export default router;
