@@ -1,6 +1,9 @@
 <template>
   <div class="mypage-card">
-    <div class="grid-container">
+    <div v-if="items.length === 0" class="empty-state">
+      현재 보유중인 카드가 없습니다.
+    </div>
+    <div v-else class="grid-container">
       <div class="grid-item" v-for="card in mypageStore.totalCards" :key="card.cardId">
         <div class="card-image" :class="{ 'grayscale': !isUserCard(card.cardId) }"
           :style="{ backgroundImage: `url(${card.image1})` }">
@@ -71,7 +74,16 @@ const isUserCard = (cardId) => {
   transform: scale(1.05);
 }
 
-
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-family: "Pretendard-Medium";
+  font-size: 20px;
+  color: #777777;
+  text-align: center;
+}
 
 /* 반응형 그리드 */
 @media (max-width: 1400px) {

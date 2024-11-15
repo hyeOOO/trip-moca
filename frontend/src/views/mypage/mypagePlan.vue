@@ -1,6 +1,9 @@
 <template>
   <div class="mypage-plan">
-    <div class="grid-container">
+    <div v-if="items.length === 0" class="empty-state">
+      현재 여행 계획이 없습니다.
+    </div>
+    <div v-else class="grid-container">
       <div class="grid-item" v-for="(item, index) in items" :key="index">
         <div class="card shadow-sm">
           <span class="img" :style="{ backgroundImage: `url(${item.planProfileImg})` }"></span>
@@ -134,6 +137,17 @@ export default {
   font-family: "Pretendard-Regular";
   margin: 0 0 30px 10px;
   color: #777777;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-family: "Pretendard-Medium";
+  font-size: 20px;
+  color: #777777;
+  text-align: center;
 }
 
 /* 반응형 그리드 */

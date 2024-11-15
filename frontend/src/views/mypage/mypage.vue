@@ -104,7 +104,7 @@
               <div class="form-group">
                 <label>휴대폰</label>
                 <input
-                  type="text"
+                  type="tel"
                   v-model="editForm.phone"
                   placeholder="번호를 입력해주세요"
                   @input="validatePhone"

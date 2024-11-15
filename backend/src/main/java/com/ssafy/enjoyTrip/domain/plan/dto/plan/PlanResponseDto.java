@@ -2,16 +2,12 @@ package com.ssafy.enjoyTrip.domain.plan.dto.plan;
 
 import com.ssafy.enjoyTrip.domain.plan.entity.Plan;
 import com.ssafy.enjoyTrip.domain.plan.entity.PlanStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Builder

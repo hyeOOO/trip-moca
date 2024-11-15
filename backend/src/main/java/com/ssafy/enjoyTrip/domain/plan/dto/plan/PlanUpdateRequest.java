@@ -2,9 +2,6 @@ package com.ssafy.enjoyTrip.domain.plan.dto.plan;
 
 import com.ssafy.enjoyTrip.domain.plan.dto.detail.DayPlanRequest;
 import com.ssafy.enjoyTrip.domain.plan.entity.PlanStatus;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
