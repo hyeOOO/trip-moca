@@ -6,7 +6,8 @@ import java.time.LocalDate;
 
 @Data
 public class MemberUpdateRequest {
-    private String password;
+    private String currentPassword;
+    private String newPassword;
     private String memberName;
     private String email;
     private String phone;

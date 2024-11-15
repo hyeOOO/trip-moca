@@ -27,7 +27,7 @@ public class Plan {
 
     private String planTitle;
 
-    @Column(name="area_code", nullable = false, insertable = false, updatable = false)
+    @Column(name = "area_code", nullable = false)
     private Long areaCode;
 
     @Column(name = "member_id", nullable = false)
@@ -42,8 +42,10 @@ public class Plan {
 
     private String planProfileImg;
 
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "area_code", referencedColumnName = "sido_code", insertable = false, updatable = false )
+    // 연관관계 매핑을 위한 필드
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_code", referencedColumnName = "sido_code",
+            insertable = false, updatable = false)
     private SidoList area;
 
     @ManyToOne(fetch =  FetchType.LAZY)
@@ -81,6 +83,9 @@ public class Plan {
         }
         if (request.getStatus() != null) {
             this.status = request.getStatus();
+        }
+        if(request.getAreaCode() != null) {
+            this.areaCode = request.getAreaCode();
         }
 
         if(request.getPlanProfileImg() != null){

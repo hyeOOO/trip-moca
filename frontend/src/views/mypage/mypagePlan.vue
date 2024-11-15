@@ -11,6 +11,9 @@
               <span class="title">{{ item.planTitle }}</span>
             </p>
             <p class="dates">{{ item.startDate }} ~ {{ item.endDate }}</p>
+            <button class="delete-btn" @click="deletePlan(item.planId)">
+              <font-awesome-icon :icon="['fas', 'trash']" :style="{ color: '#B4B4B4' }" />
+            </button>
           </div>
         </div>
       </div>
@@ -19,18 +22,25 @@
 </template>
 
 <script>
-import { useMypageStore } from '@/store/mypageStore'
-import { storeToRefs } from 'pinia'
+import { useMypageStore } from "@/store/mypageStore";
+import { storeToRefs } from "pinia";
 
 export default {
   setup() {
-    const mypageStore = useMypageStore()
-    const { userPlans } = storeToRefs(mypageStore)
+    const mypageStore = useMypageStore();
+    const { userPlans } = storeToRefs(mypageStore);
+
+    const deletePlan = async (planId) => {
+      if (confirm("정말 이 여행 계획을 삭제하시겠습니까?")) {
+        await mypageStore.deletePlan(planId);
+      }
+    };
 
     return {
-      items: userPlans
-    }
-  }
+      items: userPlans,
+      deletePlan,
+    };
+  },
 };
 </script>
 

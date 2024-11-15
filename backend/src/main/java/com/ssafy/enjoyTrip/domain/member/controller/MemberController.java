@@ -2,6 +2,7 @@ package com.ssafy.enjoyTrip.domain.member.controller;
 
 import com.ssafy.enjoyTrip.domain.member.dto.MemberResponseDto;
 import com.ssafy.enjoyTrip.domain.member.dto.MemberUpdateRequest;
+import com.ssafy.enjoyTrip.domain.member.dto.PasswordCheckRequest;
 import com.ssafy.enjoyTrip.domain.member.service.MemberService;
 import com.ssafy.enjoyTrip.global.annotation.CurrentMemberId;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,8 +48,8 @@ public class MemberController {
     @PostMapping("/check-password")  // POST로 변경 (보안상 GET 부적절)
     public ResponseEntity<Boolean> passwordValidCheck(
             @CurrentMemberId String memberId,
-            @RequestBody String password) {
-        boolean isValid = memberService.checkPassword(memberId, password);
+            @RequestBody PasswordCheckRequest request) {
+        boolean isValid = memberService.checkPassword(memberId, request.getPassword());
         return ResponseEntity.ok(isValid);
     }
 }

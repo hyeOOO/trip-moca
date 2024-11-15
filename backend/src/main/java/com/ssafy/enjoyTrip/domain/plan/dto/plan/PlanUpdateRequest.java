@@ -19,5 +19,6 @@ public class PlanUpdateRequest {
     private LocalDate endDate;             // 여행 종료일
     private PlanStatus status;             // 여행 상태
     private String planProfileImg;          // 여행 계획 대표 이미지
+    private Long areaCode;
     private List<DayPlanRequest> dayPlans; // 일자별 계획들
 }
