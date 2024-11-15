@@ -1,7 +1,10 @@
 <template>
   <div class="layout-container">
     <navBar />
-    <div class="content-wrapper" :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }">
+    <div
+      class="content-wrapper"
+      :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }"
+    >
       <!-- Left Sidebar -->
       <div class="steps-sidebar">
         <div class="steps-nav">
@@ -9,7 +12,11 @@
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
           </div>
-          <div class="step" :class="{ active: isStep2Active }" @click="toggleStep2">
+          <div
+            class="step"
+            :class="{ active: isStep2Active }"
+            @click="toggleStep2"
+          >
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
@@ -23,7 +30,13 @@
       <!-- Middle Section -->
       <div class="middle-section">
         <div class="toggle-button" @click="toggleCollapse">
-          <i class="fa-solid" :class="{ 'fa-arrow-left': !isCollapsed, 'fa-arrow-right': isCollapsed }"></i>
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isCollapsed,
+              'fa-arrow-right': isCollapsed,
+            }"
+          ></i>
         </div>
         <div class="header">
           <h2>{{ name }}</h2>
@@ -33,12 +46,23 @@
         </div>
         <div class="search-section">
           <div class="search-box">
-            <input type="text" v-model="searchQuery" placeholder="여행지를 검색하세요" @keyup.enter="handleSearch" />
+            <input
+              type="text"
+              v-model="searchQuery"
+              placeholder="여행지를 검색하세요"
+              @keyup.enter="handleSearch"
+            />
             <i class="fa-solid fa-search" @click="handleSearch"></i>
           </div>
         </div>
         <div class="places-list">
-          <div v-for="place in filteredPlaces" :key="place.attractionId" class="place-item" draggable="true" @dragstart="dragStart($event, place)">
+          <div
+            v-for="place in filteredPlaces"
+            :key="place.attractionId"
+            class="place-item"
+            draggable="true"
+            @dragstart="dragStart($event, place)"
+          >
             <div class="place-image">
               <img :src="getImageUrl(place.image1)" :alt="place.title" />
             </div>
@@ -53,13 +77,25 @@
       <!-- Right Section -->
       <div class="right-section">
         <div class="toggle-button" @click="toggleRightSection">
-          <i class="fa-solid" :class="{ 'fa-arrow-left': !isRightCollapsed, 'fa-arrow-right': isRightCollapsed }"></i>
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isRightCollapsed,
+              'fa-arrow-right': isRightCollapsed,
+            }"
+          ></i>
         </div>
         <div class="header">
           <h2>선택한 장소</h2>
         </div>
         <div class="selected-places">
-          <div v-for="dayIndex in numberOfDays" :key="dayIndex - 1" class="day-section" @dragover.prevent @drop="onDrop($event, dayIndex - 1)">
+          <div
+            v-for="dayIndex in numberOfDays"
+            :key="dayIndex - 1"
+            class="day-section"
+            @dragover.prevent
+            @drop="onDrop($event, dayIndex - 1)"
+          >
             <div class="day-header">
               <h3>
                 {{ dayIndex }}일차 {{ formatDate(getTripDate(dayIndex - 1)) }}
@@ -68,17 +104,27 @@
                 <i class="fa-solid fa-rotate-left"></i> 초기화
               </button>
             </div>
-            <div v-if="!selectedPlacesByDay[dayIndex - 1]?.length" class="empty-day">
+            <div
+              v-if="!selectedPlacesByDay[dayIndex - 1]?.length"
+              class="empty-day"
+            >
               <p></p>
             </div>
             <div v-else class="selected-day-places">
-              <div v-for="place in selectedPlacesByDay[dayIndex - 1]" :key="place.attractionId" class="selected-place">
+              <div
+                v-for="place in selectedPlacesByDay[dayIndex - 1]"
+                :key="place.attractionId"
+                class="selected-place"
+              >
                 <div class="place-image">
                   <img :src="getImageUrl(place.image1)" :alt="place.title" />
                 </div>
                 <div class="place-info">
                   <h4>{{ place.title }}</h4>
-                  <button @click="removePlace(dayIndex - 1, place)" class="remove-button">
+                  <button
+                    @click="removePlace(dayIndex - 1, place)"
+                    class="remove-button"
+                  >
                     <i class="fa-solid fa-times"></i>
                   </button>
                 </div>
@@ -87,7 +133,13 @@
           </div>
         </div>
       </div>
-      <div class="map-container" ref="tmap"></div>
+      <Tmap
+        :latitude="37.5665"
+        :longitude="126.978"
+        :selectedPlaces="yourPlacesObject"
+        @updateMarkers="handleMarkersUpdate"
+        :selected-places-by-day="selectedPlacesByDay"
+      />
     </div>
   </div>
 </template>
@@ -95,11 +147,13 @@
 <script>
 import navBar from "@/components/navBar.vue";
 import testData from "@/assets/data/testData.js";
+import Tmap from "@/components/Tmap.vue";
 
 export default {
   name: "ChoosePlace",
   components: {
     navBar,
+    Tmap,
   },
   props: {
     name: String,
@@ -116,10 +170,8 @@ export default {
       localFormattedDateRange: this.formattedDateRange,
       searchQuery: "",
       places: testData,
-      markers: [],
       isCollapsed: false,
       isRightCollapsed: false,
-      tmap: null,
       isStep2Active: true,
       selectedPlacesByDay: {},
     };
@@ -158,9 +210,9 @@ export default {
       });
     },
     removePlace(dayIndex, place) {
-      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[dayIndex].filter(
-        (p) => p.attractionId !== place.attractionId
-      );
+      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
+        dayIndex
+      ].filter((p) => p.attractionId !== place.attractionId);
       this.updateMarkers();
     },
     clearDay(dayIndex) {
@@ -168,7 +220,10 @@ export default {
       this.updateMarkers();
     },
     getImageUrl(imageUrl) {
-      return imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
+      return (
+        imageUrl ||
+        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+      );
     },
     getTripDate(dayIndex) {
       if (!this.localStartDate) return "";
@@ -217,83 +272,6 @@ export default {
         },
       });
     },
-    updateMapSize() {
-      if (this.tmap) this.tmap.resize();
-    },
-    updateMarkers() {
-      if (!this.tmap) return;
-      this.markers.forEach((marker) => marker.setMap(null));
-      this.markers = [];
-      Object.entries(this.selectedPlacesByDay).forEach(([dayIndex, dayPlaces]) => {
-        if (!dayPlaces) return;
-        dayPlaces.forEach((place) => {
-          const mapx = parseFloat(place.mapx) || this.longitude;
-          const mapy = parseFloat(place.mapy) || this.latitude;
-          if (!isNaN(mapx) && !isNaN(mapy)) {
-            console.log(`Creating marker for ${place.title}: ${mapx}, ${mapy}`);
-            const markerPosition = new window.Tmapv2.LatLng(mapy, mapx);
-            const marker = new window.Tmapv2.Marker({
-              position: markerPosition,
-              map: this.tmap,
-              title: place.title,
-              label: `${parseInt(dayIndex) + 1}일차: ${place.title}`,
-            });
-            this.markers.push(marker);
-            marker.addListener("click", () => {
-              new window.Tmapv2.InfoWindow({
-                position: markerPosition,
-                content: `
-                  <div style="padding: 10px;">
-                    <h4>${place.title}</h4>
-                    <p>${place.addr1}</p>
-                  </div>
-                `,
-                type: 2,
-                map: this.tmap,
-              });
-            });
-          } else {
-            console.warn(`Missing or invalid coordinates for ${place.title}`);
-          }
-        });
-      });
-      console.log(`Total markers created: ${this.markers.length}`);
-      if (this.markers.length > 0) {
-        const bounds = new window.Tmapv2.LatLngBounds();
-        this.markers.forEach((marker) => bounds.extend(marker.getPosition()));
-        this.tmap.fitBounds(bounds);
-      }
-    },
-    initializeMap() {
-      if (!window.Tmapv2) {
-        console.error("Tmapv2 is not loaded");
-        return;
-      }
-      const mapOptions = {
-        center: new window.Tmapv2.LatLng(this.latitude, this.longitude),
-        width: "100%",
-        height: "100%",
-        zoom: 11,
-      };
-      this.tmap = new window.Tmapv2.Map(this.$refs.tmap, mapOptions);
-      console.log("Map initialized:", this.tmap);
-      this.tmap.addListener("idle", this.updateMarkers);
-    },
-  },
-  mounted() {
-    console.log("Component mounted");
-    setTimeout(() => {
-      this.initializeMap();
-      console.log("Map initialization attempted");
-    }, 100);
-    window.addEventListener("resize", this.updateMapSize);
-  },
-  beforeUnmount() {
-    if (this.tmap) {
-      this.markers.forEach((marker) => marker.setMap(null));
-      this.tmap.destroy();
-    }
-    window.removeEventListener("resize", this.updateMapSize);
   },
 };
 </script>
@@ -570,10 +548,6 @@ export default {
 }
 
 /* Map container */
-.map-container {
-  width: 100%;
-  height: 100%;
-}
 
 .day-container {
   padding: 16px;
