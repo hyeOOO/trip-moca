@@ -7,7 +7,8 @@
 </template>
 
 <script>
-import { ref, provide } from "vue";
+import { ref, provide, watch } from "vue";
+import { showLoginModalFlag } from "@/eventBus";
 import footInfo from "@/components/footInfo.vue";
 import LoginModal from "@/components/loginModal.vue";
 
@@ -21,8 +22,13 @@ export default {
   setup() {
     const showLoginModal = ref(false);
 
+    watch(showLoginModalFlag, (newValue) => {
+      showLoginModal.value = newValue;
+    });
+
     const openLoginModal = () => {
       showLoginModal.value = true;
+      showLoginModalFlag.value = true;
     };
 
     // provide를 통해 모달 컨트롤 함수 제공
@@ -41,6 +47,13 @@ export default {
 /* 전체 설정 */
 body {
   margin: 0;
+  min-height: 100vh;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 전체 뷰포트 높이 */
 }
 /* 폰트 */
 @font-face {

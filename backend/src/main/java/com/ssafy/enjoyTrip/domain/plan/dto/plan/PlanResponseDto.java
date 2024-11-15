@@ -18,6 +18,9 @@ import java.util.stream.Collectors;
 public class PlanResponseDto {
     private Long planId;
     private String planTitle;
+    private Long areaCode;
+    private String sidoName;
+    private String planProfileImg;
     private LocalDate startDate;
     private LocalDate endDate;
     private PlanStatus status;
@@ -30,6 +33,9 @@ public class PlanResponseDto {
         return PlanResponseDto.builder()
                 .planId(plan.getPlanId())
                 .planTitle(plan.getPlanTitle())
+                .areaCode(plan.getAreaCode())
+                .sidoName(plan.getArea().getSidoName())
+                .planProfileImg(plan.getPlanProfileImg())
                 .startDate(plan.getStartDate())
                 .endDate(plan.getEndDate())
                 .status(plan.getStatus())

@@ -64,7 +64,7 @@ export default {
         { name: "경로검색", path: "/" },
         { name: "추천관광", path: "/" },
         { name: "카드도감", path: "/" },
-        { name: "마이페이지", path: "/mypage" },
+        { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],
       searchQuery: "",
     };
@@ -72,7 +72,9 @@ export default {
   computed: {
     isDarkRoute() {
       // 메인 페이지('/')가 아닌 모든 경로에서 dark 모드 (검은색) 적용
-      return this.$route.path !== "/" && this.$route.path !== "/mypage";
+      return (
+        !["/", "/mypage"].includes(this.$route.path) && !this.$route.path.startsWith("/mypage/")
+      );
     },
   },
   components: {

@@ -71,8 +71,8 @@ public class Member {
     }
 
     public void update(MemberUpdateRequest request, PasswordEncoder passwordEncoder) {
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            this.password = passwordEncoder.encode(request.getPassword());
+        if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
+            this.password = passwordEncoder.encode(request.getNewPassword());
         }
         if (request.getMemberName() != null) {
             this.memberName = request.getMemberName();

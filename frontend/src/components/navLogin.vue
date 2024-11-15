@@ -1,33 +1,50 @@
 <template>
   <div class="menu-container" ref="menuContainer" @click.stop>
     <button class="menu-button" @click.stop="toggleMenu">
-      <i :class="['fi fi-rr-menu-burger icon', { 'dark-icon': isDarkRoute }]" ></i>
+      <i :class="['fi fi-rr-menu-burger icon', { 'dark-icon': isDarkRoute }]"></i>
     </button>
-    <button class="user-button" @click="goToMyPage">
-      <i :class="['fi fi-rr-user icon', { 'dark-icon': isDarkRoute }]" ></i>
+    <button class="user-button" @click="handleUserButtonClick">
+      <i :class="['fi fi-rr-user icon', { 'dark-icon': isDarkRoute }]"></i>
     </button>
 
     <div v-show="showMenu" class="dropdown-menu">
-      <button @click="handleOpenLoginModal">로그인</button>
-      <button @click="signup">회원가입</button>
+      <!-- 비로그인 상태일 때 메뉴 -->
+      <template v-if="!isAuthenticated">
+        <button @click="handleOpenLoginModal">로그인</button>
+        <button @click="signup">회원가입</button>
+      </template>
+      <!-- 로그인 상태일 때 메뉴 -->
+      <template v-else>
+        <div class="user-info">{{ memberId }}님</div>
+        <button @click="goToMyPage">마이페이지</button>
+        <button @click="handleLogout">로그아웃</button>
+      </template>
     </div>
   </div>
 </template>
 
 <script>
 import { inject } from "vue";
+import { useAuthStore } from "@/store/auth";
+import { storeToRefs } from "pinia";
 export default {
   props: {
     isDarkRoute: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   setup() {
     const { openLoginModal } = inject("modalControl");
+    const authStore = useAuthStore();
+    // storeToRefs를 사용하여 반응형 상태 가져오기
+    const { isAuthenticated, memberId } = storeToRefs(authStore);
 
     return {
       openLoginModal,
+      authStore,
+      isAuthenticated,
+      memberId,
     };
   },
   data() {
@@ -36,10 +53,10 @@ export default {
     };
   },
   mounted() {
-    window.addEventListener('click', this.closeMenu);
+    window.addEventListener("click", this.closeMenu);
   },
   beforeUnmount() {
-    window.removeEventListener('click', this.closeMenu);
+    window.removeEventListener("click", this.closeMenu);
   },
   methods: {
     closeMenu() {
@@ -54,12 +71,28 @@ export default {
     },
     signup() {
       console.log("회원가입 클릭됨");
+      this.showMenu = false;
     },
-    logout() {
-      console.log("로그아웃 클릭됨");
+    async handleLogout() {
+      await this.authStore.logout();
+      this.showMenu = false;
+      this.$router.push("/");
+    },
+    handleUserButtonClick() {
+      if (this.isAuthenticated) {
+        this.goToMyPage();
+      } else {
+        this.handleOpenLoginModal();
+      }
     },
     goToMyPage() {
-      this.$router.push({ name: "MyPage" });
+      if (this.isAuthenticated) {
+        this.$router.push("/mypage");
+      } else {
+        alert("로그인이 필요한 서비스입니다.");
+        this.handleOpenLoginModal();
+      }
+      this.showMenu = false;
     },
   },
 };
@@ -124,11 +157,19 @@ export default {
   cursor: pointer;
   white-space: nowrap;
   color: #333;
+  width: 100%;
   transition: background-color 0.2s ease;
 }
 
 .dropdown-menu button:hover {
   background-color: #f5f5f5;
+}
+
+.user-info {
+  padding: 12px 16px;
+  color: #333;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
 }
 
 /* 반응형 스타일 */

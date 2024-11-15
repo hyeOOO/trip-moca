@@ -38,6 +38,8 @@ public class PlanService {
             // 2. Plan 엔티티 생성 및 저장
             Plan plan = Plan.builder()
                     .planTitle(request.getPlanTitle())
+                    .areaCode(request.getAreaCode())
+                    .planProfileImg(request.getPlanProfileImg())
                     .memberId(memberId)
                     .startDate(request.getStartDate())
                     .endDate(request.getEndDate())
