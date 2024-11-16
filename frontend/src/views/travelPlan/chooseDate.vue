@@ -1,7 +1,6 @@
 <template>
   <div class="layout-container">
     <navBar />
-
     <div class="content-wrapper" :class="{ collapsed: isCollapsed }">
       <div class="steps-sidebar">
         <div class="steps-nav">
@@ -14,16 +13,15 @@
             <div class="step-title">날짜 선택</div>
           </div>
 
-          <!-- router-link를 div로 변경 -->
           <div class="step" @click="checkDateAndNavigate">
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
 
-          <router-link to="/make-plan" class="step">
+          <div class="step" @click="checkAndNavigateToSavePlan">
             <div class="step-number">STEP 3</div>
             <div class="step-title">계획 생성</div>
-          </router-link>
+          </div>
         </div>
       </div>
 
@@ -54,18 +52,27 @@
         </div>
       </div>
 
-      <div class="map-container" ref="tmap"></div>
+      <div class="map-container">
+        <Tmap
+          ref="tmap"
+          :latitude="latitude"
+          :longitude="longitude"
+          :selectedPlaces="[]"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import navBar from "@/components/navBar.vue";
+import Tmap from "@/components/Tmap.vue"; // Tmap 컴포넌트 import
 
 export default {
   name: "ChooseDate",
   components: {
     navBar,
+    Tmap,
   },
   props: {
     name: {
@@ -117,7 +124,32 @@ export default {
         this.formattedDateRange = "";
       }
     },
+    // 장소 선택 후 계획 생성 페이지로 이동
+    checkAndNavigateToSavePlan() {
+      if (!this.startDate || !this.endDate) {
+        alert("날짜를 먼저 선택해 주세요!");
+        return;
+      }
+      if (!this.selectedPlaces || this.selectedPlaces.length === 0) {
+        alert("장소를 먼저 선택해주세요!");
+        return;
+      }
 
+      this.$router.push({
+        name: "savePlan",
+        params: {
+          name: this.name,
+          selectedPlaces: this.selectedPlaces
+        },
+        query: {
+          startDate: this.startDate,
+          endDate: this.endDate,
+          formattedDateRange: this.formattedDateRange,
+          id: this.id,
+        },
+      });
+    },
+    // 날짜 선택 후 장소 선택 페이지로 이동
     checkDateAndNavigate() {
       if (!this.startDate || !this.endDate) {
         alert("날짜를 먼저 선택해 주세요!");
@@ -143,7 +175,7 @@ export default {
     },
 
     toggleCollapse() {
-      this.isCollapsed = true;
+      this.isCollapsed = !this.isCollapsed;
       setTimeout(() => {
         this.updateMapSize();
       }, 300);
@@ -172,62 +204,6 @@ export default {
       return `${year}.${month}.${day}(${dayOfWeek})`;
     },
 
-    initializeMap() {
-      try {
-        if (!window.Tmapv2) {
-          console.error("TMap API가 로드되지 않았습니다.");
-          return;
-        }
-
-        const option = {
-          center: new window.Tmapv2.LatLng(this.latitude, this.longitude),
-          width: "100%",
-          height: "100%",
-          zoom: 11,
-        };
-
-        if (this.map) {
-          this.clearMap();
-        }
-
-        this.map = new window.Tmapv2.Map(this.$refs.tmap, option);
-
-        setTimeout(() => {
-          window.dispatchEvent(new Event("resize"));
-        }, 200);
-      } catch (error) {
-        console.error("지도 초기화 중 오류 발생:", error);
-      }
-    },
-
-    updateMapCenter() {
-      if (this.map && window.Tmapv2) {
-        try {
-          const newCenter = new window.Tmapv2.LatLng(
-            this.latitude,
-            this.longitude
-          );
-          this.map.setCenter(newCenter);
-          this.map.setZoom(11);
-        } catch (error) {
-          console.error("지도 중심 업데이트 중 오류 발생:", error);
-        }
-      }
-    },
-
-    clearMap() {
-      this.markers.forEach((marker) => marker.setMap(null));
-      this.markers = [];
-
-      this.polylines.forEach((polyline) => polyline.setMap(null));
-      this.polylines = [];
-
-      if (this.map) {
-        this.map.destroy();
-        this.map = null;
-      }
-    },
-
     savePlan() {
       if (!this.startDate || !this.endDate) {
         alert("출발 일자와 도착 일자를 모두 선택해주세요.");
@@ -250,26 +226,29 @@ export default {
     },
 
     updateMapSize() {
-      if (this.map) {
-        this.map.resize();
+      if (this.$refs.tmap) {
+        this.$refs.tmap.getMap().resize();
       }
     },
   },
   mounted() {
-    setTimeout(() => {
-      this.initializeMap();
-    }, 100);
-
+    // updateMapSize 이벤트 리스너 추가
     window.addEventListener("resize", this.updateMapSize);
+
+    // 초기 맵 사이즈 설정
+    setTimeout(() => {
+      this.updateMapSize();
+    }, 100);
   },
+
   beforeUnmount() {
-    this.clearMap();
     window.removeEventListener("resize", this.updateMapSize);
   },
 };
 </script>
 
 <style scoped>
+/* Base layout */
 .layout-container {
   display: flex;
   flex-direction: column;
@@ -280,17 +259,20 @@ export default {
 .content-wrapper {
   display: grid;
   grid-template-columns: 200px 320px 1fr;
-  height: calc(100vh - 64px - 56px);
+  grid-template-rows: 1fr;
+  height: calc(100vh - 64px);
   overflow: hidden;
   transition: all 0.3s ease;
+  gap: 0;
 }
 
 .content-wrapper.collapsed {
   grid-template-columns: 200px 0 1fr;
 }
 
-/* Left sidebar styles */
-.steps-sidebar {
+/* Common section styles */
+.steps-sidebar,
+.middle-section {
   background: white;
   padding: 24px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
@@ -299,6 +281,7 @@ export default {
   overflow-y: auto;
 }
 
+/* Step styles */
 .steps-nav {
   display: flex;
   flex-direction: column;
@@ -335,13 +318,6 @@ export default {
 /* Middle section styles */
 .middle-section {
   position: relative;
-  background: white;
-  padding: 24px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee;
-  height: 100%;
-  overflow-y: auto;
-  transition: all 0.3s ease;
   min-width: 0;
 }
 
@@ -351,6 +327,7 @@ export default {
   opacity: 0;
 }
 
+/* Toggle button styles */
 .toggle-button {
   position: absolute;
   top: 20px;
@@ -380,6 +357,7 @@ export default {
   color: #f57c00;
 }
 
+/* Header styles */
 .header {
   margin-bottom: 24px;
 }
@@ -395,6 +373,7 @@ export default {
   font-size: 14px;
 }
 
+/* Form styles */
 .input-group {
   margin-bottom: 16px;
 }
@@ -427,6 +406,7 @@ export default {
   border-color: #bbb;
 }
 
+/* Button styles */
 .save-button {
   width: 100%;
   padding: 12px;
@@ -443,9 +423,24 @@ export default {
   background-color: #555;
 }
 
+/* Map container styles */
 .map-container {
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.map-container :deep(.map-wrapper) {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 </style>

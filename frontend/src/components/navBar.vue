@@ -15,22 +15,26 @@
     <!-- nav-bottom -->
     <div class="nav-bottom">
       <nav class="main-nav">
-        <div class="nav-content">
-          <router-link to="/" class="logo" v-if="!isDarkRoute">
-            <img
-              src="@/assets/image/HW&SW.png"
-              alt="HW&SW Logo"
-              class="hwsw-logo-image"
-            />
-          </router-link>
-          <router-link to="/" class="logo" v-else>
-            <img
-              src="@/assets/image/HW&SW-dark.png"
-              alt="HW&SW Logo"
-              class="hwsw-logo-image"
-            />
-          </router-link>
-          <!-- 메뉴바 -->
+        <div class="nav-grid">
+          <!-- 로고 영역 -->
+          <div class="logo-area">
+            <router-link to="/" class="logo" v-if="!isDarkRoute">
+              <img
+                src="@/assets/image/HW&SW.png"
+                alt="HW&SW Logo"
+                class="hwsw-logo-image"
+              />
+            </router-link>
+            <router-link to="/" class="logo" v-else>
+              <img
+                src="@/assets/image/HW&SW-dark.png"
+                alt="HW&SW Logo"
+                class="hwsw-logo-image"
+              />
+            </router-link>
+          </div>
+
+          <!-- 메뉴바 영역 -->
           <div class="menu">
             <router-link
               v-for="(item, i) in menuItems"
@@ -41,18 +45,21 @@
               {{ item.name }}
             </router-link>
           </div>
-          <!-- 검색바 -->
-          <div class="search-bar">
-            <input
-              type="text"
-              placeholder="Search..."
-              class="search-input"
-              v-model="searchQuery"
-              @keyup.enter="handleSearch"
-            />
-            <button class="search-btn" @click="handleSearch">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
+
+          <!-- 검색바 영역 -->
+          <div class="search-area">
+            <div class="search-bar">
+              <input
+                type="text"
+                placeholder="Search..."
+                class="search-input"
+                v-model="searchQuery"
+                @keyup.enter="handleSearch"
+              />
+              <button class="search-btn" @click="handleSearch">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -78,57 +85,36 @@ export default {
     };
   },
   computed: {
-  isDarkRoute() {
-    // 메인 페이지('/')가 아닌 모든 경로에서 dark 모드 (검은색) 적용
-    return this.$route.path !== '/';
+    isDarkRoute() {
+      // 메인 페이지('/')가 아닌 모든 경로에서 dark 모드 (검은색) 적용
+      return this.$route.path !== "/";
+    },
   },
-},
   components: {
-    navLogin: navLogin,
+    navLogin,
   },
   methods: {
     handleSearch() {
-      // 검색 로직
+      if (this.searchQuery.trim()) {
+        // 검색어를 쿼리 파라미터로 전달
+        this.$router.push({
+          name: "TmapSearch",
+          query: {
+            keyword: this.searchQuery,
+          },
+        });
+      }
     },
   },
 };
 </script>
 
-<style>
+<style scoped>
 :root {
   --nav-text-color: #ffffff;
 }
 
-.menu {
-  color: var(--nav-text-color);
-  display: flex;
-  gap: 80px;
-  z-index: 2;
-  font-family: "EliceDigitalBaeum_BOLD";
-  font-size: 18px;
-  font-weight: 300;
-  padding: 15px;
-}
-
-.menu a {
-  color: var(--nav-text-color);
-  text-decoration: none;
-  transition: color 0.3s ease;
-  cursor: pointer;
-}
-
-.menu a.dark-text {
-  color: black;
-}
-
-.nav-theme .menu a:hover {
-  color: #ffdd57;
-}
-
-.nav-dark .menu a:hover {
-  color: #ecb27b;
-}
-
+/* Top Navigation Styles */
 .nav-top {
   height: 36px;
   color: var(--nav-text-color);
@@ -158,11 +144,10 @@ export default {
   transform: scale(1.05);
 }
 
-/* 구분선 */
+/* Division Line */
 .top-division-line {
   border-top: 1.5px solid rgba(255, 255, 255, 1);
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin: 10px 0;
   position: relative;
   z-index: 2;
 }
@@ -171,12 +156,12 @@ export default {
   border-top: 1.5px solid rgba(0, 0, 0, 1);
 }
 
-/* 구분선 밑 네비바 */
+/* Bottom Navigation Styles */
 .nav-bottom {
   padding: 25px;
   z-index: 2;
   position: relative;
-  margin-top: 0px;
+  margin-top: 0;
 }
 
 .main-nav {
@@ -187,27 +172,24 @@ export default {
   left: 0;
 }
 
-.nav-content {
+.nav-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
   max-width: 100%;
   margin: -5px 50px;
-  padding: 0px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 0;
 }
 
-.search-bar {
-  position: relative;
-  opacity: 0.5;
-  left: -95px;
+/* Logo Styles */
+.logo-area {
+  justify-self: center;
 }
 
 .logo {
-  position: relative;
   display: flex;
   align-items: center;
   text-decoration: none;
-  left: 130px;
 }
 
 .hwsw-logo-image {
@@ -219,6 +201,48 @@ export default {
 
 .hwsw-logo-image:hover {
   transform: scale(1.05);
+}
+
+/* Menu Styles */
+.menu {
+  justify-self: center;
+  display: flex;
+  gap: 80px;
+  z-index: 2;
+  font-family: "EliceDigitalBaeum_BOLD";
+  font-size: 18px;
+  font-weight: 300;
+  padding: 15px;
+  color: var(--nav-text-color);
+}
+
+.menu a {
+  color: var(--nav-text-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  cursor: pointer;
+}
+
+.menu a.dark-text {
+  color: black;
+}
+
+.nav-theme .menu a:hover {
+  color: #ffdd57;
+}
+
+.nav-dark .menu a:hover {
+  color: #ecb27b;
+}
+
+/* Search Bar Styles */
+.search-area {
+  justify-self: center;
+}
+
+.search-bar {
+  position: relative;
+  opacity: 0.5;
 }
 
 .search-input {
@@ -234,6 +258,7 @@ export default {
   outline: none;
   background-color: white;
 }
+
 .search-input::placeholder {
   color: #515151;
 }
@@ -247,12 +272,5 @@ export default {
   border: none;
   cursor: pointer;
   color: #666;
-}
-
-.top-info {
-  background-color: transparent;
-  padding: 8px 0;
-  position: relative;
-  z-index: 2;
 }
 </style>

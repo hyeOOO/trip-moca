@@ -20,10 +20,10 @@
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
-          <router-link to="/make-plan" class="step">
+          <div class="step" @click="checkAndNavigateToSavePlan">
             <div class="step-number">STEP 3</div>
             <div class="step-title">계획 생성</div>
-          </router-link>
+          </div>
         </div>
       </div>
 
@@ -97,12 +97,17 @@
             @drop="onDrop($event, dayIndex - 1)"
           >
             <div class="day-header">
-              <h3>
+              <h3 @click="selectDay(dayIndex - 1)" style="cursor: pointer">
                 {{ dayIndex }}일차 {{ formatDate(getTripDate(dayIndex - 1)) }}
               </h3>
-              <button @click="clearDay(dayIndex - 1)" class="clear-button">
-                <i class="fa-solid fa-rotate-left"></i> 초기화
-              </button>
+              <div class="day-header-buttons">
+                <button @click="showAllMarkers" class="view-all-button">
+                  전체보기
+                </button>
+                <button @click="clearDay(dayIndex - 1)" class="clear-button">
+                  <i class="fa-solid fa-rotate-left"></i> 초기화
+                </button>
+              </div>
             </div>
             <div
               v-if="!selectedPlacesByDay[dayIndex - 1]?.length"
@@ -132,14 +137,19 @@
             </div>
           </div>
         </div>
+        <button @click="saveAndNavigate" class="save-button">저장</button>
       </div>
-      <Tmap
-        :latitude="37.5665"
-        :longitude="126.978"
-        :selectedPlaces="yourPlacesObject"
-        @updateMarkers="handleMarkersUpdate"
-        :selected-places-by-day="selectedPlacesByDay"
-      />
+      <div class="map-container">
+        <Tmap
+          ref="tmap"
+          :latitude="latitude"
+          :longitude="longitude"
+          :selected-places-by-day="selectedPlacesByDay"
+          :selected-day="selectedDay"
+          :show-all-days="showAllDays"
+        />
+        <!-- selected-places-by-day 선택한 장소에 대한 정보들 -->
+      </div>
     </div>
   </div>
 </template>
@@ -174,6 +184,8 @@ export default {
       isRightCollapsed: false,
       isStep2Active: true,
       selectedPlacesByDay: {},
+      selectedDay: null,
+      showAllDays: false,
     };
   },
   computed: {
@@ -194,30 +206,89 @@ export default {
     },
   },
   methods: {
+    checkAndNavigateToSavePlan() {
+      // 선택된 장소가 있는지 확인
+      const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
+        (places) => places && places.length > 0
+      );
+
+      if (!hasSelectedPlaces) {
+        alert("장소를 선택해주세요!");
+        return;
+      }
+
+      // 장소가 선택되었다면 저장 페이지로 이동
+      this.saveAndNavigate();
+    },
+    // 저장하고 다음 페이지로 이동
+    saveAndNavigate() {
+      this.$router.push({
+        name: "savePlan",
+        params: {
+          name: this.name,
+          selectedPlaces: this.selectedPlacesByDay,
+        },
+        query: {
+          startDate: this.localStartDate,
+          endDate: this.localEndDate,
+          id: this.$route.query.id,
+        },
+      });
+    },
+    // 일차 선택 시 호출될 메서드
+    selectDay(dayIndex) {
+      this.selectedDay = dayIndex;
+      this.showAllDays = false;
+    },
+
+    // 전체 보기 선택 시 호출될 메서드
+    showAllMarkers() {
+      this.showAllDays = true;
+      this.selectedDay = null;
+    },
+    updateMapSize() {
+      if (this.$refs.tmap) {
+        setTimeout(() => {
+          this.$refs.tmap.getMap().resize();
+          const center = new Tmapv2.LatLng(this.latitude, this.longitude);
+          this.$refs.tmap.getMap().setCenter(center);
+        }, 400);
+      }
+    },
+    // 드래그 시작
     dragStart(event, place) {
       event.dataTransfer.setData("text/plain", JSON.stringify(place));
     },
+    // 드롭 했을때
     onDrop(event, dayIndex) {
       const place = JSON.parse(event.dataTransfer.getData("text/plain"));
-      console.log("Dropped place:", place);
-      console.log("Coordinates:", place.mapx, place.mapy);
+      console.log("Dropped place full data:", place);
+
+      // longitude와 latitude 값이 있는지 확인하고, 없다면 영어 이름의 프로퍼티에서 값을 가져옴
+      if (!place.latitude && place.mapy) {
+        place.latitude = place.mapy;
+      }
+      if (!place.longitude && place.mapx) {
+        place.longitude = place.mapx;
+      }
+
+      console.log("Processed coordinates:", {
+        latitude: place.latitude,
+        longitude: place.longitude,
+      });
+
       if (!this.selectedPlacesByDay[dayIndex]) {
         this.selectedPlacesByDay[dayIndex] = [];
       }
       this.selectedPlacesByDay[dayIndex].push(place);
-      this.$nextTick(() => {
-        this.updateMarkers();
-      });
     },
     removePlace(dayIndex, place) {
       this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
         dayIndex
       ].filter((p) => p.attractionId !== place.attractionId);
-      this.updateMarkers();
     },
     clearDay(dayIndex) {
       this.selectedPlacesByDay[dayIndex] = [];
-      this.updateMarkers();
     },
     getImageUrl(imageUrl) {
       return (
@@ -276,8 +347,8 @@ export default {
 };
 </script>
 
-
 <style scoped>
+/* Base layout */
 .layout-container {
   display: flex;
   flex-direction: column;
@@ -288,11 +359,14 @@ export default {
 .content-wrapper {
   display: grid;
   grid-template-columns: 200px 380px 380px 1fr;
+  grid-template-rows: 1fr;
   height: calc(100vh - 64px);
   overflow: hidden;
   transition: all 0.3s ease;
+  gap: 0;
 }
 
+/* Collapse states */
 .content-wrapper.collapsed {
   grid-template-columns: 200px 0 380px 1fr;
 }
@@ -305,12 +379,12 @@ export default {
   grid-template-columns: 200px 0 0 1fr;
 }
 
-/* Common styles for sections */
+/* Common section styles */
 .steps-sidebar,
 .middle-section,
 .right-section {
   background: white;
-  padding: 20px 20px 40px 20px;
+  padding: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   border-right: 1px solid #eee;
   height: 100%;
@@ -319,7 +393,16 @@ export default {
   transition: all 0.3s ease;
 }
 
-/* Scrollbar styles */
+/* Section collapse states */
+.content-wrapper.collapsed .middle-section,
+.content-wrapper.right-collapsed .right-section {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+/* Common scrollbar styles */
 .middle-section::-webkit-scrollbar,
 .right-section::-webkit-scrollbar {
   width: 8px;
@@ -342,27 +425,6 @@ export default {
   background: #555;
 }
 
-/* Section specific styles */
-.middle-section {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.right-section {
-  opacity: 1;
-  width: 100%;
-}
-
-/* Collapse states */
-.content-wrapper.collapsed .middle-section,
-.content-wrapper.right-collapsed .right-section {
-  width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-}
-
 /* Header styles */
 .header {
   margin-bottom: 24px;
@@ -375,8 +437,8 @@ export default {
 }
 
 .date-range {
+  color: #f57c00;
   font-size: 14px;
-  color: #666;
 }
 
 /* Step styles */
@@ -403,7 +465,7 @@ export default {
   margin-bottom: 4px;
 }
 
-/* Search box styles */
+/* Search styles */
 .search-box {
   position: relative;
   margin-bottom: 20px;
@@ -426,7 +488,7 @@ export default {
   font-size: 14px;
 }
 
-/* Places list styles */
+/* Place item styles */
 .places-list {
   display: flex;
   flex-direction: column;
@@ -434,14 +496,18 @@ export default {
   padding: 0 4px;
 }
 
-.place-item {
+.place-item,
+.selected-place {
   display: flex;
   align-items: center;
-  padding: 12px;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.place-item {
   cursor: move;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .place-image {
@@ -488,6 +554,21 @@ export default {
   margin-bottom: 12px;
 }
 
+.day-header h3 {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.day-header h3:hover {
+  background-color: #f0f0f0;
+}
+
+.day-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .empty-day {
   text-align: center;
   padding: 20px;
@@ -496,133 +577,92 @@ export default {
   border-radius: 8px;
 }
 
-.selected-place {
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  padding: 8px;
-}
-
 /* Button styles */
-.remove-button {
-  background: none;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  padding: 4px;
-}
-
 .toggle-button {
   position: absolute;
   top: 20px;
   right: 10px;
+  width: 32px;
+  height: 32px;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  padding: 8px;
-  display: none;
+  z-index: 100;
+  transition: transform 0.3s ease;
 }
 
-.toggle-button .fa-arrow-left {
-  display: block;
+.toggle-button i {
+  font-size: 18px;
+  color: #666;
+  transition: color 0.3s ease;
 }
 
-.toggle-button .fa-arrow-right {
-  display: none;
+.toggle-button:hover {
+  transform: scale(1.1);
 }
 
-.middle-section:not(.collapsed) .toggle-button,
-.right-section:not(.right-collapsed) .toggle-button {
-  display: block;
+.toggle-button:hover i {
+  color: #f57c00;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.remove-button,
+.clear-button,
+.view-all-button,
+.save-button {
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 6px 12px;
+}
+
+.remove-button {
+  background: none;
+  color: #666;
 }
 
 .clear-button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
   background-color: #f1f1f1;
-  cursor: pointer;
+}
+
+.view-all-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.save-button {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  background: #2B2B2B;
+  color: white;
 }
 
 /* Map container */
-
-.day-container {
-  padding: 16px;
-  background: #fff;
-  margin-bottom: 16px;
-}
-
-.day-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.day-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #333;
-}
-
-.day-date {
-  font-size: 14px;
-  color: #666;
-  margin-left: 8px;
-}
-
-/* Place item styles */
-.place-card {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  background: #fff;
-}
-
-.place-card img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-right: 12px;
-}
-
-.place-details {
-  flex: 1;
-}
-
-.place-name {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.place-description {
-  font-size: 13px;
-  color: #666;
-}
-
-/* Action button */
-.action-button {
+.map-container {
+  position: relative;
   width: 100%;
-  padding: 12px;
-  background: #000;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  margin-top: 16px;
-  cursor: pointer;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
 }
 
-.action-button:hover {
-  background: #333;
+.map-container :deep(.map-wrapper) {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 </style>
