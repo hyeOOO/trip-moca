@@ -15,12 +15,7 @@
           <p class="error-message" v-if="loginErrors.password">{{ loginErrors.password }}</p>
         </label>
         <p class="forgot-pass">비밀번호를 잊어버리셨나요?</p>
-        <button
-          type="button"
-          class="modal-btn submit"
-          @click="handleLogin"
-          :disabled="!isLoginFormValid"
-        >
+        <button type="button" class="modal-btn submit" @click="handleLogin" :disabled="!isLoginFormValid">
           로그인
         </button>
         <button type="button" class="modal-btn close" @click="closeModal">닫기</button>
@@ -68,12 +63,7 @@
             <input type="email" v-model="signupForm.email" @input="validateEmail" />
             <p class="error-message" v-if="signupErrors.email">{{ signupErrors.email }}</p>
           </label>
-          <button
-            type="button"
-            class="modal-btn submit"
-            @click="handleSignUp"
-            :disabled="!isSignupFormValid"
-          >
+          <button type="button" class="modal-btn submit" @click="handleSignUp" :disabled="!isSignupFormValid">
             회원가입
           </button>
           <button type="button" class="modal-btn close" @click="closeModal">닫기</button>
@@ -282,8 +272,8 @@ export default {
       if (!this.isSignupFormValid) {
         return;
       }
+
       try {
-        // api를 import 해서 사용
         const response = await api.post("/api/auth/signup", {
           memberId: this.signupForm.id,
           password: this.signupForm.password,
@@ -293,12 +283,43 @@ export default {
 
         if (response.status === 200) {
           alert("회원가입이 완료되었습니다. 로그인해주세요.");
-          this.isSignUp = false; // 로그인 폼으로 전환
+          this.isSignUp = false;
           this.resetForms();
         }
       } catch (error) {
-        console.error("Signup error:", error);
-        alert("회원가입 중 오류가 발생했습니다.");
+        console.group('회원가입 에러');
+        console.error('Error object:', error);
+        console.error('Error response:', error.response?.data);
+        console.groupEnd();
+
+        if (error.response?.data) {
+          const { code, message } = error.response.data;
+
+          switch (code) {
+            case 2001:
+              alert(message || "이미 사용중인 아이디입니다.");
+              this.signupForm.id = "";
+              this.$nextTick(() => {
+                const idInput = document.querySelector('.sign-up input[type="text"]');
+                if (idInput) idInput.focus();
+              });
+              break;
+
+            case 2004:
+              alert(message || "이미 사용중인 이메일입니다.");
+              this.signupForm.email = "";
+              this.$nextTick(() => {
+                const emailInput = document.querySelector('.sign-up input[type="email"]');
+                if (emailInput) emailInput.focus();
+              });
+              break;
+
+            default:
+              alert(message || "회원가입 중 오류가 발생했습니다.");
+          }
+        } else {
+          alert("서버와의 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        }
       }
     },
   },
@@ -383,7 +404,7 @@ body.modal-open {
   padding: 50px 30px 0;
 }
 
-.form > h2 {
+.form>h2 {
   color: black;
   font-family: "Pretendard-Bold";
   font-size: 26px;

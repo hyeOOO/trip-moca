@@ -1,6 +1,6 @@
 <template>
   <div class="mypage-card">
-    <div v-if="items.length === 0" class="empty-state">
+    <div v-if="!mypageStore?.userCards?.length" class="empty-state">
       현재 보유중인 카드가 없습니다.
     </div>
     <div v-else class="grid-container">

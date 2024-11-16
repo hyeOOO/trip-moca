@@ -31,6 +31,10 @@ public class AuthService {
                     "이미 사용중인 아이디입니다.");
         }
 
+        if(memberRepository.existsByEmail(request.getEmail())){
+            throw new UnauthorizedException(ErrorCode.DUPLICATE_EMAIL, "이미 사용중인 이메일입니다");
+        }
+
         Member member = request.toEntity();
         member.encodePassword(passwordEncoder);
         memberRepository.save(member);

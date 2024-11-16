@@ -83,4 +83,6 @@ public class AuthController {
         authService.logout(memberId);
         return ResponseEntity.ok("로그아웃 성공");
     }
+
+
 }
