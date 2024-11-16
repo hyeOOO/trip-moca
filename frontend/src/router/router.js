@@ -1,13 +1,12 @@
-import { createWebHistory, createRouter } from "vue-router";
-import Main from "@/views/mainPage/mainPage.vue";
-import Login from "@/views/login/loginPage.vue";
-import DestinationGallery from "@/views/travelPlan/DestinationGallery.vue";
-import choosePlace from "@/views/travelPlan/choosePlace.vue";
-import Mypage from "@/views/mypage/mypage.vue";
-import MypagePlan from "@/views/mypage/mypagePlan.vue";
-import MypageCard from "@/views/mypage/mypageCard.vue";
-import { useAuthStore } from "@/store/auth";
-import { showLoginModalFlag } from "@/eventBus";
+import { createWebHistory, createRouter } from 'vue-router';
+import Main from '@/views/mainPage/mainPage.vue';
+import DestinationGallery from '@/views/travelPlan/DestinationGallery.vue';
+import choosePlace from '@/views/travelPlan/choosePlace.vue';
+import Mypage from '@/views/mypage/mypage.vue';
+import MypagePlan from '@/views/mypage/mypagePlan.vue';
+import MypageCard from '@/views/mypage/mypageCard.vue';
+import { useAuthStore } from '@/store/auth';
+import { showLoginModalFlag } from '@/eventBus';
 
 // 도시별 좌표 정보
 function getLatLng(cityName) {
@@ -19,14 +18,23 @@ function getLatLng(cityName) {
     광주: { lat: (35.0905 + 35.2472) / 2, lng: (126.6518 + 126.9539) / 2 },
     부산: { lat: (34.8799 + 35.3891) / 2, lng: (128.7369 + 129.316) / 2 },
     울산: { lat: (35.4669 + 35.7366) / 2, lng: (129.0756 + 129.4729) / 2 },
-    세종특별자치시: { lat: (36.4641 + 36.6284) / 2, lng: (127.1565 + 127.3649) / 2 },
+    세종특별자치시: {
+      lat: (36.4641 + 36.6284) / 2,
+      lng: (127.1565 + 127.3649) / 2,
+    },
     경기도: { lat: (36.8924 + 38.2846) / 2, lng: (126.3923 + 127.8264) / 2 },
-    강원특별자치도: { lat: (37.0498 + 38.6149) / 2, lng: (127.0495 + 129.3722) / 2 },
+    강원특별자치도: {
+      lat: (37.0498 + 38.6149) / 2,
+      lng: (127.0495 + 129.3722) / 2,
+    },
     충청북도: { lat: (36.0657 + 37.2173) / 2, lng: (127.2493 + 128.7959) / 2 },
     충청남도: { lat: (35.9832 + 37.0291) / 2, lng: (125.9066 + 127.3458) / 2 },
     경상북도: { lat: (35.7133 + 37.1909) / 2, lng: (127.8108 + 129.6919) / 2 },
     경상남도: { lat: (34.5565 + 35.6753) / 2, lng: (127.4669 + 129.2876) / 2 },
-    전북특별자치도: { lat: (35.0641 + 35.9942) / 2, lng: (126.3322 + 127.8573) / 2 },
+    전북특별자치도: {
+      lat: (35.0641 + 35.9942) / 2,
+      lng: (126.3322 + 127.8573) / 2,
+    },
     전라남도: { lat: (33.8968 + 35.4961) / 2, lng: (125.0662 + 127.5347) / 2 },
     제주도: { lat: (33.106 + 34.007) / 2, lng: (126.1524 + 126.9848) / 2 },
   };
@@ -35,21 +43,17 @@ function getLatLng(cityName) {
 
 const routes = [
   {
-    path: "/",
+    path: '/',
     component: Main,
   },
   {
-    path: "/login",
-    component: Login,
-  },
-  {
-    path: "/travelPlan",
+    path: '/travelPlan',
     component: DestinationGallery,
   },
   {
-    path: "/chooseDate/:name",
-    name: "chooseDate",
-    component: () => import("@/views/travelPlan/chooseDate.vue"),
+    path: '/chooseDate/:name',
+    name: 'chooseDate',
+    component: () => import('@/views/travelPlan/chooseDate.vue'),
     props: (route) => ({
       name: route.params.name,
       id: route.query.id,
@@ -58,35 +62,35 @@ const routes = [
     }),
   },
   {
-    path: "/choosePlace/:name", // URL 파라미터로 변경
-    name: "choosePlace",
+    path: '/choosePlace/:name', // URL 파라미터로 변경
+    name: 'choosePlace',
     component: choosePlace,
     props: (route) => ({
       name: route.params.name, // URL 파라미터에서 name 가져오기
-      startDate: route.query.startDate || "",
-      endDate: route.query.endDate || "",
-      formattedDateRange: route.query.formattedDateRange || "",
+      startDate: route.query.startDate || '',
+      endDate: route.query.endDate || '',
+      formattedDateRange: route.query.formattedDateRange || '',
       latitude: getLatLng(route.params.name)?.lat,
       longitude: getLatLng(route.params.name)?.lng,
       id: route.query.id,
     }),
   },
   {
-    path: "/mypage",
+    path: '/mypage',
     component: Mypage,
     meta: { requiresAuth: true }, // 인증 필요 표시
     children: [
       {
-        path: "",
-        redirect: "/mypage/plan",
+        path: '',
+        redirect: '/mypage/plan',
       },
       {
-        path: "plan",
+        path: 'plan',
         component: MypagePlan,
         meta: { requiresAuth: true },
       },
       {
-        path: "card",
+        path: 'card',
         component: MypageCard,
         meta: { requiresAuth: true },
       },
@@ -99,7 +103,7 @@ const router = createRouter({
   routes,
   scrollBehavior(to, from) {
     // savedPosition 매개변수 제거
-    if (to.path.startsWith("/mypage") && from.path.startsWith("/mypage")) {
+    if (to.path.startsWith('/mypage') && from.path.startsWith('/mypage')) {
       return false;
     }
     return { top: 0 };
@@ -115,7 +119,7 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
       showLoginModalFlag.value = true; // 로그인 모달 표시
-      next("/");
+      next('/');
     } else {
       next();
     }

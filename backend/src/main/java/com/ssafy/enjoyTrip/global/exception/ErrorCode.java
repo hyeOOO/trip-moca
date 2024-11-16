@@ -18,7 +18,8 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND(4005, "저장된 리프레시 토큰이 없습니다"),
     DUPLICATE_MEMBER_ID(2001, "이미 사용중인 아이디입니다"),
     MEMBER_NOT_FOUND(2002, "가입되지 않은 아이디입니다"),
-    INVALID_PASSWORD(2003, "비밀번호가 일치하지 않습니다");
+    INVALID_PASSWORD(2003, "비밀번호가 일치하지 않습니다"),
+    DUPLICATE_EMAIL(2004, "이미 사용중인 이메일입니다");
 
 
     private final int code;
