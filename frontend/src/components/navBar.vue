@@ -76,7 +76,7 @@ export default {
     return {
       menuItems: [
         { name: "여행계획", path: "/travelPlan" },
-        { name: "경로검색", path: "/" },
+        { name: "경로검색", path: "/routeSearch" },
         { name: "추천관광", path: "/" },
         { name: "카드도감", path: "/" },
         { name: "마이페이지", path: "/" },
@@ -137,7 +137,7 @@ export default {
 }
 
 .nav-dark .info-top-text {
-  color: black;
+  color: var(--nav-text-color);
 }
 
 .info-top-text:hover {
@@ -224,7 +224,15 @@ export default {
 }
 
 .menu a.dark-text {
-  color: black;
+  color: var(--nav-text-color);
+}
+
+.nav-theme {
+  --nav-text-color: #ffffff;
+}
+
+.nav-dark {
+  --nav-text-color: #000000;
 }
 
 .nav-theme .menu a:hover {

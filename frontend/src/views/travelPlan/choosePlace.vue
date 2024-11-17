@@ -156,7 +156,8 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
-import testData from "@/assets/data/testData.js";
+import testData from "@/assets/data/testData.js"; // 임시 데이터
+// import axios from "@/api/axiosConfig"; // 1. Axios 설정 임시 데이터 지우고 가져오삼
 import Tmap from "@/components/Tmap.vue";
 
 export default {
@@ -179,7 +180,7 @@ export default {
       localEndDate: this.endDate,
       localFormattedDateRange: this.formattedDateRange,
       searchQuery: "",
-      places: testData,
+      places: testData, // 2. 이거 places: [], 로 바꾸고 axios로 가져오면 될걸?
       isCollapsed: false,
       isRightCollapsed: false,
       isStep2Active: true,
@@ -206,6 +207,16 @@ export default {
     },
   },
   methods: {
+    // 3.
+    //  async fetchPlaces() {
+    //   try {
+    //     const response = await axios.get("/places"); // 백엔드 API 엔드포인트
+    //     this.places = response.data; // JSON 데이터를 상태에 저장
+    //   } catch (error) {
+    //     console.error("데이터를 가져오는 중 오류 발생:", error);
+    //     alert("장소 데이터를 가져올 수 없습니다.");
+    //   }
+    // }, -> 데이터 가져오는 메서드..?
     checkAndNavigateToSavePlan() {
       // 선택된 장소가 있는지 확인
       const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
@@ -344,6 +355,10 @@ export default {
       });
     },
   },
+  // 4.
+  // async mounted() {
+  //   await this.fetchPlaces(); // 컴포넌트가 마운트될 때 백엔드에서 데이터 가져오는부분
+  // },
 };
 </script>
 
@@ -666,3 +681,19 @@ export default {
   min-height: 0;
 }
 </style>
+
+// 백엔드 API 예시
+// /place 엔드포인트에서 Json 형태로 데이터를 가져와야함
+// app.get("/places", (req, res) => {
+//   res.json([
+//     {
+//       attractionId: 12497,
+//       title: "가마오름",
+//       addr1: "제주특별자치도 제주시 한경면 청수서5길 63",
+//       latitude: 33.3059197039,
+//       longitude: 126.2507039833,
+//       image1: "http://tong.visitkorea.or.kr/cms/resource/95/3026695_image2_1.jpg",
+//     },
+//     // 추가 데이터...
+//   ]);
+// });

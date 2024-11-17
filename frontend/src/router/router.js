@@ -6,6 +6,7 @@ import ChooseDate from "@/views/travelPlan/chooseDate.vue";
 import ChoosePlace from "@/views/travelPlan/choosePlace.vue";
 import SavePlan from "@/views/travelPlan/savePlan.vue";
 import TmapSearch from "@/components/TmapSearch.vue";
+import RouteSearch from "@/views/routeSearch/routeSearch.vue";
 
 function getLatLng(cityName) {
   const coordinates = {
@@ -40,6 +41,11 @@ function getLatLng(cityName) {
 }
 
 const routes = [
+  {
+    path: "/routeSearch",
+    name: "RouteSearch",
+    component: RouteSearch,
+  },
   {
     path: "/search",
     name: "TmapSearch",
