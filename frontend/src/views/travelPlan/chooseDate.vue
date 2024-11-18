@@ -66,7 +66,7 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
-import Tmap from "@/components/Tmap.vue"; // Tmap 컴포넌트 import
+import Tmap from "@/components/Tmap/Tmap.vue"; // Tmap 컴포넌트 import
 
 export default {
   name: "ChooseDate",

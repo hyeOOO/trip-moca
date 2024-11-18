@@ -158,7 +158,7 @@
 import navBar from "@/components/navBar.vue";
 import testData from "@/assets/data/testData.js"; // 임시 데이터
 // import axios from "@/api/axiosConfig"; // 1. Axios 설정 임시 데이터 지우고 가져오삼
-import Tmap from "@/components/Tmap.vue";
+import Tmap from "@/components/Tmap/Tmap.vue";
 
 export default {
   name: "ChoosePlace",

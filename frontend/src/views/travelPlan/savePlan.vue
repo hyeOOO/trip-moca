@@ -135,7 +135,7 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
-import Tmap from "@/components/Tmap.vue";
+import Tmap from "@/components/Tmap/Tmap.vue";
 
 export default {
   name: "SavePlan",

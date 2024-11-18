@@ -127,7 +127,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import navBar from "@/components/navBar.vue";
-import TmapRoute from "@/components/TmapRoute.vue";
+import TmapRoute from "@/components/Tmap/TmapRoute.vue";
 
 // 상태 관리
 const startLocation = ref("");
