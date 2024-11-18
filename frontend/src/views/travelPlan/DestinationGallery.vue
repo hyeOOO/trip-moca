@@ -86,6 +86,7 @@ export default {
     navBar,
   },
   methods: {
+    // 선택한 도시의 정보를 chooseDate.vue 로 전달
     selectDestination(destination) {
       this.$router.push({
         name: "chooseDate",

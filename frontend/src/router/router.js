@@ -1,14 +1,18 @@
-import { createWebHistory, createRouter } from 'vue-router';
-import Main from '@/views/mainPage/mainPage.vue';
-import DestinationGallery from '@/views/travelPlan/DestinationGallery.vue';
-import choosePlace from '@/views/travelPlan/choosePlace.vue';
+import { createWebHistory, createRouter } from "vue-router";
+import Main from "@/views/mainPage/mainPage.vue";
+import DestinationGallery from "@/views/travelPlan/DestinationGallery.vue";
+import ChooseDate from "@/views/travelPlan/chooseDate.vue";
+import ChoosePlace from "@/views/travelPlan/choosePlace.vue";
 import Mypage from '@/views/mypage/mypage.vue';
 import MypagePlan from '@/views/mypage/mypagePlan.vue';
 import MypageCard from '@/views/mypage/mypageCard.vue';
 import { useAuthStore } from '@/store/auth';
 import { showLoginModalFlag } from '@/eventBus';
+import SavePlan from "@/views/travelPlan/savePlan.vue";
+import TmapSearch from "@/components/TmapSearch.vue";
+import RouteSearch from "@/views/routeSearch/routeSearch.vue";
 
-// 도시별 좌표 정보
+
 function getLatLng(cityName) {
   const coordinates = {
     서울: { lat: (37.4288 + 37.7017) / 2, lng: (126.7644 + 127.184) / 2 },
@@ -43,35 +47,77 @@ function getLatLng(cityName) {
 
 const routes = [
   {
-    path: '/',
+    path: "/routeSearch",
+    name: "RouteSearch",
+    component: RouteSearch,
+  },
+  {
+    path: "/search",
+    name: "TmapSearch",
+    component: TmapSearch,
+  },
+  {
+    path: "/",
+    name: "main",
     component: Main,
   },
   {
-    path: '/travelPlan',
+    path: "/login",
+    name: "login",
+    component: Login,
+  },
+  {
+    path: "/travelPlan",
+    name: "travelPlan",
     component: DestinationGallery,
   },
   {
-    path: '/chooseDate/:name',
-    name: 'chooseDate',
-    component: () => import('@/views/travelPlan/chooseDate.vue'),
+    path: "/chooseDate/:name",
+    name: "chooseDate",
+    component: ChooseDate,
+    props: (route) => {
+      const selectedPlaces = route.params.selectedPlaces || {};
+      return {
+        name: route.params.name,
+        id: route.query.id,
+        latitude: getLatLng(route.params.name).lat,
+        longitude: getLatLng(route.params.name).lng,
+        selectedPlaces: selectedPlaces,
+        startDate: "",
+        endDate: "",
+        formattedDateRange: "",
+      };
+    },
+  },
+  {
+    path: "/choosePlace/:name",
+    name: "choosePlace",
+    component: ChoosePlace,
     props: (route) => ({
       name: route.params.name,
+      startDate: route.query.startDate || "",
+      endDate: route.query.endDate || "",
+      formattedDateRange: route.query.formattedDateRange || "",
+      latitude: getLatLng(route.params.name)?.lat,
+      longitude: getLatLng(route.params.name)?.lng,
       id: route.query.id,
-      latitude: getLatLng(route.params.name).lat,
-      longitude: getLatLng(route.params.name).lng,
+      selectedPlaces: route.params.selectedPlaces
+        ? JSON.parse(route.params.selectedPlaces)
+        : {}, // JSON 파싱
     }),
   },
   {
-    path: '/choosePlace/:name', // URL 파라미터로 변경
-    name: 'choosePlace',
-    component: choosePlace,
+    path: "/save-plan/:name",
+    name: "savePlan",
+    component: SavePlan,
     props: (route) => ({
-      name: route.params.name, // URL 파라미터에서 name 가져오기
-      startDate: route.query.startDate || '',
-      endDate: route.query.endDate || '',
-      formattedDateRange: route.query.formattedDateRange || '',
-      latitude: getLatLng(route.params.name)?.lat,
-      longitude: getLatLng(route.params.name)?.lng,
+      name: route.params.name,
+      startDate: route.query.startDate || "",
+      endDate: route.query.endDate || "",
+      formattedDateRange: route.query.formattedDateRange || "",
+      selectedPlaces: route.params.selectedPlaces || {},
+      latitude: getLatLng(route.params.name).lat,
+      longitude: getLatLng(route.params.name).lng,
       id: route.query.id,
     }),
   },
