@@ -68,20 +68,20 @@
             <button
               :class="[
                 'route-type-btn',
-                { active: selectedRouteType === 'pedestrian' },
-              ]"
-              @click="selectRouteType('pedestrian')"
-            >
-              보행자 경로
-            </button>
-            <button
-              :class="[
-                'route-type-btn',
                 { active: selectedRouteType === 'car' },
               ]"
               @click="selectRouteType('car')"
             >
               자동차 경로
+            </button>
+            <button
+              :class="[
+                'route-type-btn',
+                { active: selectedRouteType === 'pedestrian' },
+              ]"
+              @click="selectRouteType('pedestrian')"
+            >
+              보행자 경로
             </button>
           </div>
           <div class="time-info">
@@ -118,6 +118,7 @@
           :selected-end="selectedEnd"
           :route-type="selectedRouteType"
           @route-calculated="handleRouteCalculated"
+          @locationSelected="handleLocationSelected"
         />
       </div>
     </div>
@@ -139,7 +140,7 @@ const endSuggestions = ref([]);
 const showStartSuggestions = ref(false);
 const showEndSuggestions = ref(false);
 const showRouteInfo = ref(false);
-const selectedRouteType = ref("pedestrian");
+const selectedRouteType = ref("car");
 const routeDetails = ref(null);
 const tmapRoute = ref(null);
 
@@ -192,13 +193,46 @@ const selectEndLocation = (suggestion) => {
   tmapRoute.value.setLocationMarker(suggestion, "end"); // 마커 표시 추가
   showEndSuggestions.value = false;
 };
+const handleLocationSelected = (location) => {
+  startLocation.value = location.name;
+  selectedStart.value = location;
+  showStartSuggestions.value = false;
+};
+// routeSearch.vue의 selectRouteType 함수 수정
+const selectRouteType = async (type) => {
+  if (type === "pedestrian") {
+    // 도보 경로 선택 시 거리 체크
+    const distance = calculateDistance(
+      selectedStart.value.lat,
+      selectedStart.value.lng,
+      selectedEnd.value.lat,
+      selectedEnd.value.lng
+    );
 
-// 경로 타입 선택
-const selectRouteType = (type) => {
+    if (distance > 10) {
+      alert("도보 경로는 10km 이내만 검색 가능합니다!!");
+      return; // 타입 변경하지 않고 함수 종료
+    }
+  }
+
   selectedRouteType.value = type;
   if (showRouteInfo.value) {
     searchRoute();
   }
+};
+
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 };
 
 // 경로 검색
@@ -223,7 +257,7 @@ const searchRoute = async () => {
 const handleRouteCalculated = (details) => {
   if (details) {
     routeDetails.value = details;
-    showRouteInfo.value = true;  // 여기서도 showRouteInfo를 true로 설정
+    showRouteInfo.value = true; // 여기서도 showRouteInfo를 true로 설정
   }
 };
 

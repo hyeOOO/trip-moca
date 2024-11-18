@@ -75,7 +75,7 @@ export default {
       menuItems: [
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
-        { name: "추천관광", path: "/" },
+        { name: "추천관광", path: "/detailedTravelPlan" },
         { name: "카드도감", path: "/" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],

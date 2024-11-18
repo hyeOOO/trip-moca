@@ -11,6 +11,7 @@ import { showLoginModalFlag } from '@/eventBus';
 import SavePlan from "@/views/travelPlan/savePlan.vue";
 import TmapSearch from "@/components/Tmap/TmapSearch.vue";
 import RouteSearch from "@/views/routeSearch/routeSearch.vue";
+import DetailedTravelPlan from "@/views/detailedTravelPlan/detailedTravelPlan.vue";
 
 
 function getLatLng(cityName) {
@@ -46,6 +47,11 @@ function getLatLng(cityName) {
 }
 
 const routes = [
+  {
+    path: "/detailedTravelPlan",
+    name: "DetailedTravelPlan",
+    component: DetailedTravelPlan,
+  },
   {
     path: "/routeSearch",
     name: "RouteSearch",

@@ -117,10 +117,17 @@
             </div>
             <div v-else class="selected-day-places">
               <div
-                v-for="place in selectedPlacesByDay[dayIndex - 1]"
+                v-for="(place, index) in selectedPlacesByDay[dayIndex - 1]"
                 :key="place.attractionId"
                 class="selected-place"
+                draggable="true"
+                @dragstart="
+                  dragStartSelected($event, place, dayIndex - 1, index)
+                "
+                @dragover.prevent
+                @drop.stop="onDrop($event, dayIndex - 1, index)"
               >
+                <div class="order-number">{{ index + 1 }}</div>
                 <div class="place-image">
                   <img :src="getImageUrl(place.image1)" :alt="place.title" />
                 </div>
@@ -187,6 +194,10 @@ export default {
       selectedPlacesByDay: {},
       selectedDay: null,
       showAllDays: false,
+      draggedItem: null,
+      draggedDay: null,
+      draggedIndex: null,
+      isSelectedPlaceDrag: false,
     };
   },
   computed: {
@@ -217,6 +228,7 @@ export default {
     //     alert("장소 데이터를 가져올 수 없습니다.");
     //   }
     // }, -> 데이터 가져오는 메서드..?
+
     checkAndNavigateToSavePlan() {
       // 선택된 장소가 있는지 확인
       const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
@@ -268,31 +280,105 @@ export default {
     },
     // 드래그 시작
     dragStart(event, place) {
-      event.dataTransfer.setData("text/plain", JSON.stringify(place));
+      this.isSelectedPlaceDrag = false;
+      event.dataTransfer.setData(
+        "text/plain",
+        JSON.stringify({
+          place,
+          isNew: true,
+        })
+      );
     },
+
+    dragStartSelected(event, place, dayIndex, placeIndex) {
+      this.isSelectedPlaceDrag = true;
+      event.dataTransfer.setData(
+        "text/plain",
+        JSON.stringify({
+          place,
+          fromDay: dayIndex,
+          fromIndex: placeIndex,
+          isNew: false,
+        })
+      );
+    },
+
     // 드롭 했을때
-    onDrop(event, dayIndex) {
-      const place = JSON.parse(event.dataTransfer.getData("text/plain"));
-      console.log("Dropped place full data:", place);
+    onDrop(event, targetDayIndex, targetIndex) {
+      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      const { place, fromDay, fromIndex, isNew } = data;
 
-      // longitude와 latitude 값이 있는지 확인하고, 없다면 영어 이름의 프로퍼티에서 값을 가져옴
-      if (!place.latitude && place.mapy) {
-        place.latitude = place.mapy;
+      // 현재 날짜의 장소들 복사
+      const currentPlaces = [
+        ...(this.selectedPlacesByDay[targetDayIndex] || []),
+      ];
+
+      if (!isNew) {
+        // 다른 날짜의 장소를 이동하는 경우
+        if (fromDay !== targetDayIndex) {
+          // 원래 위치에서 제거
+          const fromPlaces = [...(this.selectedPlacesByDay[fromDay] || [])];
+          fromPlaces.splice(fromIndex, 1);
+          this.selectedPlacesByDay[fromDay] = fromPlaces;
+
+          // 지정된 위치에 추가
+          if (targetIndex !== undefined) {
+            currentPlaces.splice(targetIndex, 0, place);
+          } else {
+            currentPlaces.push(place);
+          }
+        }
+        // 같은 날짜 내에서 이동하는 경우
+        else {
+          if (targetIndex !== undefined) {
+            currentPlaces.splice(fromIndex, 1); // 원래 위치에서 제거
+            currentPlaces.splice(targetIndex, 0, place); // 새 위치에 추가
+          }
+        }
       }
-      if (!place.longitude && place.mapx) {
-        place.longitude = place.mapx;
+      // 새로운 장소를 추가하는 경우 (middle-section에서 가져올 때)
+      else {
+        if (!place.latitude && place.mapy) {
+          place.latitude = place.mapy;
+        }
+        if (!place.longitude && place.mapx) {
+          place.longitude = place.mapx;
+        }
+        // 새로운 장소는 항상 끝에 추가
+        currentPlaces.push(place);
       }
 
-      console.log("Processed coordinates:", {
-        latitude: place.latitude,
-        longitude: place.longitude,
-      });
-
-      if (!this.selectedPlacesByDay[dayIndex]) {
-        this.selectedPlacesByDay[dayIndex] = [];
-      }
-      this.selectedPlacesByDay[dayIndex].push(place);
+      this.selectedPlacesByDay[targetDayIndex] = currentPlaces;
+      this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
     },
+
+    onDropReorder(event, dayIndex, targetIndex) {
+      event.stopPropagation();
+
+      if (!this.isSelectedPlaceDrag) return;
+
+      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      const { fromDay, fromIndex } = data;
+
+      if (fromDay === dayIndex && fromIndex !== targetIndex) {
+        const places = [...this.selectedPlacesByDay[dayIndex]];
+        const [removed] = places.splice(fromIndex, 1);
+        places.splice(targetIndex, 0, removed);
+        this.selectedPlacesByDay[dayIndex] = places;
+        // 반응성을 위해 객체를 새로 할당
+        this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
+      }
+
+      this.resetDragState();
+    },
+
+    resetDragState() {
+      this.draggedItem = null;
+      this.draggedDay = null;
+      this.draggedIndex = null;
+      this.isSelectedPlaceDrag = false;
+    },
+
     removePlace(dayIndex, place) {
       this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
         dayIndex
@@ -528,9 +614,11 @@ export default {
 .place-image {
   width: 80px;
   height: 80px;
-  margin-right: 16px;
+  margin-right: 8px;
 }
-
+.order-number {
+  margin-right: 8px;
+}
 .place-image img {
   width: 100%;
   height: 100%;
@@ -656,7 +744,7 @@ export default {
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 500;
-  background: #2B2B2B;
+  background: #2b2b2b;
   color: white;
 }
 
@@ -680,20 +768,75 @@ export default {
   height: 100%;
   min-height: 0;
 }
+
+/* 기존 스타일 유지하고 selected-place에 대한 스타일 추가 */
+.selected-place {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  padding-left: 48px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selected-place:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.selected-place .order-number {
+  position: absolute;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  background-color: #f57c00;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.selected-place.dragging {
+  opacity: 0.5;
+}
+
+/* 드롭 영역 스타일 */
+.day-section {
+  position: relative;
+}
+
+.day-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.day-section.drag-over::after {
+  opacity: 1;
+}
+
+/* 나머지 기존 스타일 유지 */
 </style>
 
-// 백엔드 API 예시
-// /place 엔드포인트에서 Json 형태로 데이터를 가져와야함
-// app.get("/places", (req, res) => {
-//   res.json([
-//     {
-//       attractionId: 12497,
-//       title: "가마오름",
-//       addr1: "제주특별자치도 제주시 한경면 청수서5길 63",
-//       latitude: 33.3059197039,
-//       longitude: 126.2507039833,
-//       image1: "http://tong.visitkorea.or.kr/cms/resource/95/3026695_image2_1.jpg",
-//     },
-//     // 추가 데이터...
-//   ]);
-// });
+// 백엔드 API 예시 // /place 엔드포인트에서 Json 형태로 데이터를 가져와야함 //
+app.get("/places", (req, res) => { // res.json([ // { // attractionId: 12497, //
+title: "가마오름", // addr1: "제주특별자치도 제주시 한경면 청수서5길 63", //
+latitude: 33.3059197039, // longitude: 126.2507039833, // image1:
+"http://tong.visitkorea.or.kr/cms/resource/95/3026695_image2_1.jpg", // }, // //
+추가 데이터... // ]); // });
