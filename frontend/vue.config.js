@@ -1,11 +1,9 @@
 const { defineConfig } = require('@vue/cli-service');
+
 module.exports = defineConfig({
   transpileDependencies: true,
-});
-//webpack 설정을 추가
-module.exports = {
   devServer: {
-    port: 5173, // 원하는 포트 번호
+    port: 5173,
   },
   css: {
     loaderOptions: {
@@ -16,4 +14,14 @@ module.exports = {
       },
     },
   },
-};
+  // ESLint 설정 수정
+  lintOnSave: false,  // ESLint 검사 비활성화
+  configureWebpack: {
+    resolve: {
+      fallback: {
+        fs: false,
+        path: false
+      }
+    }
+  }
+});

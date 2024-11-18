@@ -1,8 +1,10 @@
 <template>
   <div class="layout-container">
     <navBar />
-
-    <div class="content-wrapper" :class="{ collapsed: isCollapsed }">
+    <div
+      class="content-wrapper"
+      :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }"
+    >
       <!-- Left Sidebar -->
       <div class="steps-sidebar">
         <div class="steps-nav">
@@ -10,62 +12,63 @@
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
           </div>
-
-          <div class="step active">
+          <div
+            class="step"
+            :class="{ active: isStep2Active }"
+            @click="toggleStep2"
+          >
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
-
-          <router-link to="/make-plan" class="step">
+          <div class="step" @click="checkAndNavigateToSavePlan">
             <div class="step-number">STEP 3</div>
             <div class="step-title">계획 생성</div>
-          </router-link>
+          </div>
         </div>
       </div>
 
       <!-- Middle Section -->
       <div class="middle-section">
         <div class="toggle-button" @click="toggleCollapse">
-          <i class="fa-solid fa-arrow-left"></i>
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isCollapsed,
+              'fa-arrow-right': isCollapsed,
+            }"
+          ></i>
         </div>
-
         <div class="header">
           <h2>{{ name }}</h2>
-          <p v-if="formattedDateRange" class="date-range">
-            {{ formattedDateRange }}
+          <p v-if="localFormattedDateRange" class="date-range">
+            {{ localFormattedDateRange }}
           </p>
         </div>
-
         <div class="search-section">
           <div class="search-box">
             <input
               type="text"
               v-model="searchQuery"
               placeholder="여행지를 검색하세요"
-              @input="searchPlaces"
+              @keyup.enter="handleSearch"
             />
-            <i class="fa-solid fa-search"></i>
+            <i class="fa-solid fa-search" @click="handleSearch"></i>
           </div>
         </div>
-
         <div class="places-list">
           <div
             v-for="place in filteredPlaces"
             :key="place.attractionId"
             class="place-item"
+            draggable="true"
+            @dragstart="dragStart($event, place)"
           >
             <div class="place-image">
-              <img
-                :src="place.image1 || '/default-place.jpg'"
-                :alt="place.title"
-              />
+              <img :src="getImageUrl(place.image1)" :alt="place.title" />
             </div>
             <div class="place-info">
-              <h3>{{ place.title }}</h3>
-              <p>{{ place.addr1 }}</p>
-              <button @click="selectPlace(place)" class="select-button">
-                선택
-              </button>
+              <h3 class="place-title">{{ place.title }}</h3>
+              <p class="place-address">{{ place.addr1 }}</p>
             </div>
           </div>
         </div>
@@ -73,34 +76,58 @@
 
       <!-- Right Section -->
       <div class="right-section">
+        <div class="toggle-button" @click="toggleRightSection">
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isRightCollapsed,
+              'fa-arrow-right': isRightCollapsed,
+            }"
+          ></i>
+        </div>
+        <div class="header">
+          <h2>선택한 장소</h2>
+        </div>
         <div class="selected-places">
           <div
-            v-for="(dayPlaces, index) in selectedPlacesByDay"
-            :key="index"
+            v-for="dayIndex in numberOfDays"
+            :key="dayIndex - 1"
             class="day-section"
+            @dragover.prevent
+            @drop="onDrop($event, dayIndex - 1)"
           >
             <div class="day-header">
-              <h3>{{ index + 1 }}일차 {{ formatDate(getTripDate(index)) }}</h3>
-              <button @click="clearDay(index)" class="clear-button">
-                <i class="fa-solid fa-rotate-left"></i> 초기화
-              </button>
+              <h3 @click="selectDay(dayIndex - 1)" style="cursor: pointer">
+                {{ dayIndex }}일차 {{ formatDate(getTripDate(dayIndex - 1)) }}
+              </h3>
+              <div class="day-header-buttons">
+                <button @click="showAllMarkers" class="view-all-button">
+                  전체보기
+                </button>
+                <button @click="clearDay(dayIndex - 1)" class="clear-button">
+                  <i class="fa-solid fa-rotate-left"></i> 초기화
+                </button>
+              </div>
             </div>
-            <div class="day-places">
+            <div
+              v-if="!selectedPlacesByDay[dayIndex - 1]?.length"
+              class="empty-day"
+            >
+              <p></p>
+            </div>
+            <div v-else class="selected-day-places">
               <div
-                v-for="place in dayPlaces"
+                v-for="place in selectedPlacesByDay[dayIndex - 1]"
                 :key="place.attractionId"
                 class="selected-place"
               >
                 <div class="place-image">
-                  <img
-                    :src="place.image1 || '/default-place.jpg'"
-                    :alt="place.title"
-                  />
+                  <img :src="getImageUrl(place.image1)" :alt="place.title" />
                 </div>
                 <div class="place-info">
                   <h4>{{ place.title }}</h4>
                   <button
-                    @click="removePlace(index, place)"
+                    @click="removePlace(dayIndex - 1, place)"
                     class="remove-button"
                   >
                     <i class="fa-solid fa-times"></i>
@@ -110,49 +137,56 @@
             </div>
           </div>
         </div>
+        <button @click="saveAndNavigate" class="save-button">저장</button>
       </div>
-
-      <!-- Map -->
-      <div class="map-container" ref="tmap"></div>
+      <div class="map-container">
+        <Tmap
+          ref="tmap"
+          :latitude="latitude"
+          :longitude="longitude"
+          :selected-places-by-day="selectedPlacesByDay"
+          :selected-day="selectedDay"
+          :show-all-days="showAllDays"
+        />
+        <!-- selected-places-by-day 선택한 장소에 대한 정보들 -->
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import navBar from "@/components/navBar.vue";
-import testData from "@/assets/data/testData.js";
+import testData from "@/assets/data/testData.js"; // 임시 데이터
+// import axios from "@/api/axiosConfig"; // 1. Axios 설정 임시 데이터 지우고 가져오삼
+import Tmap from "@/components/Tmap.vue";
 
 export default {
   name: "ChoosePlace",
   components: {
     navBar,
+    Tmap,
   },
   props: {
-    name: {
-      type: String,
-      required: true,
-    },
-    formattedDateRange: {
-      type: String,
-      required: true,
-    },
-    startDate: {
-      type: String,
-      required: true,
-    },
-    endDate: {
-      type: String,
-      required: true,
-    },
+    name: String,
+    formattedDateRange: String,
+    startDate: String,
+    endDate: String,
+    latitude: Number,
+    longitude: Number,
   },
   data() {
     return {
+      localStartDate: this.startDate,
+      localEndDate: this.endDate,
+      localFormattedDateRange: this.formattedDateRange,
       searchQuery: "",
-      places: testData,
-      selectedPlacesByDay: {},
-      map: null,
-      markers: [],
+      places: testData, // 2. 이거 places: [], 로 바꾸고 axios로 가져오면 될걸?
       isCollapsed: false,
+      isRightCollapsed: false,
+      isStep2Active: true,
+      selectedPlacesByDay: {},
+      selectedDay: null,
+      showAllDays: false,
     };
   },
   computed: {
@@ -166,105 +200,170 @@ export default {
       );
     },
     numberOfDays() {
-      if (!this.startDate || !this.endDate) return 0;
-      const start = new Date(this.startDate);
-      const end = new Date(this.endDate);
+      if (!this.localStartDate || !this.localEndDate) return 0;
+      const start = new Date(this.localStartDate);
+      const end = new Date(this.localEndDate);
       return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     },
   },
   methods: {
-    goToDateSelection() {
+    // 3.
+    //  async fetchPlaces() {
+    //   try {
+    //     const response = await axios.get("/places"); // 백엔드 API 엔드포인트
+    //     this.places = response.data; // JSON 데이터를 상태에 저장
+    //   } catch (error) {
+    //     console.error("데이터를 가져오는 중 오류 발생:", error);
+    //     alert("장소 데이터를 가져올 수 없습니다.");
+    //   }
+    // }, -> 데이터 가져오는 메서드..?
+    checkAndNavigateToSavePlan() {
+      // 선택된 장소가 있는지 확인
+      const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
+        (places) => places && places.length > 0
+      );
+
+      if (!hasSelectedPlaces) {
+        alert("장소를 선택해주세요!");
+        return;
+      }
+
+      // 장소가 선택되었다면 저장 페이지로 이동
+      this.saveAndNavigate();
+    },
+    // 저장하고 다음 페이지로 이동
+    saveAndNavigate() {
       this.$router.push({
-        path: `/chooseDate/${this.name}`, // name을 URL 파라미터로 전달
+        name: "savePlan",
+        params: {
+          name: this.name,
+          selectedPlaces: this.selectedPlacesByDay,
+        },
         query: {
-          id: this.$route.query.id || "2", // 현재 route에서 id를 가져오거나 기본값 '2' 사용
+          startDate: this.localStartDate,
+          endDate: this.localEndDate,
+          id: this.$route.query.id,
         },
       });
     },
+    // 일차 선택 시 호출될 메서드
+    selectDay(dayIndex) {
+      this.selectedDay = dayIndex;
+      this.showAllDays = false;
+    },
 
+    // 전체 보기 선택 시 호출될 메서드
+    showAllMarkers() {
+      this.showAllDays = true;
+      this.selectedDay = null;
+    },
+    updateMapSize() {
+      if (this.$refs.tmap) {
+        setTimeout(() => {
+          this.$refs.tmap.getMap().resize();
+          const center = new Tmapv2.LatLng(this.latitude, this.longitude);
+          this.$refs.tmap.getMap().setCenter(center);
+        }, 400);
+      }
+    },
+    // 드래그 시작
+    dragStart(event, place) {
+      event.dataTransfer.setData("text/plain", JSON.stringify(place));
+    },
+    // 드롭 했을때
+    onDrop(event, dayIndex) {
+      const place = JSON.parse(event.dataTransfer.getData("text/plain"));
+      console.log("Dropped place full data:", place);
+
+      // longitude와 latitude 값이 있는지 확인하고, 없다면 영어 이름의 프로퍼티에서 값을 가져옴
+      if (!place.latitude && place.mapy) {
+        place.latitude = place.mapy;
+      }
+      if (!place.longitude && place.mapx) {
+        place.longitude = place.mapx;
+      }
+
+      console.log("Processed coordinates:", {
+        latitude: place.latitude,
+        longitude: place.longitude,
+      });
+
+      if (!this.selectedPlacesByDay[dayIndex]) {
+        this.selectedPlacesByDay[dayIndex] = [];
+      }
+      this.selectedPlacesByDay[dayIndex].push(place);
+    },
+    removePlace(dayIndex, place) {
+      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
+        dayIndex
+      ].filter((p) => p.attractionId !== place.attractionId);
+    },
+    clearDay(dayIndex) {
+      this.selectedPlacesByDay[dayIndex] = [];
+    },
+    getImageUrl(imageUrl) {
+      return (
+        imageUrl ||
+        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+      );
+    },
+    getTripDate(dayIndex) {
+      if (!this.localStartDate) return "";
+      const date = new Date(this.localStartDate);
+      date.setDate(date.getDate() + dayIndex);
+      return date;
+    },
+    formatDate(date) {
+      if (!date) return "";
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      return `(${days[date.getDay()]})`;
+    },
     toggleCollapse() {
       this.isCollapsed = !this.isCollapsed;
       setTimeout(() => {
         this.updateMapSize();
       }, 300);
     },
-
-    searchPlaces() {
-      // 검색 로직 구현
+    toggleRightSection() {
+      this.isRightCollapsed = !this.isRightCollapsed;
+      setTimeout(() => {
+        this.updateMapSize();
+      }, 300);
     },
-
-    selectPlace(place) {
-      const currentDay = this.getCurrentDay();
-      if (!this.selectedPlacesByDay[currentDay]) {
-        this.selectedPlacesByDay[currentDay] = []; // 직접 할당
+    toggleStep2() {
+      this.isStep2Active = !this.isStep2Active;
+      if (!this.isStep2Active) {
+        this.isCollapsed = true;
+        this.isRightCollapsed = true;
+      } else {
+        this.isCollapsed = false;
+        this.isRightCollapsed = false;
       }
-      this.selectedPlacesByDay[currentDay].push(place);
-      this.updateMap();
+      this.updateMapSize();
     },
-
-    removePlace(day, place) {
-      const index = this.selectedPlacesByDay[day].findIndex(
-        (p) => p.attractionId === place.attractionId
-      );
-      if (index > -1) {
-        this.selectedPlacesByDay[day].splice(index, 1);
-      }
-      this.updateMap();
+    handleSearch() {
+      if (!this.searchQuery.trim()) return;
     },
-
-    clearDay(day) {
-      this.selectedPlacesByDay[day] = []; // 직접 할당
-      this.updateMap();
-    },
-
-    getCurrentDay() {
-      // 현재 선택된 날짜에 해당하는 일차를 반환
-      return 0; // 기본값
-    },
-
-    getTripDate(dayIndex) {
-      if (!this.startDate) return "";
-      const date = new Date(this.startDate);
-      date.setDate(date.getDate() + dayIndex);
-      return date;
-    },
-
-    formatDate(date) {
-      if (!date) return "";
-      const days = ["일", "월", "화", "수", "목", "금", "토"];
-      return `(${days[date.getDay()]})`;
-    },
-
-    updateMap() {
-      // TMap 업데이트 로직
-    },
-
-    updateMapSize() {
-      if (this.map) {
-        this.map.resize();
-      }
-    },
-
-    initializeMap() {
-      // TMap 초기화 로직
+    goToDateSelection() {
+      this.$router.push({
+        name: "chooseDate",
+        query: {
+          name: this.name,
+          startDate: this.localStartDate,
+          endDate: this.localEndDate,
+        },
+      });
     },
   },
-  mounted() {
-    this.initializeMap();
-    // 일수만큼 selectedPlacesByDay 초기화
-    for (let i = 0; i < this.numberOfDays; i++) {
-      this.selectedPlacesByDay[i] = []; // 직접 할당
-    }
-  },
-  beforeUnmount() {
-    if (this.map) {
-      this.map.destroy();
-    }
-  },
+  // 4.
+  // async mounted() {
+  //   await this.fetchPlaces(); // 컴포넌트가 마운트될 때 백엔드에서 데이터 가져오는부분
+  // },
 };
 </script>
 
 <style scoped>
+/* Base layout */
 .layout-container {
   display: flex;
   flex-direction: column;
@@ -274,32 +373,90 @@ export default {
 
 .content-wrapper {
   display: grid;
-  grid-template-columns: 200px 320px 320px 1fr;
+  grid-template-columns: 200px 380px 380px 1fr;
+  grid-template-rows: 1fr;
   height: calc(100vh - 64px);
   overflow: hidden;
   transition: all 0.3s ease;
+  gap: 0;
 }
 
+/* Collapse states */
 .content-wrapper.collapsed {
-  grid-template-columns: 200px 0 320px 1fr;
+  grid-template-columns: 200px 0 380px 1fr;
 }
 
-/* Left sidebar styles from previous component */
-.steps-sidebar {
+.content-wrapper.right-collapsed {
+  grid-template-columns: 200px 380px 0 1fr;
+}
+
+.content-wrapper.collapsed.right-collapsed {
+  grid-template-columns: 200px 0 0 1fr;
+}
+
+/* Common section styles */
+.steps-sidebar,
+.middle-section,
+.right-section {
   background: white;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   border-right: 1px solid #eee;
   height: 100%;
   overflow-y: auto;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
-.steps-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* Section collapse states */
+.content-wrapper.collapsed .middle-section,
+.content-wrapper.right-collapsed .right-section {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
 }
 
+/* Common scrollbar styles */
+.middle-section::-webkit-scrollbar,
+.right-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.middle-section::-webkit-scrollbar-track,
+.right-section::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.middle-section::-webkit-scrollbar-thumb,
+.right-section::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.middle-section::-webkit-scrollbar-thumb:hover,
+.right-section::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Header styles */
+.header {
+  margin-bottom: 24px;
+}
+
+.header h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+.date-range {
+  color: #f57c00;
+  font-size: 14px;
+}
+
+/* Step styles */
 .step {
   display: flex;
   flex-direction: column;
@@ -323,36 +480,10 @@ export default {
   margin-bottom: 4px;
 }
 
-.step-title {
-  font-size: 16px;
-}
-
-/* Middle section styles */
-.middle-section {
-  position: relative;
-  background: white;
-  padding: 24px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.search-section {
-  margin: 20px 0;
-}
-
+/* Search styles */
 .search-box {
   position: relative;
-  width: 100%;
-}
-
-.search-box input {
-  width: 100%;
-  padding: 12px 40px 12px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  margin-bottom: 20px;
 }
 
 .search-box i {
@@ -361,127 +492,107 @@ export default {
   top: 50%;
   transform: translateY(-50%);
   color: #666;
+  cursor: pointer;
 }
 
+.search-box input {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  font-size: 14px;
+}
+
+/* Place item styles */
 .places-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.place-item,
+.selected-place {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 12px;
 }
 
 .place-item {
-  display: flex;
-  padding: 12px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  gap: 12px;
+  cursor: move;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .place-image {
-  width: 100px;
-  height: 100px;
-  overflow: hidden;
-  border-radius: 4px;
+  width: 80px;
+  height: 80px;
+  margin-right: 16px;
 }
 
 .place-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 8px;
 }
 
 .place-info {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
 }
 
-.select-button {
-  align-self: flex-end;
-  padding: 8px 16px;
-  background-color: #f57c00;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.place-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
 }
 
-.select-button:hover {
-  background-color: #ef6c00;
+.place-address {
+  font-size: 13px;
+  color: #666;
 }
 
-/* Right section styles */
-.right-section {
-  background: white;
-  padding: 24px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee;
-  height: 100%;
-  overflow-y: auto;
-}
-
+/* Day section styles */
 .day-section {
-  margin-bottom: 24px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 16px;
 }
 
 .day-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-.clear-button {
-  padding: 6px 12px;
-  background-color: #f5f5f5;
-  border: none;
-  border-radius: 4px;
+.day-header h3 {
   cursor: pointer;
-  font-size: 12px;
-  color: #666;
-  transition: background-color 0.3s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
-.clear-button:hover {
-  background-color: #e0e0e0;
+.day-header h3:hover {
+  background-color: #f0f0f0;
 }
 
-.day-places {
+.day-header-buttons {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
-.selected-place {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #eee;
+.empty-day {
+  text-align: center;
+  padding: 20px;
+  background: #fff;
+  border: 2px dashed #ddd;
   border-radius: 8px;
 }
 
-.remove-button {
-  padding: 4px;
-  background: none;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.remove-button:hover {
-  color: #f44336;
-}
-
-/* Map container styles */
-.map-container {
-  width: 100%;
-  height: 100%;
-}
-
-/* Toggle button styles */
+/* Button styles */
 .toggle-button {
   position: absolute;
   top: 20px;
@@ -497,17 +608,92 @@ export default {
   transition: transform 0.3s ease;
 }
 
-.toggle-button:hover {
-  transform: scale(1.1);
-}
-
 .toggle-button i {
   font-size: 18px;
   color: #666;
   transition: color 0.3s ease;
 }
 
+.toggle-button:hover {
+  transform: scale(1.1);
+}
+
 .toggle-button:hover i {
   color: #f57c00;
 }
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.remove-button,
+.clear-button,
+.view-all-button,
+.save-button {
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 6px 12px;
+}
+
+.remove-button {
+  background: none;
+  color: #666;
+}
+
+.clear-button {
+  background-color: #f1f1f1;
+}
+
+.view-all-button {
+  background-color: #4caf50;
+  color: white;
+}
+
+.save-button {
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  background: #2B2B2B;
+  color: white;
+}
+
+/* Map container */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.map-container :deep(.map-wrapper) {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
 </style>
+
+// 백엔드 API 예시
+// /place 엔드포인트에서 Json 형태로 데이터를 가져와야함
+// app.get("/places", (req, res) => {
+//   res.json([
+//     {
+//       attractionId: 12497,
+//       title: "가마오름",
+//       addr1: "제주특별자치도 제주시 한경면 청수서5길 63",
+//       latitude: 33.3059197039,
+//       longitude: 126.2507039833,
+//       image1: "http://tong.visitkorea.or.kr/cms/resource/95/3026695_image2_1.jpg",
+//     },
+//     // 추가 데이터...
+//   ]);
+// });
