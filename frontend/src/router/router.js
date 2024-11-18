@@ -9,7 +9,7 @@ import MypageCard from '@/views/mypage/mypageCard.vue';
 import { useAuthStore } from '@/store/auth';
 import { showLoginModalFlag } from '@/eventBus';
 import SavePlan from "@/views/travelPlan/savePlan.vue";
-import TmapSearch from "@/components/TmapSearch.vue";
+import TmapSearch from "@/components/Tmap/TmapSearch.vue";
 import RouteSearch from "@/views/routeSearch/routeSearch.vue";
 
 
