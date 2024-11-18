@@ -15,7 +15,9 @@
           <p class="error-message" v-if="loginErrors.password">{{ loginErrors.password }}</p>
         </label>
         <p class="forgot-pass">비밀번호를 잊어버리셨나요?</p>
-        <button type="button" class="modal-btn submit" @click="handleLogin" :disabled="!isLoginFormValid">로그인</button>
+        <button type="button" class="modal-btn submit" @click="handleLogin" :disabled="!isLoginFormValid">
+          로그인
+        </button>
         <button type="button" class="modal-btn close" @click="closeModal">닫기</button>
       </div>
       <div class="sub-cont">
@@ -61,8 +63,9 @@
             <input type="email" v-model="signupForm.email" @input="validateEmail" />
             <p class="error-message" v-if="signupErrors.email">{{ signupErrors.email }}</p>
           </label>
-          <button type="button" class="modal-btn submit" @click="handleSignUp"
-            :disabled="!isSignupFormValid">회원가입</button>
+          <button type="button" class="modal-btn submit" @click="handleSignUp" :disabled="!isSignupFormValid">
+            회원가입
+          </button>
           <button type="button" class="modal-btn close" @click="closeModal">닫기</button>
         </div>
       </div>
@@ -74,6 +77,7 @@
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "vue-router"; // router 추가
 import api from "@/plugins/axios"; // api import 추가
+import { showLoginModalFlag } from "@/eventBus"; // eventBus import 추가
 
 export default {
   name: "LoginModal",
@@ -115,21 +119,25 @@ export default {
   },
   computed: {
     isLoginFormValid() {
-      return !this.loginErrors.id &&
+      return (
+        !this.loginErrors.id &&
         !this.loginErrors.password &&
         this.loginForm.id &&
-        this.loginForm.password;
+        this.loginForm.password
+      );
     },
     isSignupFormValid() {
-      return !this.signupErrors.id &&
+      return (
+        !this.signupErrors.id &&
         !this.signupErrors.password &&
         !this.signupErrors.email &&
         !this.signupErrors.name &&
         this.signupForm.id &&
         this.signupForm.password &&
         this.signupForm.email &&
-        this.signupForm.name;
-    }
+        this.signupForm.name
+      );
+    },
   },
   watch: {
     modelValue(newValue) {
@@ -176,7 +184,8 @@ export default {
       if (!this.signupForm.password) {
         this.signupErrors.password = "비밀번호를 입력해주세요.";
       } else if (!passwordRegex.test(this.signupForm.password)) {
-        this.signupErrors.password = "비밀번호는 8자 이상이며, 영문, 숫자, 특수문자를 포함해야 합니다.";
+        this.signupErrors.password =
+          "비밀번호는 8자 이상이며, 영문, 숫자, 특수문자를 포함해야 합니다.";
       } else {
         this.signupErrors.password = "";
       }
@@ -203,6 +212,12 @@ export default {
     },
     closeModal() {
       this.$emit("update:modelValue", false);
+      showLoginModalFlag.value = false; // flag 값도 false로 설정
+
+      // 로그인하지 않고 모달을 닫을 때 router의 현재 경로를 메인으로 강제 이동
+      if (!this.authStore.isAuthenticated) {
+        this.$router.push("/");
+      }
     },
     toggleForm() {
       this.isSignUp = !this.isSignUp;
@@ -217,7 +232,7 @@ export default {
         id: "",
         password: "",
         email: "",
-        name: ""
+        name: "",
       };
       this.loginErrors = {
         id: "",
@@ -242,6 +257,8 @@ export default {
 
         if (response || this.authStore.accessToken) {
           this.closeModal(); // 모달 닫기
+          // 로그인 성공 시 showLoginModalFlag 값을 false로 설정
+          showLoginModalFlag.value = false;
           this.$router.push("/"); // 또는 다른 페이지로 리다이렉트
         } else {
           alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
@@ -255,23 +272,54 @@ export default {
       if (!this.isSignupFormValid) {
         return;
       }
+
       try {
-        // api를 import 해서 사용
         const response = await api.post("/api/auth/signup", {
           memberId: this.signupForm.id,
           password: this.signupForm.password,
           email: this.signupForm.email,
-          name: this.signupForm.name
+          name: this.signupForm.name,
         });
 
         if (response.status === 200) {
           alert("회원가입이 완료되었습니다. 로그인해주세요.");
-          this.isSignUp = false; // 로그인 폼으로 전환
+          this.isSignUp = false;
           this.resetForms();
         }
       } catch (error) {
-        console.error("Signup error:", error);
-        alert("회원가입 중 오류가 발생했습니다.");
+        console.group('회원가입 에러');
+        console.error('Error object:', error);
+        console.error('Error response:', error.response?.data);
+        console.groupEnd();
+
+        if (error.response?.data) {
+          const { code, message } = error.response.data;
+
+          switch (code) {
+            case 2001:
+              alert(message || "이미 사용중인 아이디입니다.");
+              this.signupForm.id = "";
+              this.$nextTick(() => {
+                const idInput = document.querySelector('.sign-up input[type="text"]');
+                if (idInput) idInput.focus();
+              });
+              break;
+
+            case 2004:
+              alert(message || "이미 사용중인 이메일입니다.");
+              this.signupForm.email = "";
+              this.$nextTick(() => {
+                const emailInput = document.querySelector('.sign-up input[type="email"]');
+                if (emailInput) emailInput.focus();
+              });
+              break;
+
+            default:
+              alert(message || "회원가입 중 오류가 발생했습니다.");
+          }
+        } else {
+          alert("서버와의 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        }
       }
     },
   },
@@ -342,11 +390,8 @@ body.modal-open {
   transform: translate(-50%, -50%);
   /* 위치 조정 */
   box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07),
-    0 2px 4px rgba(0, 0, 0, 0.07),
-    0 4px 8px rgba(0, 0, 0, 0.07),
-    0 8px 16px rgba(0, 0, 0, 0.07),
-    0 16px 32px rgba(0, 0, 0, 0.07),
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.07),
+    0 4px 8px rgba(0, 0, 0, 0.07), 0 8px 16px rgba(0, 0, 0, 0.07), 0 16px 32px rgba(0, 0, 0, 0.07),
     0 32px 64px rgba(0, 0, 0, 0.07);
   border-radius: 10px;
 }
@@ -387,7 +432,7 @@ body.modal-open {
   width: 260px;
   height: 36px;
   border-radius: 30px;
-  font-family: 'Pretendard-SemiBold';
+  font-family: "Pretendard-SemiBold";
   font-size: 15px;
   cursor: pointer;
 }
@@ -455,13 +500,13 @@ body.modal-open {
 }
 
 .img__text h2 {
-  font-family: 'Pretendard-SemiBold';
+  font-family: "Pretendard-SemiBold";
   margin-bottom: 10px;
   font-weight: normal;
 }
 
 .img__text p {
-  font-family: 'Pretendard-Regular';
+  font-family: "Pretendard-Regular";
   font-size: 14px;
   line-height: 1.5;
 }
@@ -488,7 +533,7 @@ body.modal-open {
   background: transparent;
   color: #fff;
   text-transform: uppercase;
-  font-family: 'Pretendard-Regular';
+  font-family: "Pretendard-Regular";
   font-size: 15px;
   cursor: pointer;
 }
@@ -590,7 +635,7 @@ input {
   margin-top: 5px;
   text-align: center;
   min-height: 15px;
-  font-family: 'Pretendard-Regular';
+  font-family: "Pretendard-Regular";
 }
 
 button:disabled {

@@ -13,6 +13,9 @@ import java.util.List;
 public class PlanDetailsResponseDto {
     private Long planId;
     private String planTitle;
+    private Long areaCode;
+    private String sidoName;
+    private String planProfileImg;
     private PlanStatus status;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -22,6 +25,9 @@ public class PlanDetailsResponseDto {
         return PlanDetailsResponseDto.builder()
                 .planId(plan.getPlanId())
                 .planTitle(plan.getPlanTitle())
+                .areaCode(plan.getAreaCode())
+                .sidoName(plan.getArea().getSidoName())
+                .planProfileImg(plan.getPlanProfileImg())
                 .status(plan.getStatus())
                 .startDate(plan.getStartDate())
                 .endDate(plan.getEndDate())

@@ -1,12 +1,17 @@
 import { createWebHistory, createRouter } from "vue-router";
 import Main from "@/views/mainPage/mainPage.vue";
-import Login from "@/views/login/loginPage.vue";
 import DestinationGallery from "@/views/travelPlan/DestinationGallery.vue";
 import ChooseDate from "@/views/travelPlan/chooseDate.vue";
 import ChoosePlace from "@/views/travelPlan/choosePlace.vue";
+import Mypage from '@/views/mypage/mypage.vue';
+import MypagePlan from '@/views/mypage/mypagePlan.vue';
+import MypageCard from '@/views/mypage/mypageCard.vue';
+import { useAuthStore } from '@/store/auth';
+import { showLoginModalFlag } from '@/eventBus';
 import SavePlan from "@/views/travelPlan/savePlan.vue";
 import TmapSearch from "@/components/TmapSearch.vue";
 import RouteSearch from "@/views/routeSearch/routeSearch.vue";
+
 
 function getLatLng(cityName) {
   const coordinates = {
@@ -111,19 +116,62 @@ const routes = [
       endDate: route.query.endDate || "",
       formattedDateRange: route.query.formattedDateRange || "",
       selectedPlaces: route.params.selectedPlaces || {},
-      latitude: getLatLng(route.params.name)?.lat,
-      longitude: getLatLng(route.params.name)?.lng,
+      latitude: getLatLng(route.params.name).lat,
+      longitude: getLatLng(route.params.name).lng,
       id: route.query.id,
     }),
+  },
+  {
+    path: '/mypage',
+    component: Mypage,
+    meta: { requiresAuth: true }, // 인증 필요 표시
+    children: [
+      {
+        path: '',
+        redirect: '/mypage/plan',
+      },
+      {
+        path: 'plan',
+        component: MypagePlan,
+        meta: { requiresAuth: true },
+      },
+      {
+        path: 'card',
+        component: MypageCard,
+        meta: { requiresAuth: true },
+      },
+    ],
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior() {
+  scrollBehavior(to, from) {
+    // savedPosition 매개변수 제거
+    if (to.path.startsWith('/mypage') && from.path.startsWith('/mypage')) {
+      return false;
+    }
     return { top: 0 };
   },
+});
+
+// 네비게이션 가드 추가
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  const isAuthenticated = authStore.isAuthenticated;
+
+  // 인증이 필요한 페이지에 접근하려 할 때
+  if (to.matched.some((record) => record.meta.requiresAuth)) {
+    if (!isAuthenticated) {
+      showLoginModalFlag.value = true; // 로그인 모달 표시
+      next('/');
+    } else {
+      next();
+    }
+  } else {
+    next(); // 인증이 필요없는 페이지는 그냥 진행
+  }
 });
 
 export default router;
