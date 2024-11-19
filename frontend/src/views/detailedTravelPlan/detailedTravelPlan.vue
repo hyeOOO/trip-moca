@@ -2,7 +2,7 @@
   <div class="detailed-travel-plan">
     <nav-bar />
     <div class="main-content flex relative h-[calc(100vh-64px)]">
-      <!-- Left Sidebar -->
+      <!-- 왼쪽 사이드바 -->
       <div class="left-sidebar w-48 bg-white border-r border-gray-200 flex flex-col">
         <div class="overflow-y-auto flex-1 divide-y divide-gray-200">
           <button
@@ -41,9 +41,9 @@
         </div>
       </div>
 
-      <!-- Main Content Area -->
+      <!-- 메인 콘텐츠 영역 -->
       <div class="flex-1 relative">
-        <!-- Map Section -->
+        <!-- 지도 섹션 -->
         <div class="absolute inset-0">
           <tmap-multipath
             :selected-places-by-day="getSelectedPlaces"
@@ -54,14 +54,14 @@
           />
         </div>
 
-        <!-- Middle Section (Sliding Panel) -->
+        <!-- 중간섹션 -->
         <div
           ref="middleSection"
           class="middle-section absolute left-0 h-full bg-white shadow-lg transition-width"
           :class="{ expanded: isExpanded }"
           :style="{ width: `${currentWidth}px` }"
         >
-          <div class="content-wrapper h-full bg-white">
+          <div class="content-wrapper">
             <div class="p-6 h-full overflow-y-auto">
               <div class="mb-6">
                 <h1 class="text-2xl font-bold mb-2">{{ planData.planTitle }}</h1>
@@ -70,35 +70,38 @@
                 </p>
               </div>
 
-              <div v-if="selectedDay === 'all'" class="days-grid" :style="gridStyle">
-                <div
-                  v-for="day in planData.dayPlans"
-                  :key="day.day"
-                  class="day-container"
-                >
-                  <h2 class="text-xl font-bold mb-4">
-                    {{ day.day }}일차 ({{ formatDate(day.date) }})
-                  </h2>
-                  <div class="space-y-4">
-                    <div
-                      v-for="(spot, index) in day.details"
-                      :key="spot.planDetailId"
-                      class="spot-card bg-white rounded-lg shadow p-4"
-                    >
-                      <div class="flex gap-4">
-                        <div class="spot-number font-bold text-blue-500 text-lg">
-                          {{ index + 1 }}
-                        </div>
-                        <div class="flex-1">
-                          <img
-                            :src="spot.image"
-                            :alt="spot.attractionTitle"
-                            class="w-full h-48 object-cover rounded mb-3"
-                          />
-                          <h3 class="font-bold text-lg mb-2">
-                            {{ spot.attractionTitle }}
-                          </h3>
-                          <p class="text-gray-600">{{ spot.memo }}</p>
+              <!-- 전체 일정 뷰 -->
+              <div v-if="selectedDay === 'all'" class="days-grid-container overflow-x-auto">
+                <div class="days-grid" :style="gridStyle">
+                  <div
+                    v-for="day in planData.dayPlans"
+                    :key="day.day"
+                    class="day-container min-w-[380px]"
+                  >
+                    <h2 class="text-xl font-bold mb-4">
+                      {{ day.day }}일차 ({{ formatDate(day.date) }})
+                    </h2>
+                    <div class="space-y-4">
+                      <div
+                        v-for="(spot, index) in day.details"
+                        :key="spot.planDetailId"
+                        class="spot-card bg-white rounded-lg shadow p-4"
+                      >
+                        <div class="flex gap-4">
+                          <div class="spot-number font-bold text-blue-500 text-lg">
+                            {{ index + 1 }}
+                          </div>
+                          <div class="flex-1">
+                            <img
+                              :src="spot.image"
+                              :alt="spot.attractionTitle"
+                              class="w-full h-48 object-cover rounded mb-3"
+                            />
+                            <h3 class="font-bold text-lg mb-2">
+                              {{ spot.attractionTitle }}
+                            </h3>
+                            <p class="text-gray-600">{{ spot.memo }}</p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -106,6 +109,7 @@
                 </div>
               </div>
 
+              <!-- 개별 일정 뷰 -->
               <div v-else class="space-y-4">
                 <div
                   v-for="(spot, index) in getCurrentDaySpots()"
@@ -133,7 +137,7 @@
             </div>
           </div>
 
-          <!-- Drag Handle -->
+          <!-- 드래그 핸들 -->
           <div
             ref="dragHandle"
             class="drag-handle absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 
@@ -170,22 +174,29 @@ const startX = ref(0);
 const currentX = ref(0);
 const initialPanelOffset = ref(0);
 
-// Width calculation
 const currentWidth = computed(() => {
   const baseWidth = 400;
   const maxWidth = Math.min(window.innerWidth - 192, 1200);
   return Math.min(baseWidth + panelOffset.value, maxWidth);
 });
 
-// Grid layout computation
 const gridStyle = computed(() => {
-  const isPanelWide = currentWidth.value > 800;
-  const columns = isPanelWide ? Math.floor(currentWidth.value / 400) : 1;
+  const columnWidth = 380;
+  const gap = 24;
+  const availableWidth = currentWidth.value - 48;
+  let columns = Math.floor((availableWidth + gap) / (columnWidth + gap));
+  columns = Math.min(3, Math.max(1, columns));
+
+  const totalDayPlans = planData.value.dayPlans ? planData.value.dayPlans.length : 0;
+
   return {
     display: 'grid',
-    gridTemplateColumns: `repeat(${columns}, minmax(300px, 1fr))`,
+    gridTemplateColumns: `repeat(${columns}, ${columnWidth}px)`,
     gap: '1.5rem',
-    height: 'fit-content'
+    height: 'fit-content',
+    minWidth: totalDayPlans > columns 
+      ? `${(columnWidth + gap) * totalDayPlans - gap}px`
+      : '100%'
   };
 });
 
@@ -357,11 +368,43 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Layout */
 .detailed-travel-plan {
   height: 100vh;
   overflow: hidden;
 }
 
+.days-grid-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  /* 부드러운 스크롤 효과 추가 */
+  scroll-behavior: smooth;
+  /* 가로 스크롤 터치 동작 활성화 */
+  touch-action: pan-x;
+}
+
+.days-grid-container::-webkit-scrollbar {
+  height: 8px;
+  background-color: #f5f5f5;
+}
+
+.days-grid-container::-webkit-scrollbar-track {
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  margin: 0 24px;
+}
+
+.days-grid-container::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: #888;
+}
+
+.days-grid-container::-webkit-scrollbar-thumb:hover {
+  background-color: #666;
+}
+
+/* Middle section styles */
 .middle-section {
   width: 400px;
   max-width: calc(100vw - 192px);
@@ -374,24 +417,26 @@ onMounted(() => {
   flex-direction: column;
 }
 
+/* Content wrapper */
 .content-wrapper {
   position: relative;
   height: 100%;
-  overflow: hidden;
+  overflow: hidden; /* 변경 없음 */
   user-select: none;
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
+/* Scrollable content area */
 .p-6 {
   height: 100%;
-  overflow-y: auto;
+  overflow-y: hidden; /* auto에서 hidden으로 변경 */
   padding-right: 24px;
 }
 
-/* Scrollbar styles */
+/* Scrollbar styles - unified for both content-wrapper and days-grid */
 .content-wrapper::-webkit-scrollbar,
 .days-grid::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  display: none;
 }
 
 .content-wrapper::-webkit-scrollbar-track,
@@ -412,25 +457,43 @@ onMounted(() => {
   background: #555;
 }
 
-/* Days grid layout */
+/* days-grid 스타일 수정 */
 .days-grid {
   display: grid;
   gap: 1.5rem;
   height: fit-content;
-  transition: grid-template-columns 0.3s ease;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 12px;
-  scroll-behavior: smooth;
+  padding-right: 24px;
+  /* 최소 너비 설정을 gridStyle computed에서 동적으로 처리 */
 }
 
+/* Day container에 세로 스크롤 추가 */
 .day-container {
-  min-width: 300px;
+  width: 380px;
   background-color: #fff;
+  flex-shrink: 0;
+  height: calc(100vh - 200px); /* 상단 여백과 패딩을 고려한 높이 */
+  overflow-y: auto; /* 세로 스크롤 추가 */
 }
 
-/* Spot card styles */
+.day-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.day-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.day-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.day-container::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Spot card */
 .spot-card {
   transition: transform 0.2s ease;
   background-color: #fff;
@@ -440,7 +503,7 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-/* Drag handle styles */
+/* Drag handle */
 .drag-handle {
   opacity: 0.8;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -450,10 +513,6 @@ onMounted(() => {
   cursor: grab;
 }
 
-.drag-handle:hover {
-  opacity: 1;
-}
-
 .drag-handle:active {
   cursor: grabbing;
 }
@@ -461,6 +520,14 @@ onMounted(() => {
 @media (max-width: 1024px) {
   .middle-section {
     width: 350px;
+  }
+  
+  .day-container {
+    width: 330px;
+  }
+  
+  .days-grid {
+    gap: 1rem;
   }
 }
 </style>

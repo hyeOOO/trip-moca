@@ -325,8 +325,8 @@ const drawRoute = (resultData) => {
   // 단일 폴리라인으로 경로 그리기
   const polyline = new window.Tmapv2.Polyline({
     path: allPoints,
-    strokeColor: "#FF9F45",
-    strokeWeight: 10,
+    strokeColor: "#6BCB77",
+    strokeWeight: 7,
     strokeOpacity: 1,
     map: map.value,
     strokeStyle: 'solid'

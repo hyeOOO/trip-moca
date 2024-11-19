@@ -35,16 +35,11 @@ export default {
     return {
       map: null,
       markersByDay: {},
+      polylinesByDay: {},
       defaultZoom: 11,
-      markerColors: [
-        "red",
-        "blue",
-        "green",
-        "yellow",
-        "purple",
-        "orange",
-        "pink",
-      ],
+      currentInfoWindow: null,
+      routePolylines: [],
+      tData: null,
     };
   },
 
@@ -52,15 +47,26 @@ export default {
     selectedPlacesByDay: {
       handler(newPlaces) {
         this.updateMarkers(newPlaces);
+        this.updateRoutes(newPlaces);
       },
       deep: true,
     },
     selectedDay(newDay) {
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.setMap(null);
+        this.currentInfoWindow = null;
+      }
       this.toggleMarkersByDay(newDay);
+      this.toggleRoutes(newDay);
     },
     showAllDays(show) {
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.setMap(null);
+        this.currentInfoWindow = null;
+      }
       if (show) {
         this.showAllMarkers();
+        this.showAllRoutes();
       }
     },
   },
@@ -71,6 +77,10 @@ export default {
 
   methods: {
     initializeMap() {
+      if (this.map) {
+        this.map = null;
+      }
+
       this.map = new Tmapv2.Map("map_div", {
         center: new Tmapv2.LatLng(this.latitude, this.longitude),
         width: "100%",
@@ -78,46 +88,165 @@ export default {
         zoom: this.defaultZoom,
         httpsMode: true,
       });
+
+      this.tData = new Tmapv2.extension.TData();
     },
 
-    getMap() {
-      return this.map;
+    calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     },
 
-    createMarker(place, dayIndex) {
-      console.log("Creating marker for place:", place);
+    async calculateRoute(places, day) {
+      if (places.length < 2) return;
 
-      const position = new Tmapv2.LatLng(
-        Number(place.latitude),
-        Number(place.longitude)
-      );
-
-      const colors = [
+      const routeColors = [
         "#FF6B6B",
-        "#4D96FF",
         "#6BCB77",
-        "#FFD93D",
         "#B983FF",
         "#FF9F45",
         "#4CACBC",
         "#FF8FB1",
         "#95CD41",
         "#7B2869",
+        "#FFD93D"
       ];
 
-      const markerHtml = `
-    <div style="width: 24px; height: 24px;">
-      <i class="fa-solid fa-location-dot" style="color: ${
-        colors[dayIndex % colors.length]
-      }; font-size: 24px;"></i>
-    </div>
-  `;
+      const start = places[0];
+      const end = places[places.length - 1];
+      const waypoints = places.slice(1, -1);
+
+      // 경유지 목록 생성
+      const passList = waypoints
+        .map((place) => `${place.longitude},${place.latitude}`)
+        .join("_");
+
+      const startLatLng = new Tmapv2.LatLng(start.latitude, start.longitude);
+      const endLatLng = new Tmapv2.LatLng(end.latitude, end.longitude);
+
+      const optionObj = {
+        reqCoordType: "WGS84GEO",
+        resCoordType: "WGS84GEO",
+        passList: passList,
+        trafficInfo: "Y",
+      };
+
+      return new Promise((resolve) => {
+        const params = {
+          onComplete: (response) => {
+            const resultData = response._responseData.features;
+            const dayRoutes = [];
+
+            resultData.forEach((feature) => {
+              if (feature.geometry.type === "LineString") {
+                const path = feature.geometry.coordinates.map(
+                  (coord) => new Tmapv2.LatLng(coord[1], coord[0])
+                );
+
+                const polyline = new Tmapv2.Polyline({
+                  path: path,
+                  strokeColor: routeColors[(day - 1) % routeColors.length], // 일자에 맞는 색상 적용
+                  strokeWeight: 5,
+                  strokeStyle: "solid",
+                  map: this.map,
+                });
+
+                dayRoutes.push(polyline);
+              }
+            });
+
+            this.routePolylines[day] = dayRoutes;
+            resolve();
+          },
+          onProgress: () => {},
+          onError: () => {
+            console.error("경로 검색 중 오류가 발생했습니다.");
+            resolve();
+          },
+        };
+
+        this.tData.getRoutePlanJson(startLatLng, endLatLng, optionObj, params);
+      });
+    },
+
+    clearRoutes() {
+      Object.values(this.routePolylines).forEach((routes) => {
+        routes.forEach((route) => {
+          if (route) route.setMap(null);
+        });
+      });
+      this.routePolylines = {};
+    },
+
+    async updateRoutes(places) {
+      this.clearRoutes();
+
+      for (const [day, dayPlaces] of Object.entries(places)) {
+        if (dayPlaces.length >= 2) {
+          await this.calculateRoute(dayPlaces, day);
+        }
+      }
+    },
+
+    toggleRoutes(dayIndex) {
+      // 모든 경로 숨기기
+      Object.values(this.routePolylines).forEach((routes) => {
+        routes.forEach((route) => route.setMap(null));
+      });
+
+      // 선택된 날짜의 경로만 표시
+      if (dayIndex && this.routePolylines[dayIndex]) {
+        this.routePolylines[dayIndex].forEach((route) =>
+          route.setMap(this.map)
+        );
+      }
+    },
+
+    showAllRoutes() {
+      Object.values(this.routePolylines).forEach((routes) => {
+        routes.forEach((route) => route.setMap(this.map));
+      });
+    },
+
+    // 기존 메서드들...
+    getMap() {
+      return this.map;
+    },
+
+    createMarker(place, dayIndex, placeIndex) {
+      const position = new Tmapv2.LatLng(
+        Number(place.latitude),
+        Number(place.longitude)
+      );
+
+      const colors = [
+        "red",
+        "green",
+        "purple",
+        "orange",
+        "mint",
+        "pink",
+        "lime",
+        "magenta",
+        "yello"
+      ];
+      const adjustedDayIndex = dayIndex - 1;
+      const currentColor = colors[adjustedDayIndex % colors.length];
+      const markerNumber = (placeIndex % 9) + 1;
+      const markerImageUrl = `https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/${currentColor}${markerNumber}.png`;
 
       const marker = new Tmapv2.Marker({
         position: position,
-        icon:
-          "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markerHtml),
-        iconHTML: markerHtml,
+        icon: markerImageUrl,
         iconSize: new Tmapv2.Size(24, 24),
         map: this.map,
         title: place.title,
@@ -125,16 +254,18 @@ export default {
       });
 
       marker.addListener("click", () => {
-        new Tmapv2.InfoWindow({
+        if (this.currentInfoWindow) {
+          this.currentInfoWindow.setMap(null);
+        }
+
+        this.currentInfoWindow = new Tmapv2.InfoWindow({
           position: position,
           content: `
-        <div style="padding:10px;min-width:150px;background-color:white;border-radius:5px;">
-          <div style="font-weight:bold;margin-bottom:5px;">${place.title}</div>
-          <div style="font-size:12px;color:${
-            colors[dayIndex % colors.length]
-          };">${dayIndex + 1}일차</div>
-        </div>
-      `,
+            <div style="padding:10px;min-width:150px;background-color:white;border-radius:5px;">
+              <div style="font-weight:bold;margin-bottom:5px;">${place.title}</div>
+              <div style="font-size:12px;">${dayIndex}일차</div>
+            </div>
+          `,
           type: 2,
           map: this.map,
           border: "0px solid #FF0000",
@@ -142,74 +273,123 @@ export default {
         });
       });
 
-      // 마커가 생성될 때마다 해당 위치로 지도 중심 이동
-      this.map.setCenter(position);
-
-      console.log(
-        "Marker created at position:",
-        position.lat(),
-        position.lng()
-      );
       return marker;
     },
 
-    updateMarkers(places) {
-      // 기존 마커 제거
+    createPolyline(positions, color) {
+      return new Tmapv2.Polyline({
+        path: positions,
+        strokeColor: color,
+        strokeWeight: 3,
+        strokeStyle: "solid",
+        map: this.map,
+      });
+    },
+
+    clearAllMarkers() {
       Object.values(this.markersByDay).forEach((markers) => {
-        markers.forEach((marker) => marker.setMap(null));
+        markers.forEach((marker) => {
+          if (marker) {
+            marker.setMap(null);
+            marker = null;
+          }
+        });
       });
       this.markersByDay = {};
+    },
 
-      // 새로운 마커들의 위치를 저장할 배열
+    clearAllPolylines() {
+      Object.values(this.polylinesByDay).forEach((polyline) => {
+        if (polyline) {
+          polyline.setMap(null);
+          polyline = null;
+        }
+      });
+      this.polylinesByDay = {};
+    },
+
+    updateMarkers(places) {
+      this.clearAllMarkers();
+      this.clearAllPolylines();
+
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.setMap(null);
+        this.currentInfoWindow = null;
+      }
+
       let lastPosition = null;
 
-      // 새로운 마커 생성
       Object.entries(places).forEach(([day, dayPlaces]) => {
         if (!this.markersByDay[day]) {
           this.markersByDay[day] = [];
         }
 
-        dayPlaces.forEach((place) => {
+        const dayPositions = [];
+
+        dayPlaces.forEach((place, placeIndex) => {
           try {
-            const marker = this.createMarker(place, parseInt(day));
+            const marker = this.createMarker(place, parseInt(day), placeIndex);
             this.markersByDay[day].push(marker);
-            // 마지막 마커의 위치 저장
             lastPosition = marker.getPosition();
+            dayPositions.push(lastPosition);
           } catch (error) {
             console.error("Error creating marker:", error);
           }
         });
       });
 
-      // 마지막으로 추가된 마커의 위치로 지도 중심 이동
       if (lastPosition) {
         this.map.setCenter(lastPosition);
       }
 
-      // 줌 레벨 유지
       this.map.setZoom(this.defaultZoom);
     },
 
     toggleMarkersByDay(dayIndex) {
       Object.entries(this.markersByDay).forEach(([day, markers]) => {
         markers.forEach((marker) => {
-          marker.setMap(parseInt(day) === dayIndex ? this.map : null);
+          if (marker) {
+            marker.setMap(null);
+          }
         });
       });
+
+      if (dayIndex) {
+        const markers = this.markersByDay[dayIndex];
+        if (markers) {
+          markers.forEach((marker) => {
+            if (marker) {
+              marker.setMap(this.map);
+            }
+          });
+        }
+      }
     },
 
     showAllMarkers() {
       Object.values(this.markersByDay).forEach((markers) => {
-        markers.forEach((marker) => marker.setMap(this.map));
+        markers.forEach((marker) => {
+          if (marker) {
+            marker.setMap(this.map);
+          }
+        });
       });
     },
   },
 
   beforeUnmount() {
-    Object.values(this.markersByDay).forEach((markers) => {
-      markers.forEach((marker) => marker.setMap(null));
-    });
-    this.markersByDay = {};
+    if (this.currentInfoWindow) {
+      this.currentInfoWindow.setMap(null);
+      this.currentInfoWindow = null;
+    }
+
+    this.clearAllMarkers();
+    this.clearAllPolylines();
+    this.clearRoutes();
+
+    if (this.map) {
+      this.map = null;
+    }
   },
 };
 </script>
