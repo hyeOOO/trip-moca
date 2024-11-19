@@ -12,7 +12,7 @@ import SavePlan from "@/views/travelPlan/savePlan.vue";
 import TmapSearch from "@/components/Tmap/TmapSearch.vue";
 import RouteSearch from "@/views/routeSearch/routeSearch.vue";
 import DetailedTravelPlan from "@/views/detailedTravelPlan/detailedTravelPlan.vue";
-
+import ModifyPlan from "@/views/detailedTravelPlan/modifyPlan.vue";
 
 function getLatLng(cityName) {
   const coordinates = {
@@ -48,9 +48,14 @@ function getLatLng(cityName) {
 
 const routes = [
   {
-    path: "/detailedTravelPlan",
+    path: "/plan/:id",
     name: "DetailedTravelPlan",
     component: DetailedTravelPlan,
+  },
+  {
+    path: '/modify-plan/:id',
+    name: "ModifyPlan",
+    component: ModifyPlan,
   },
   {
     path: "/routeSearch",
@@ -104,7 +109,7 @@ const routes = [
       id: route.query.id,
       selectedPlaces: route.params.selectedPlaces
         ? JSON.parse(route.params.selectedPlaces)
-        : {}, // JSON 파싱
+        : {},
     }),
   },
   {
@@ -125,7 +130,7 @@ const routes = [
   {
     path: '/mypage',
     component: Mypage,
-    meta: { requiresAuth: true }, // 인증 필요 표시
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -149,7 +154,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, from) {
-    // savedPosition 매개변수 제거
     if (to.path.startsWith('/mypage') && from.path.startsWith('/mypage')) {
       return false;
     }
@@ -157,21 +161,19 @@ const router = createRouter({
   },
 });
 
-// 네비게이션 가드 추가
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore();
   const isAuthenticated = authStore.isAuthenticated;
 
-  // 인증이 필요한 페이지에 접근하려 할 때
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
-      showLoginModalFlag.value = true; // 로그인 모달 표시
+      showLoginModalFlag.value = true;
       next('/');
     } else {
       next();
     }
   } else {
-    next(); // 인증이 필요없는 페이지는 그냥 진행
+    next();
   }
 });
 

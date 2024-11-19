@@ -3,20 +3,17 @@
     <router-view />
     <login-modal v-model="showLoginModal" />
   </div>
-  <footInfo />
 </template>
 
 <script>
 import { ref, provide, watch } from "vue";
 import { showLoginModalFlag } from "@/eventBus";
-import footInfo from "@/components/footInfo.vue";
 import LoginModal from "@/components/loginModal.vue";
 
 export default {
   name: "App",
   data() {},
   components: {
-    footInfo,
     LoginModal,
   },
   setup() {

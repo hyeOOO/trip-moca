@@ -86,15 +86,17 @@
   <div v-intersect class="fade-in-section">
     <fourthContent />
   </div>
+  <div>
+    <footInfo />
+  </div>
 </template>
-
-
 
 <script>
 import firstContent from "@/views/mainPage/firstContent.vue";
 import secondContent from "@/views/mainPage/secondContent.vue";
 import thirdContent from "@/views/mainPage/thirdContent.vue";
 import fourthContent from "@/views/mainPage/fourthContent.vue";
+import footInfo from "@/components/footInfo.vue";
 import region from "@/assets/data/region.js";
 import navBar from "@/components/navBar.vue";
 
@@ -113,6 +115,7 @@ export default {
     secondContent: secondContent,
     thirdContent: thirdContent,
     fourthContent: fourthContent,
+    footInfo: footInfo,
   },
   directives: {
     intersect: {

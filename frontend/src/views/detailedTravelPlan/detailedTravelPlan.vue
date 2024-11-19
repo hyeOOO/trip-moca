@@ -1,10 +1,10 @@
 <template>
-  <div class="detailed-travel-plan">
+  <div class="detailed-travel-plan h-screen flex flex-col">
     <nav-bar />
-    <div class="main-content flex relative h-[calc(100vh-64px)]">
+    <div class="main-content flex-1 flex relative">
       <!-- 왼쪽 사이드바 -->
-      <div class="left-sidebar w-48 bg-white border-r border-gray-200 flex flex-col">
-        <div class="overflow-y-auto flex-1 divide-y divide-gray-200">
+      <div class="w-48 bg-white border-r border-gray-200 flex flex-col h-full">
+        <div class="flex-1 overflow-y-auto divide-y divide-gray-200">
           <button
             class="w-full p-4 text-left hover:bg-gray-100 font-medium"
             :class="{ 'bg-blue-50 text-blue-600': selectedDay === 'all' }"
@@ -25,19 +25,19 @@
           </div>
         </div>
 
-        <div class="p-4 border-t border-gray-200">
+        <div class="sticky bottom-0 bg-white p-4 border-t border-gray-200">
           <button
             class="w-full mb-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
             @click="goToModifyPlan"
           >
             편집
           </button>
-          <button
+          <!-- <button
             class="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
             @click="savePlan"
           >
             저장
-          </button>
+          </button> -->
         </div>
       </div>
 
@@ -57,21 +57,26 @@
         <!-- 중간섹션 -->
         <div
           ref="middleSection"
-          class="middle-section absolute left-0 h-full bg-white shadow-lg transition-width"
+          class="middle-section absolute left-0 h-full bg-white shadow-lg transition-width overflow-hidden"
           :class="{ expanded: isExpanded }"
           :style="{ width: `${currentWidth}px` }"
         >
-          <div class="content-wrapper">
+          <div class="content-wrapper h-full">
             <div class="p-6 h-full overflow-y-auto">
-              <div class="mb-6">
-                <h1 class="text-2xl font-bold mb-2">{{ planData.planTitle }}</h1>
+              <div class="mb-6" v-if="!isLoading">
+                <h1 class="text-2xl font-bold mb-2">
+                  {{ planData.planTitle }}
+                </h1>
                 <p class="text-gray-600">
                   {{ formatDateRange(planData.startDate, planData.endDate) }}
                 </p>
               </div>
 
               <!-- 전체 일정 뷰 -->
-              <div v-if="selectedDay === 'all'" class="days-grid-container overflow-x-auto">
+              <div
+                v-if="selectedDay === 'all'"
+                class="days-grid-container overflow-x-auto"
+              >
                 <div class="days-grid" :style="gridStyle">
                   <div
                     v-for="day in planData.dayPlans"
@@ -79,9 +84,9 @@
                     class="day-container min-w-[380px]"
                   >
                     <h2 class="text-xl font-bold mb-4">
-                      {{ day.day }}일차 ({{ formatDate(day.date) }})
+                      {{ day.day }}일차 {{ formatDate(new Date(day.date)) }}
                     </h2>
-                    <div class="space-y-4">
+                    <div class="space-y-4 overflow-y-auto max-h-[calc(100vh-300px)]">
                       <div
                         v-for="(spot, index) in day.details"
                         :key="spot.planDetailId"
@@ -110,7 +115,7 @@
               </div>
 
               <!-- 개별 일정 뷰 -->
-              <div v-else class="space-y-4">
+              <div v-else class="space-y-4 h-[calc(100%-120px)] overflow-y-auto">
                 <div
                   v-for="(spot, index) in getCurrentDaySpots()"
                   :key="spot.planDetailId"
@@ -140,9 +145,7 @@
           <!-- 드래그 핸들 -->
           <div
             ref="dragHandle"
-            class="drag-handle absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 
-            bg-white rounded-r-lg shadow flex items-center justify-center cursor-grab
-            hover:bg-gray-100 transition-colors z-20"
+            class="drag-handle absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-white rounded-r-lg shadow flex items-center justify-center cursor-grab hover:bg-gray-100 transition-colors z-20"
             @mousedown="startDragExpand"
             @touchstart="startDragExpand"
           >
@@ -157,15 +160,17 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
+import { usePlanStore } from '@/store/planStore';
 import navBar from "@/components/navBar.vue";
 import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
-import detailTestData from "@/assets/data/detailTestData.js";
 
 const router = useRouter();
+const planStore = usePlanStore();
 const selectedDay = ref("all");
 const isExpanded = ref(false);
 const middleSection = ref(null);
 const dragHandle = ref(null);
+const isLoading = ref(true);
 
 // Panel state
 const panelOffset = ref(0);
@@ -180,37 +185,17 @@ const currentWidth = computed(() => {
   return Math.min(baseWidth + panelOffset.value, maxWidth);
 });
 
-const gridStyle = computed(() => {
-  const columnWidth = 380;
-  const gap = 24;
-  const availableWidth = currentWidth.value - 48;
-  let columns = Math.floor((availableWidth + gap) / (columnWidth + gap));
-  columns = Math.min(3, Math.max(1, columns));
+const gridStyle = computed(() => ({
+  display: 'flex',
+  gap: '1.5rem',
+  width: 'max-content'
+}));
 
-  const totalDayPlans = planData.value.dayPlans ? planData.value.dayPlans.length : 0;
-
-  return {
-    display: 'grid',
-    gridTemplateColumns: `repeat(${columns}, ${columnWidth}px)`,
-    gap: '1.5rem',
-    height: 'fit-content',
-    minWidth: totalDayPlans > columns 
-      ? `${(columnWidth + gap) * totalDayPlans - gap}px`
-      : '100%'
-  };
-});
-
-const planData = ref({
-  planId: null,
-  planTitle: "",
-  startDate: "",
-  endDate: "",
-  dayPlans: [],
-});
+const planData = computed(() => planStore.getPlanData);
 
 let animationFrame = null;
 
-const totalDays = computed(() => planData.value.totalDays || 0);
+const totalDays = computed(() => planData.value?.dayPlans?.length || 0);
 
 const getSelectedPlaces = computed(() => {
   if (selectedDay.value === "all") {
@@ -244,15 +229,15 @@ const startDragExpand = (e) => {
   if (!dragHandle.value) return;
   if (e.type === "mousedown" && e.button !== 0) return;
   e.preventDefault();
-  
+
   isDragging.value = true;
   startX.value = e.type === "mousedown" ? e.clientX : e.touches[0].clientX;
   initialPanelOffset.value = panelOffset.value;
-  
+
   if (dragHandle.value) {
     dragHandle.value.style.cursor = "grabbing";
   }
-  
+
   if (e.type === "mousedown") {
     document.addEventListener("mousemove", handleDragMove);
     document.addEventListener("mouseup", stopDragExpand);
@@ -264,14 +249,14 @@ const startDragExpand = (e) => {
 
 const handleDragMove = (e) => {
   if (!isDragging.value) return;
-  
+
   const clientX = e.type === "mousemove" ? e.clientX : e.touches[0].clientX;
   const delta = clientX - startX.value;
-  
+
   if (animationFrame) {
     cancelAnimationFrame(animationFrame);
   }
-  
+
   animationFrame = requestAnimationFrame(() => {
     const newOffset = initialPanelOffset.value + delta;
     const maxOffset = Math.min(window.innerWidth - 192, 1200) - 400;
@@ -285,12 +270,12 @@ const stopDragExpand = () => {
   if (dragHandle.value) {
     dragHandle.value.style.cursor = "grab";
   }
-  
+
   document.removeEventListener("mousemove", handleDragMove);
   document.removeEventListener("mouseup", stopDragExpand);
   document.removeEventListener("touchmove", handleDragMove);
   document.removeEventListener("touchend", stopDragExpand);
-  
+
   if (animationFrame) {
     cancelAnimationFrame(animationFrame);
   }
@@ -298,30 +283,36 @@ const stopDragExpand = () => {
 
 const fetchPlanData = async () => {
   try {
+    isLoading.value = true;
     await new Promise((resolve) => setTimeout(resolve, 500));
-    planData.value = detailTestData;
+    planStore.initializePlan();
   } catch (error) {
     console.error("Failed to fetch plan data:", error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
 const formatDateRange = (start, end) => {
+  if (!start || !end || isLoading.value) return "";
   const startDate = new Date(start);
   const endDate = new Date(end);
   return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
 };
 
 const formatDate = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date)) return "";
   const days = ["일", "월", "화", "수", "목", "금", "토"];
-  const d = new Date(date);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(
     2,
     "0"
-  )}-${String(d.getDate()).padStart(2, "0")}(${days[d.getDay()]})`;
+  )}.${String(date.getDate()).padStart(2, "0")}(${days[date.getDay()]})`;
 };
 
 const getDayDate = (day) => {
+  if (!planData.value?.startDate || isLoading.value) return "";
   const start = new Date(planData.value.startDate);
+  if (isNaN(start.getTime())) return "";
   start.setDate(start.getDate() + day - 1);
   return formatDate(start);
 };
@@ -344,7 +335,7 @@ const goToModifyPlan = () => {
 const savePlan = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    console.log("Plan saved:", planData.value);
+    planStore.savePlan();
     alert("저장되었습니다.");
   } catch (error) {
     console.error("Failed to save plan:", error);
@@ -368,43 +359,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Layout */
+/* 전체 레이아웃 - 스크롤 방지 */
 .detailed-travel-plan {
   height: 100vh;
   overflow: hidden;
 }
 
-.days-grid-container {
-  width: 100%;
-  overflow-x: auto;
-  padding-bottom: 16px;
-  /* 부드러운 스크롤 효과 추가 */
-  scroll-behavior: smooth;
-  /* 가로 스크롤 터치 동작 활성화 */
-  touch-action: pan-x;
-}
-
-.days-grid-container::-webkit-scrollbar {
-  height: 8px;
-  background-color: #f5f5f5;
-}
-
-.days-grid-container::-webkit-scrollbar-track {
-  border-radius: 4px;
-  background-color: #f5f5f5;
-  margin: 0 24px;
-}
-
-.days-grid-container::-webkit-scrollbar-thumb {
-  border-radius: 4px;
-  background-color: #888;
-}
-
-.days-grid-container::-webkit-scrollbar-thumb:hover {
-  background-color: #666;
-}
-
-/* Middle section styles */
+/* 중간 섹션 - 지도와 콘텐츠 영역 */
 .middle-section {
   width: 400px;
   max-width: calc(100vw - 192px);
@@ -413,87 +374,99 @@ onMounted(() => {
   will-change: transform;
   touch-action: none;
   transition: width 0.3s ease;
-  display: flex;
-  flex-direction: column;
+  height: calc(100vh - 64px);
 }
 
-/* Content wrapper */
+/* 콘텐츠 래퍼 - 드래그 방지 */
 .content-wrapper {
   position: relative;
   height: 100%;
-  overflow: hidden; /* 변경 없음 */
+  overflow: hidden;
   user-select: none;
   background-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Scrollable content area */
+/* 패딩 영역 - 하단 버튼 공간 확보 */
 .p-6 {
-  height: 100%;
-  overflow-y: hidden; /* auto에서 hidden으로 변경 */
+  height: calc 100%;
   padding-right: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Scrollbar styles - unified for both content-wrapper and days-grid */
-.content-wrapper::-webkit-scrollbar,
-.days-grid::-webkit-scrollbar {
-  display: none;
+/* 일정 그리드 컨테이너 - 가로 스크롤 허용 */
+.days-grid-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 20px;
+  min-height: 0;
+  flex-grow: 1;
 }
 
-.content-wrapper::-webkit-scrollbar-track,
-.days-grid::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-  margin: 4px 0;
-}
-
-.content-wrapper::-webkit-scrollbar-thumb,
-.days-grid::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.content-wrapper::-webkit-scrollbar-thumb:hover,
-.days-grid::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* days-grid 스타일 수정 */
+/* 일정 그리드 - 일자별 카드 배치 */
 .days-grid {
-  display: grid;
+  display: inline-flex;
   gap: 1.5rem;
-  height: fit-content;
+  min-height: 100%;
+  padding-bottom: 16px;
   padding-right: 24px;
-  /* 최소 너비 설정을 gridStyle computed에서 동적으로 처리 */
 }
 
-/* Day container에 세로 스크롤 추가 */
+/* 일자별 컨테이너 */
 .day-container {
-  width: 380px;
+  flex: 0 0 380px;
+  max-height: calc(100vh - 280px);
   background-color: #fff;
-  flex-shrink: 0;
-  height: calc(100vh - 200px); /* 상단 여백과 패딩을 고려한 높이 */
-  overflow-y: auto; /* 세로 스크롤 추가 */
 }
 
-.day-container::-webkit-scrollbar {
-  width: 8px;
+/* 일자별 콘텐츠 영역 스크롤바 */
+.day-container .space-y-4 {
+  height: 100%;
+  overflow-y: auto;
+  max-height: inherit;
 }
 
-.day-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+.day-container .space-y-4::-webkit-scrollbar {
+  width: 6px;
 }
 
-.day-container::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+.day-container .space-y-4::-webkit-scrollbar-track {
+  background-color: #f5f5f5;
+  border-radius: 3px;
 }
 
-.day-container::-webkit-scrollbar-thumb:hover {
-  background: #666;
+.day-container .space-y-4::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 3px;
 }
 
-/* Spot card */
+.day-container .space-y-4::-webkit-scrollbar-thumb:hover {
+  background-color: #666;
+}
+
+/* 가로 스크롤바 스타일 */
+.days-grid-container::-webkit-scrollbar {
+  height: 6px;
+  background-color: #f5f5f5;
+}
+
+.days-grid-container::-webkit-scrollbar-track {
+  border-radius: 3px;
+  background-color: #f5f5f5;
+  margin: 0 24px;
+}
+
+.days-grid-container::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: #888;
+}
+
+.days-grid-container::-webkit-scrollbar-thumb:hover {
+  background-color: #666;
+}
+
+/* 장소 카드 호버 효과 */
 .spot-card {
   transition: transform 0.2s ease;
   background-color: #fff;
@@ -503,7 +476,7 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-/* Drag handle */
+/* 드래그 핸들 스타일 */
 .drag-handle {
   opacity: 0.8;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -517,17 +490,19 @@ onMounted(() => {
   cursor: grabbing;
 }
 
+.left-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+}
+
+/* 반응형 스타일 */
 @media (max-width: 1024px) {
   .middle-section {
     width: 350px;
   }
-  
   .day-container {
     width: 330px;
-  }
-  
-  .days-grid {
-    gap: 1rem;
   }
 }
 </style>
