@@ -259,7 +259,35 @@ export default {
           this.closeModal(); // 모달 닫기
           // 로그인 성공 시 showLoginModalFlag 값을 false로 설정
           showLoginModalFlag.value = false;
+
+          // 위치 정보 요청
+          try {
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+              });
+            });
+
+            // 위치 기반 카드 체크
+            const cardResponse = await api.post('/domain/card/get-card', {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+
+            if (cardResponse.data) {
+              // Vue 인스턴스에 카드 모달 상태 추가
+              this.$emit('card-acquired', cardResponse.data);
+            }
+          } catch (geoError) {
+            console.error('위치 정보 오류:', geoError);
+            if (geoError.code === 1) {
+              alert('위치 정보 접근을 허용해주세요.');
+            }
+          }
           this.$router.push("/"); // 또는 다른 페이지로 리다이렉트
+
         } else {
           alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
         }
@@ -322,6 +350,7 @@ export default {
         }
       }
     },
+
   },
 };
 </script>
