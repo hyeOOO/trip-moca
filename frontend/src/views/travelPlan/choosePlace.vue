@@ -181,7 +181,6 @@ export default {
       isCollapsed: false,
       isRightCollapsed: false,
       isStep2Active: true,
-      selectedPlacesByDay: {},
       selectedDay: null,
       showAllDays: false,
       isLoading: false, // 로딩 상태 추가
@@ -191,6 +190,7 @@ export default {
       pageSize: 15,
       isLastPage: false,
       isFetching: false,
+      localSelectedPlaces: {}, // selectedPlacesByDay를 대체
     };
   },
   computed: {
@@ -220,6 +220,23 @@ export default {
       const end = new Date(this.endDate);
       return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     },
+    selectedPlacesByDay: {
+      get() {
+        return this.localSelectedPlaces;
+      },
+      set(newValue) {
+        this.localSelectedPlaces = newValue;
+        const formattedPlaces = Object.entries(newValue).map(([day, places]) => ({
+          day: parseInt(day),
+          details: places.map((place, index) => ({
+            attractionId: place.attractionId,
+            sequence: index,
+            memo: place.memo || "",
+          })),
+        }));
+        this.planStore.setSelectedPlaces(formattedPlaces);
+      },
+    },
   },
   methods: {
     // 3.
@@ -241,17 +258,16 @@ export default {
       this.error = null;
 
       try {
-        // API 요청 시 페이지네이션 파라미터 추가
         const response = await api.get(`/domain/attraction/search`, {
           params: {
             areaCode: this.areaCode,
             page: page,
             size: this.pageSize,
-            sort: "title,asc", // 정렬 옵션 (필요에 따라 수정)
+            sort: "title,asc",
           },
         });
 
-        // 첫 페이지면 데이터를 새로 설정, 아니면 기존 데이터에 추가
+        // 데이터 설정 후 selectedPlacesByDay 갱신을 위해 computed 재계산 트리거
         if (page === 0) {
           this.places = response.data.content;
         } else {
@@ -262,19 +278,44 @@ export default {
         this.currentPage = response.data.number;
         this.totalPages = response.data.totalPages;
         this.isLastPage = response.data.last;
+
+        // API 응답 후 선택된 장소들 데이터 복원
+        this.restoreSelectedPlaces();
       } catch (error) {
         console.error("관광지 데이터 조회 실패:", error);
         this.error = "관광지 정보를 불러오는데 실패했습니다.";
-
-        if (error.response?.status === 401) {
-          return;
-        }
-
-        alert("관광지 정보를 불러오는데 실패했습니다. 다시 시도해주세요.");
       } finally {
         this.isFetching = false;
         this.isLoading = false;
       }
+    },
+    // 새로운 메서드: 선택된 장소들의 전체 데이터 복원
+    // 새로운 메서드: store의 데이터를 사용해 선택된 장소들 복원
+    restoreSelectedPlaces() {
+      const storePlaces = this.planStore.selectedPlaces;
+      const restoredPlaces = {};
+
+      storePlaces.forEach((dayPlan) => {
+        const fullPlaces = dayPlan.details
+          .map((detail) => {
+            const fullPlace = this.places.find((p) => p.attractionId === detail.attractionId);
+            if (fullPlace) {
+              return {
+                ...fullPlace,
+                sequence: detail.sequence,
+                memo: detail.memo,
+              };
+            }
+            return null;
+          })
+          .filter((place) => place !== null);
+
+        if (fullPlaces.length > 0) {
+          restoredPlaces[dayPlan.day] = fullPlaces;
+        }
+      });
+
+      this.selectedPlacesByDay = restoredPlaces;
     },
 
     // 스크롤 이벤트 핸들러
@@ -343,21 +384,22 @@ export default {
     // 드롭 했을때
     onDrop(event, dayIndex) {
       const place = JSON.parse(event.dataTransfer.getData("text/plain"));
-      console.log("Dropped place full data:", place);
+      const newPlacesByDay = { ...this.selectedPlacesByDay };
 
-      // longitude와 latitude 값이 있는지 확인하고, 없다면 영어 이름의 프로퍼티에서 값을 가져옴
-      if (!this.selectedPlacesByDay[dayIndex]) {
-        this.selectedPlacesByDay[dayIndex] = [];
+      if (!newPlacesByDay[dayIndex]) {
+        newPlacesByDay[dayIndex] = [];
       }
 
-      const newPlace = {
-        attractionId: place.attractionId,
-        sequence: this.selectedPlacesByDay[dayIndex].length,
-        memo: "",
-      };
+      newPlacesByDay[dayIndex] = [
+        ...newPlacesByDay[dayIndex],
+        {
+          ...place,
+          sequence: newPlacesByDay[dayIndex].length,
+          memo: "",
+        },
+      ];
 
-      this.selectedPlacesByDay[dayIndex].push(place);
-      this.updateStorePlaces();
+      this.selectedPlacesByDay = newPlacesByDay;
     },
 
     updateStorePlaces() {
@@ -438,16 +480,6 @@ export default {
   async mounted() {
     // 컴포넌트 마운트 시 관광지 데이터 가져오기
     await this.fetchAttractions();
-
-    // store에서 기존 선택된 장소들 불러오기
-    const storePlaces = this.planStore.selectedPlaces;
-    if (storePlaces.length > 0) {
-      storePlaces.forEach((dayPlaces) => {
-        this.selectedPlacesByDay[dayPlaces.day] = dayPlaces.details;
-      });
-    }
-
-    // 스크롤 이벤트 리스너 등록
     const middleSection = this.$el.querySelector(".middle-section");
     if (middleSection) {
       middleSection.addEventListener("scroll", this.handleScroll);

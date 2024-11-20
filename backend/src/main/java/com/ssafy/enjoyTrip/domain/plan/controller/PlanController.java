@@ -1,5 +1,8 @@
 package com.ssafy.enjoyTrip.domain.plan.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.ssafy.enjoyTrip.domain.plan.dto.detail.PlanDetailResponseDto;
 import com.ssafy.enjoyTrip.domain.plan.dto.detail.PlanDetailsResponseDto;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanCreateRequest;
@@ -7,12 +10,15 @@ import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanResponseDto;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanUpdateRequest;
 import com.ssafy.enjoyTrip.domain.plan.service.PlanService;
 import com.ssafy.enjoyTrip.global.annotation.CurrentMemberId;
+import com.ssafy.enjoyTrip.global.s3.service.S3Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,23 +28,34 @@ import java.util.List;
 @RequestMapping("/domain/plans")
 public class PlanController {
     private final PlanService planService;
+    private final S3Service s3Service;
 
     @Operation(summary = "여행 계획 생성", description = "상세 여행 계획까지 포함된 여행 계획을 생성하는 API 입니다.")
-    @PostMapping
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<String> createPlan(
-            @RequestBody PlanCreateRequest request,
+            @RequestPart("plan") String planJson,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             @CurrentMemberId String memberId) {
-        planService.createPlan(request, memberId);
-        return ResponseEntity.ok("여행 계획이 성공적으로 추가되었습니다.");
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule()); // LocalDate 처리를 위해 필요
+
+        try {
+            PlanCreateRequest request = mapper.readValue(planJson, PlanCreateRequest.class);
+            planService.createPlan(request, image, memberId);
+            return ResponseEntity.ok("여행 계획이 성공적으로 추가되었습니다.");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Invalid plan data format", e);
+        }
     }
 
     @Operation(summary = "여행 계획 수정", description = "상세 여행 계획까지 수정 가능한 API 입니다.")
     @PutMapping("/{planId}")
     public ResponseEntity<String> updatePlan(
             @PathVariable String planId,
-            @RequestBody PlanUpdateRequest request,
+            @RequestPart(value = "plan") PlanUpdateRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             @CurrentMemberId String memberId) {
-        planService.updatePlan(request, planId, memberId);
+        planService.updatePlan(request, image, planId, memberId);
         return ResponseEntity.ok("여행 계획이 성공적으로 수정되었습니다.");
     }
 
