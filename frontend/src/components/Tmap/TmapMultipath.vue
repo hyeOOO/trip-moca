@@ -22,7 +22,7 @@ export default {
       required: true,
     },
     selectedDay: {
-      type: Number,
+      type: [Number, String], // String 타입 추가
       default: null,
     },
     showAllDays: {
@@ -118,7 +118,7 @@ export default {
         "#FF8FB1",
         "#95CD41",
         "#7B2869",
-        "#FFD93D"
+        "#FFD93D",
       ];
 
       const start = places[0];
@@ -237,7 +237,7 @@ export default {
         "pink",
         "lime",
         "magenta",
-        "yello"
+        "yello",
       ];
       const adjustedDayIndex = dayIndex - 1;
       const currentColor = colors[adjustedDayIndex % colors.length];

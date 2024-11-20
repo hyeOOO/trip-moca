@@ -34,7 +34,7 @@
         <div class="sticky bottom-0 bg-white p-4 border-t border-gray-200">
           <button
             class="w-full mb-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-            @click="goToModifyPlan"
+            @click="goToTravelCart"
           >
             편집
           </button>
@@ -353,8 +353,8 @@ const selectDay = (day) => {
 };
 
 // 일정 수정 페이지로 이동
-const goToModifyPlan = () => {
-  router.push(`/modify-plan/${planData.value.planId}`);
+const goToTravelCart = () => {
+  router.push(`/TravelCart/${planData.value.planId}`);
 };
 
 // 계획 저장 핸들러

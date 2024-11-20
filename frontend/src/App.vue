@@ -41,10 +41,6 @@ export default {
 </script>
 
 <style lang="scss">
-/* 전체 설정 */
-body {
-  margin: 0;
-}
 
 #app {
   display: flex;

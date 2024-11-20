@@ -12,19 +12,25 @@ import SavePlan from "@/views/travelPlan/savePlan.vue";
 import TmapSearch from "@/components/Tmap/TmapSearch.vue";
 import RouteSearch from "@/views/routeSearch/routeSearch.vue";
 import DetailedTravelPlan from "@/views/detailedTravelPlan/detailedTravelPlan.vue";
-import ModifyPlan from "@/views/detailedTravelPlan/modifyPlan.vue";
+import TravelCart from "@/views/detailedTravelPlan/travelCart.vue";
 import WelcomeAnimation from "@/views/animationView/welcomeAnimation.vue";
+import SelectCard from "@/views/cardBook/selectCard.vue";
 
 const routes = [
+  {
+    path: "/selectCard",
+    name: "SelectCard",
+    component: SelectCard,
+  },
   {
     path: "/plan/:id",
     name: "DetailedTravelPlan",
     component: DetailedTravelPlan,
   },
   {
-    path: "/modify-plan/:id",
-    name: "ModifyPlan",
-    component: ModifyPlan,
+    path: "/TravelCart/:id",
+    name: "TravelCart",
+    component: TravelCart,
   },
   {
     path: "/routeSearch",
@@ -39,7 +45,7 @@ const routes = [
   {
     path: "/",
     name: "WelcomeAnimation",
-    component: Main, //나중에 WelcomeAnimation 로 바꾸셈
+    component: WelcomeAnimation, //나중에 WelcomeAnimation 로 바꾸셈
   },
   {
     path: "/main",

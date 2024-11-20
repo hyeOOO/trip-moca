@@ -76,7 +76,7 @@ export default {
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
         { name: "추천관광", path: "/plan/1" },
-        { name: "카드도감", path: "/main" },
+        { name: "카드도감", path: "/selectCard" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],
       searchQuery: "",

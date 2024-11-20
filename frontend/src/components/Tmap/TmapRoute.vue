@@ -1,5 +1,3 @@
-TmapRoute.vue
-
 <template>
   <div ref="mapContainer" class="map-container">
     <div id="map_div" style="width: 100%; height: 100%"></div>
