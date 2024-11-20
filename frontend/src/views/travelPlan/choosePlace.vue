@@ -36,8 +36,8 @@
         </div>
         <div class="header">
           <h2>{{ name }}</h2>
-          <p v-if="localFormattedDateRange" class="date-range">
-            {{ localFormattedDateRange }}
+          <p v-if="formattedDateRange" class="date-range">
+            {{ formattedDateRange }}
           </p>
         </div>
         <div class="search-section">
@@ -239,28 +239,20 @@ export default {
     },
   },
   methods: {
-    // 3.
-    //  async fetchPlaces() {
-    //   try {
-    //     const response = await axios.get("/places"); // 백엔드 API 엔드포인트
-    //     this.places = response.data; // JSON 데이터를 상태에 저장
-    //   } catch (error) {
-    //     console.error("데이터를 가져오는 중 오류 발생:", error);
-    //     alert("장소 데이터를 가져올 수 없습니다.");
-    //   }
-    // }, -> 데이터 가져오는 메서드..?
-    async fetchAttractions(page = 0) {
+    async fetchAttractions(page = 0, searchQuery = "") {
       if (!this.areaCode || this.isFetching) {
         return;
       }
 
       this.isFetching = true;
       this.error = null;
+      this.isLoading = true;
 
       try {
         const response = await api.get(`/domain/attraction/search`, {
           params: {
             areaCode: this.areaCode,
+            title: searchQuery, // 검색어 추가
             page: page,
             size: this.pageSize,
             sort: "title,asc",
@@ -279,8 +271,10 @@ export default {
         this.totalPages = response.data.totalPages;
         this.isLastPage = response.data.last;
 
-        // API 응답 후 선택된 장소들 데이터 복원
-        this.restoreSelectedPlaces();
+        // 검색 결과가 변경되더라도 선택된 장소들은 유지
+        // 기존 선택된 장소들의 정보를 보존
+        const currentSelectedPlaces = { ...this.selectedPlacesByDay };
+        this.selectedPlacesByDay = currentSelectedPlaces;
       } catch (error) {
         console.error("관광지 데이터 조회 실패:", error);
         this.error = "관광지 정보를 불러오는데 실패했습니다.";
@@ -319,12 +313,12 @@ export default {
     },
 
     // 스크롤 이벤트 핸들러
-    handleScroll({ target }) {
+    async handleScroll({ target }) {
       const { scrollTop, clientHeight, scrollHeight } = target;
 
       // 스크롤이 bottom에 가까워지면 다음 페이지 로드
       if (!this.isLastPage && !this.isFetching && scrollTop + clientHeight >= scrollHeight - 100) {
-        this.fetchAttractions(this.currentPage + 1);
+        await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
       }
     },
 
@@ -462,8 +456,19 @@ export default {
       }
       this.updateMapSize();
     },
-    handleSearch() {
-      if (!this.searchQuery.trim()) return;
+    async handleSearch() {
+      if (!this.searchQuery.trim()) {
+        // 검색어가 비어있으면 전체 목록 조회
+        await this.fetchAttractions(0);
+        return;
+      }
+
+      // 검색 시작 시 로딩 상태 설정
+      this.isLoading = true;
+      this.currentPage = 0;
+
+      // 백엔드 API 호출하여 검색 수행
+      await this.fetchAttractions(0, this.searchQuery.trim());
     },
     goToDateSelection() {
       this.$router.push({
@@ -480,6 +485,7 @@ export default {
   async mounted() {
     // 컴포넌트 마운트 시 관광지 데이터 가져오기
     await this.fetchAttractions();
+    // 스크롤 이벤트 리스너 추가
     const middleSection = this.$el.querySelector(".middle-section");
     if (middleSection) {
       middleSection.addEventListener("scroll", this.handleScroll);

@@ -29,8 +29,8 @@
         </div>
         <div class="header">
           <h2>{{ name }}</h2>
-          <p v-if="localFormattedDateRange" class="date-range">
-            {{ localFormattedDateRange }}
+          <p v-if="formattedDateRange" class="date-range">
+            {{ formattedDateRange }}
           </p>
         </div>
 
@@ -159,6 +159,9 @@ export default {
   computed: {
     defaultTitle() {
       return `${this.name || "국내"} 여행`;
+    },
+    formattedDateRange() {
+      return this.planStore.dates.formattedDateRange;
     },
   },
   beforeUnmount() {
