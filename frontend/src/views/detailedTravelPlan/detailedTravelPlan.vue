@@ -1,10 +1,14 @@
 <template>
+  <!-- 전체 페이지 레이아웃 컨테이너 -->
   <div class="detailed-travel-plan h-screen flex flex-col">
     <nav-bar />
+    <!-- 메인 콘텐츠 영역 -->
     <div class="main-content flex-1 flex relative">
-      <!-- 왼쪽 사이드바 -->
+      <!-- 왼쪽 사이드바: 일정 목록 및 버튼 -->
       <div class="w-48 bg-white border-r border-gray-200 flex flex-col h-full">
+        <!-- 일정 목록 스크롤 영역 -->
         <div class="flex-1 overflow-y-auto divide-y divide-gray-200">
+          <!-- 전체 일정 보기 버튼 -->
           <button
             class="w-full p-4 text-left hover:bg-gray-100 font-medium"
             :class="{ 'bg-blue-50 text-blue-600': selectedDay === 'all' }"
@@ -13,6 +17,7 @@
             전체일정
           </button>
 
+          <!-- 일자별 버튼 목록 -->
           <div v-for="day in totalDays" :key="day" class="day-item">
             <button
               class="w-full p-4 text-left hover:bg-gray-100"
@@ -25,6 +30,7 @@
           </div>
         </div>
 
+        <!-- 하단 고정 버튼 영역 -->
         <div class="sticky bottom-0 bg-white p-4 border-t border-gray-200">
           <button
             class="w-full mb-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
@@ -32,18 +38,12 @@
           >
             편집
           </button>
-          <!-- <button
-            class="w-full p-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-            @click="savePlan"
-          >
-            저장
-          </button> -->
         </div>
       </div>
 
-      <!-- 메인 콘텐츠 영역 -->
+      <!-- 메인 콘텐츠 영역: 지도와 일정 상세 정보 -->
       <div class="flex-1 relative">
-        <!-- 지도 섹션 -->
+        <!-- 지도 표시 영역 -->
         <div class="absolute inset-0">
           <tmap-multipath
             :selected-places-by-day="getSelectedPlaces"
@@ -54,15 +54,17 @@
           />
         </div>
 
-        <!-- 중간섹션 -->
+        <!-- 드래그 가능한 일정 상세 패널 -->
         <div
           ref="middleSection"
           class="middle-section absolute left-0 h-full bg-white shadow-lg transition-width overflow-hidden"
           :class="{ expanded: isExpanded }"
           :style="{ width: `${currentWidth}px` }"
         >
+          <!-- 패널 내용 -->
           <div class="content-wrapper h-full">
             <div class="p-6 h-full overflow-y-auto">
+              <!-- 여행 제목 및 날짜 정보 -->
               <div class="mb-6" v-if="!isLoading">
                 <h1 class="text-2xl font-bold mb-2">
                   {{ planData.planTitle }}
@@ -77,7 +79,9 @@
                 v-if="selectedDay === 'all'"
                 class="days-grid-container overflow-x-auto"
               >
+                <!-- 가로 스크롤 가능한 일정 그리드 -->
                 <div class="days-grid" :style="gridStyle">
+                  <!-- 일자별 컨테이너 -->
                   <div
                     v-for="day in planData.dayPlans"
                     :key="day.day"
@@ -86,6 +90,7 @@
                     <h2 class="text-xl font-bold mb-4">
                       {{ day.day }}일차 {{ formatDate(new Date(day.date)) }}
                     </h2>
+                    <!-- 장소 카드 목록 -->
                     <div class="space-y-4 overflow-y-auto max-h-[calc(100vh-300px)]">
                       <div
                         v-for="(spot, index) in day.details"
@@ -116,6 +121,7 @@
 
               <!-- 개별 일정 뷰 -->
               <div v-else class="space-y-4 h-[calc(100%-120px)] overflow-y-auto">
+                <!-- 선택된 날짜의 장소 카드 목록 -->
                 <div
                   v-for="(spot, index) in getCurrentDaySpots()"
                   :key="spot.planDetailId"
@@ -142,10 +148,10 @@
             </div>
           </div>
 
-          <!-- 드래그 핸들 -->
+          <!-- 패널 크기 조절을 위한 드래그 핸들 -->
           <div
             ref="dragHandle"
-            class="drag-handle absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-white rounded-r-lg shadow flex items-center justify-center cursor-grab hover:bg-gray-100 transition-colors z-20"
+            class="drag-handle absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-transparent flex items-center justify-center hover:bg-transparent transition-colors z-20"
             @mousedown="startDragExpand"
             @touchstart="startDragExpand"
           >
@@ -158,45 +164,54 @@
 </template>
 
 <script setup>
+// 필요한 Vue 컴포넌트와 기능들을 임포트
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { usePlanStore } from '@/store/planStore';
 import navBar from "@/components/navBar.vue";
 import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 
+// 라우터와 상태관리 스토어 초기화
 const router = useRouter();
 const planStore = usePlanStore();
-const selectedDay = ref("all");
-const isExpanded = ref(false);
-const middleSection = ref(null);
-const dragHandle = ref(null);
-const isLoading = ref(true);
 
-// Panel state
-const panelOffset = ref(0);
-const isDragging = ref(false);
-const startX = ref(0);
-const currentX = ref(0);
-const initialPanelOffset = ref(0);
+// 상태 변수들 정의
+const selectedDay = ref("all"); // 선택된 일자
+const isExpanded = ref(false); // 패널 확장 상태
+const middleSection = ref(null); // 중간 섹션 참조
+const dragHandle = ref(null); // 드래그 핸들 참조
+const isLoading = ref(true); // 로딩 상태
 
+// 패널 드래그 관련 상태
+const panelOffset = ref(0); // 패널 오프셋
+const isDragging = ref(false); // 드래그 중 여부
+const startX = ref(0); // 드래그 시작 X 좌표
+const currentX = ref(0); // 현재 X 좌표
+const initialPanelOffset = ref(0); // 초기 패널 오프셋
+
+// 현재 패널 너비 계산
 const currentWidth = computed(() => {
   const baseWidth = 400;
   const maxWidth = Math.min(window.innerWidth - 192, 1200);
   return Math.min(baseWidth + panelOffset.value, maxWidth);
 });
 
+// 그리드 스타일 계산
 const gridStyle = computed(() => ({
   display: 'flex',
   gap: '1.5rem',
   width: 'max-content'
 }));
 
+// 여행 계획 데이터
 const planData = computed(() => planStore.getPlanData);
 
 let animationFrame = null;
 
+// 총 일수 계산
 const totalDays = computed(() => planData.value?.dayPlans?.length || 0);
 
+// 선택된 장소들 데이터 가공
 const getSelectedPlaces = computed(() => {
   if (selectedDay.value === "all") {
     return planData.value.dayPlans.reduce((acc, day) => {
@@ -225,6 +240,7 @@ const getSelectedPlaces = computed(() => {
     : {};
 });
 
+// 드래그 시작 핸들러
 const startDragExpand = (e) => {
   if (!dragHandle.value) return;
   if (e.type === "mousedown" && e.button !== 0) return;
@@ -247,6 +263,7 @@ const startDragExpand = (e) => {
   }
 };
 
+// 드래그 중 핸들러
 const handleDragMove = (e) => {
   if (!isDragging.value) return;
 
@@ -265,6 +282,7 @@ const handleDragMove = (e) => {
   });
 };
 
+// 드래그 종료 핸들러
 const stopDragExpand = () => {
   isDragging.value = false;
   if (dragHandle.value) {
@@ -281,6 +299,7 @@ const stopDragExpand = () => {
   }
 };
 
+// 여행 계획 데이터 가져오기
 const fetchPlanData = async () => {
   try {
     isLoading.value = true;
@@ -293,6 +312,7 @@ const fetchPlanData = async () => {
   }
 };
 
+// 날짜 범위 포맷팅
 const formatDateRange = (start, end) => {
   if (!start || !end || isLoading.value) return "";
   const startDate = new Date(start);
@@ -300,6 +320,7 @@ const formatDateRange = (start, end) => {
   return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
 };
 
+// 날짜 포맷팅
 const formatDate = (date) => {
   if (!date || !(date instanceof Date) || isNaN(date)) return "";
   const days = ["일", "월", "화", "수", "목", "금", "토"];
@@ -309,6 +330,7 @@ const formatDate = (date) => {
   )}.${String(date.getDate()).padStart(2, "0")}(${days[date.getDay()]})`;
 };
 
+// 일자별 날짜 가져오기
 const getDayDate = (day) => {
   if (!planData.value?.startDate || isLoading.value) return "";
   const start = new Date(planData.value.startDate);
@@ -317,6 +339,7 @@ const getDayDate = (day) => {
   return formatDate(start);
 };
 
+// 현재 선택된 날짜의 장소 목록 가져오기
 const getCurrentDaySpots = () => {
   const dayPlan = planData.value.dayPlans.find(
     (day) => day.day === selectedDay.value
@@ -324,14 +347,17 @@ const getCurrentDaySpots = () => {
   return dayPlan ? dayPlan.details : [];
 };
 
+// 날짜 선택 핸들러
 const selectDay = (day) => {
   selectedDay.value = day;
 };
 
+// 일정 수정 페이지로 이동
 const goToModifyPlan = () => {
   router.push(`/modify-plan/${planData.value.planId}`);
 };
 
+// 계획 저장 핸들러
 const savePlan = async () => {
   try {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -343,6 +369,7 @@ const savePlan = async () => {
   }
 };
 
+// 컴포넌트 언마운트 시 이벤트 리스너 정리
 onBeforeUnmount(() => {
   if (animationFrame) {
     cancelAnimationFrame(animationFrame);
@@ -353,6 +380,7 @@ onBeforeUnmount(() => {
   document.removeEventListener("touchend", stopDragExpand);
 });
 
+// 컴포넌트 마운트 시 초기 데이터 로드
 onMounted(() => {
   fetchPlanData();
 });
@@ -413,20 +441,21 @@ onMounted(() => {
   padding-right: 24px;
 }
 
-/* 일자별 컨테이너 */
+/* 일자별 컨테이너 스타일링 */
 .day-container {
   flex: 0 0 380px;
   max-height: calc(100vh - 280px);
   background-color: #fff;
 }
 
-/* 일자별 콘텐츠 영역 스크롤바 */
+/* 일자별 콘텐츠 영역 스크롤바 스타일링 */
 .day-container .space-y-4 {
   height: 100%;
   overflow-y: auto;
   max-height: inherit;
 }
 
+/* 스크롤바 스타일링 */
 .day-container .space-y-4::-webkit-scrollbar {
   width: 6px;
 }
@@ -445,7 +474,7 @@ onMounted(() => {
   background-color: #666;
 }
 
-/* 가로 스크롤바 스타일 */
+/* 가로 스크롤바 스타일링 */
 .days-grid-container::-webkit-scrollbar {
   height: 6px;
   background-color: #f5f5f5;
@@ -476,12 +505,11 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-/* 드래그 핸들 스타일 */
+/* 드래그 핸들 스타일링 */
 .drag-handle {
   opacity: 0.8;
   transition: opacity 0.2s ease, transform 0.2s ease;
   touch-action: none;
-  right: 24px;
   z-index: 30;
   cursor: grab;
 }
@@ -490,13 +518,14 @@ onMounted(() => {
   cursor: grabbing;
 }
 
+/* 왼쪽 사이드바 레이아웃 */
 .left-sidebar {
   display: flex;
   flex-direction: column;
   height: calc(100vh - 64px);
 }
 
-/* 반응형 스타일 */
+/* 반응형 스타일링 */
 @media (max-width: 1024px) {
   .middle-section {
     width: 350px;

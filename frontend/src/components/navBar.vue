@@ -25,7 +25,7 @@
                 class="hwsw-logo-image"
               />
             </router-link>
-            <router-link to="/" class="logo" v-else>
+            <router-link to="/main" class="logo" v-else>
               <img
                 src="@/assets/image/HW&SW-dark.png"
                 alt="HW&SW Logo"
@@ -76,7 +76,7 @@ export default {
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
         { name: "추천관광", path: "/plan/1" },
-        { name: "카드도감", path: "/" },
+        { name: "카드도감", path: "/main" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],
       searchQuery: "",

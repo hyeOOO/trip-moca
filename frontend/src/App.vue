@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="root">
     <router-view />
     <login-modal v-model="showLoginModal" />
   </div>
@@ -44,13 +44,13 @@ export default {
 /* 전체 설정 */
 body {
   margin: 0;
-  min-height: 100vh;
 }
 
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* 전체 뷰포트 높이 */
+  height: 919px; /* 전체 뷰포트 높이 */
+
 }
 /* 폰트 */
 @font-face {

@@ -139,9 +139,7 @@ export default {
 <style>
 /* 배경 이미지 */
 .background {
-  position: relative;
   height: 100vh;
-  overflow: hidden;
   margin: 0;
   background-size: cover;
   background-repeat: no-repeat;
