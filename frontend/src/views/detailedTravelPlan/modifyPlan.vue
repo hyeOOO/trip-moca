@@ -363,19 +363,15 @@ const handleDragOver = (event, targetDay, targetIndex) => {
   const dragCard = event.target.closest(".place-card");
   if (!dragCard) return;
 
-  const cards = Array.from(dragCard.parentNode.children);
   const cardRect = dragCard.getBoundingClientRect();
-  const midPoint = cardRect.top + cardRect.height / 2;
+  const mouseY = event.clientY;
+  const threshold = cardRect.top + (cardRect.height * 0.5);
+  const isAbove = mouseY < threshold;
 
-  // 마우스 위치에 따라 위/아래 드롭 위치 표시
-  if (event.clientY < midPoint) {
-    dragCard.classList.add("drag-over-top");
-    dragCard.classList.remove("drag-over-bottom");
-  } else {
-    dragCard.classList.add("drag-over-bottom");
-    dragCard.classList.remove("drag-over-top");
-  }
+  dragCard.classList.remove("drag-over-top", "drag-over-bottom");
+  dragCard.classList.add(isAbove ? "drag-over-top" : "drag-over-bottom");
 };
+
 
 // 드래그 중 처리
 const handleDragMove = (e) => {
@@ -403,43 +399,87 @@ const stopDragResize = () => {
 
 // --- 드래그 앤 드롭 관련 함수들 ---
 // 드롭 처리
-const handleDrop = (event, targetDay) => {
+const handleDrop = (event, targetDay, targetIndex) => {
   event.preventDefault();
   if (!draggedItem.value) return;
 
   const newPlan = JSON.parse(JSON.stringify(planData.value));
   const targetDayPlan = newPlan.dayPlans.find((plan) => plan.day === targetDay);
-
   if (!targetDayPlan) return;
 
-  if (draggedItem.value.type === "cart") {
-    const newPlace = {
-      attractionId: draggedItem.value.item.attractionId,
-      title: draggedItem.value.item.title,
-      attractionTitle: draggedItem.value.item.title,
-      image: draggedItem.value.item.image,
-      latitude: draggedItem.value.item.latitude || draggedItem.value.item.mapy,
-      longitude:
-        draggedItem.value.item.longitude || draggedItem.value.item.mapx,
-      addr1: draggedItem.value.item.addr1,
-      memo: "",
-    };
-    targetDayPlan.details.push(newPlace);
-  } else if (draggedItem.value.type === "day") {
-    const sourceDayPlan = newPlan.dayPlans.find(
-      (plan) => plan.day === draggedItem.value.fromDay
-    );
-    if (sourceDayPlan) {
-      const [movedPlace] = sourceDayPlan.details.splice(
-        draggedItem.value.index,
-        1
+  // 새로운 장소 객체 생성 함수
+  const createNewPlace = () => ({
+    attractionId: draggedItem.value.item.attractionId,
+    title: draggedItem.value.item.title,
+    attractionTitle: draggedItem.value.item.title,
+    image: draggedItem.value.item.image,
+    latitude: draggedItem.value.item.latitude || draggedItem.value.item.mapy,
+    longitude: draggedItem.value.item.longitude || draggedItem.value.item.mapx,
+    addr1: draggedItem.value.item.addr1,
+    memo: "",
+  });
+
+  // 비어있는 날짜에 드롭하는 경우
+  if (targetDayPlan.details.length === 0) {
+    if (draggedItem.value.type === "cart") {
+      targetDayPlan.details.push(createNewPlace());
+    } else if (draggedItem.value.type === "day") {
+      const sourceDayPlan = newPlan.dayPlans.find(
+        (plan) => plan.day === draggedItem.value.fromDay
       );
-      targetDayPlan.details.push(movedPlace);
+      if (sourceDayPlan) {
+        const [movedPlace] = sourceDayPlan.details.splice(draggedItem.value.index, 1);
+        targetDayPlan.details.push(movedPlace);
+      }
+    }
+  } 
+  // 기존 항목이 있는 날짜에 드롭하는 경우
+  else {
+    const dragCard = event.target.closest(".place-card");
+    if (dragCard) {
+      const cardRect = dragCard.getBoundingClientRect();
+      const mouseY = event.clientY;
+      const threshold = cardRect.top + (cardRect.height * 0.5);
+      const insertAtIndex = mouseY < threshold ? targetIndex : targetIndex + 1;
+
+      if (draggedItem.value.type === "cart") {
+        targetDayPlan.details.splice(insertAtIndex, 0, createNewPlace());
+      } else if (draggedItem.value.type === "day") {
+        const sourceDayPlan = newPlan.dayPlans.find(
+          (plan) => plan.day === draggedItem.value.fromDay
+        );
+        if (sourceDayPlan) {
+          const [movedPlace] = sourceDayPlan.details.splice(draggedItem.value.index, 1);
+          targetDayPlan.details.splice(insertAtIndex, 0, movedPlace);
+        }
+      }
+    } else {
+      // dragCard가 없는 경우 (빈 영역에 드롭)
+      if (draggedItem.value.type === "cart") {
+        targetDayPlan.details.push(createNewPlace());
+      } else if (draggedItem.value.type === "day") {
+        const sourceDayPlan = newPlan.dayPlans.find(
+          (plan) => plan.day === draggedItem.value.fromDay
+        );
+        if (sourceDayPlan) {
+          const [movedPlace] = sourceDayPlan.details.splice(draggedItem.value.index, 1);
+          targetDayPlan.details.push(movedPlace);
+        }
+      }
     }
   }
 
   planStore.updateEditingPlan(newPlan);
   draggedItem.value = null;
+  clearDragOverStyles();
+};
+
+// Add this new function to clear drag over styles:
+const clearDragOverStyles = () => {
+  const cards = document.querySelectorAll('.place-card');
+  cards.forEach(card => {
+    card.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
 };
 
 // 드래그 종료 시 스타일 정리
@@ -688,5 +728,18 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow-y: auto;
   height: calc(100vh - 250px); /* nav-bar + header + button 영역 높이를 뺀 값 */
+}
+
+.drag-over-top {
+  border-top: 2px solid #3b82f6;
+}
+
+.drag-over-bottom {
+  border-bottom: 2px solid #3b82f6;
+}
+
+.place-card {
+  position: relative;
+  transition: border 0.2s ease;
 }
 </style>

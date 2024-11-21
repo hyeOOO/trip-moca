@@ -45,7 +45,7 @@ export default {
 #app {
   display: flex;
   flex-direction: column;
-  height: 919px; /* 전체 뷰포트 높이 */
+  height: 100vh; /* 전체 뷰포트 높이 */
 
 }
 /* 폰트 */

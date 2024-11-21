@@ -1,50 +1,44 @@
 <template>
-  <!-- 전체 페이지 레이아웃 컨테이너 -->
-  <div class="detailed-travel-plan h-screen flex flex-col">
+  <!-- 전체 페이지 레이아웃 -->
+  <div class="travel-plan">
     <nav-bar />
-    <!-- 메인 콘텐츠 영역 -->
-    <div class="main-content flex-1 flex relative">
-      <!-- 왼쪽 사이드바: 일정 목록 및 버튼 -->
-      <div class="w-48 bg-white border-r border-gray-200 flex flex-col h-full">
-        <!-- 일정 목록 스크롤 영역 -->
-        <div class="flex-1 overflow-y-auto divide-y divide-gray-200">
-          <!-- 전체 일정 보기 버튼 -->
+    <div class="main-content">
+      <!-- 왼쪽 사이드바: 일자별 일정 목록 -->
+      <div class="sidebar">
+        <div class="schedule-list">
+          <!-- 전체 일정 버튼 -->
           <button
-            class="w-full p-4 text-left hover:bg-gray-100 font-medium"
-            :class="{ 'bg-blue-50 text-blue-600': selectedDay === 'all' }"
+            class="schedule-btn"
+            :class="{ active: selectedDay === 'all' }"
             @click="selectDay('all')"
           >
+            <i class="fa-regular fa-calendar"></i><br />
             전체일정
           </button>
 
-          <!-- 일자별 버튼 목록 -->
+          <!-- 일자별 버튼 -->
           <div v-for="day in totalDays" :key="day" class="day-item">
             <button
-              class="w-full p-4 text-left hover:bg-gray-100"
-              :class="{ 'bg-blue-50 text-blue-600': selectedDay === day }"
+              class="schedule-btn"
+              :class="{ active: selectedDay === day }"
               @click="selectDay(day)"
             >
-              <div class="font-medium">DAY {{ day }}</div>
-              <div class="text-sm text-gray-500">{{ getDayDate(day) }}</div>
+              <div class="day-title">DAY {{ day }}</div>
+              <div class="day-date">{{ day }}일차</div>
             </button>
           </div>
         </div>
 
-        <!-- 하단 고정 버튼 영역 -->
-        <div class="sticky bottom-0 bg-white p-4 border-t border-gray-200">
-          <button
-            class="w-full mb-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-            @click="goToTravelCart"
-          >
-            편집
-          </button>
+        <!-- 하단 편집 버튼 -->
+        <div class="edit-button-container">
+          <button class="edit-button" @click="goToTravelCart">편집</button>
         </div>
       </div>
 
-      <!-- 메인 콘텐츠 영역: 지도와 일정 상세 정보 -->
-      <div class="flex-1 relative">
-        <!-- 지도 표시 영역 -->
-        <div class="absolute inset-0">
+      <!-- 메인 영역: 지도와 일정 상세 -->
+      <div class="content-area">
+        <!-- 지도 영역 -->
+        <div class="map-container">
           <tmap-multipath
             :selected-places-by-day="getSelectedPlaces"
             :latitude="33.3846"
@@ -54,63 +48,54 @@
           />
         </div>
 
-        <!-- 드래그 가능한 일정 상세 패널 -->
+        <!-- 드래그 가능한 일정 패널 -->
         <div
           ref="middleSection"
-          class="middle-section absolute left-0 h-full bg-white shadow-lg transition-width overflow-hidden"
+          class="schedule-panel"
           :class="{ expanded: isExpanded }"
           :style="{ width: `${currentWidth}px` }"
         >
-          <!-- 패널 내용 -->
-          <div class="content-wrapper h-full">
-            <div class="p-6 h-full overflow-y-auto">
-              <!-- 여행 제목 및 날짜 정보 -->
-              <div class="mb-6" v-if="!isLoading">
-                <h1 class="text-2xl font-bold mb-2">
-                  {{ planData.planTitle }}
-                </h1>
-                <p class="text-gray-600">
+          <div class="panel-content">
+            <div class="schedule-detail">
+              <!-- 여행 제목과 기간 -->
+              <div class="trip-header" v-if="!isLoading">
+                <h1>{{ planData.planTitle }}</h1>
+                <p>
                   {{ formatDateRange(planData.startDate, planData.endDate) }}
                 </p>
               </div>
 
               <!-- 전체 일정 뷰 -->
-              <div
-                v-if="selectedDay === 'all'"
-                class="days-grid-container overflow-x-auto"
-              >
-                <!-- 가로 스크롤 가능한 일정 그리드 -->
+              <div v-if="selectedDay === 'all'" class="all-schedules">
                 <div class="days-grid" :style="gridStyle">
-                  <!-- 일자별 컨테이너 -->
                   <div
                     v-for="day in planData.dayPlans"
                     :key="day.day"
-                    class="day-container min-w-[380px]"
+                    class="day-container"
                   >
-                    <h2 class="text-xl font-bold mb-4">
-                      {{ day.day }}일차 {{ formatDate(new Date(day.date)) }}
+                    <h2>
+                      <span class="day">{{ day.day }}일차</span>
+                      <span class="date">{{
+                        formatDate(new Date(day.date))
+                      }}</span>
                     </h2>
-                    <!-- 장소 카드 목록 -->
-                    <div class="space-y-4 overflow-y-auto max-h-[calc(100vh-300px)]">
+                    <div class="spots-container">
                       <div
                         v-for="(spot, index) in day.details"
                         :key="spot.planDetailId"
-                        class="spot-card bg-white rounded-lg shadow p-4"
+                        class="spot-card"
                       >
-                        <div class="flex gap-4">
-                          <div class="spot-number font-bold text-blue-500 text-lg">
-                            {{ index + 1 }}
-                          </div>
-                          <div class="flex-1">
+                        <div class="spot-content">
+                          <div class="spot-number">{{ index + 1 }}</div>
+                          <div class="spot-info">
                             <img
                               :src="spot.image"
                               :alt="spot.attractionTitle"
-                              class="w-full h-48 object-cover rounded mb-3"
                             />
-                            <h3 class="font-bold text-lg mb-2">
-                              {{ spot.attractionTitle }}
-                            </h3>
-                            <p class="text-gray-600">{{ spot.memo }}</p>
+                            <div class="text-container">
+                              <h3>{{ spot.attractionTitle }}</h3>
+                              <p>{{ spot.memo }}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -120,27 +105,20 @@
               </div>
 
               <!-- 개별 일정 뷰 -->
-              <div v-else class="space-y-4 h-[calc(100%-120px)] overflow-y-auto">
-                <!-- 선택된 날짜의 장소 카드 목록 -->
+              <div v-else class="day-schedule">
                 <div
                   v-for="(spot, index) in getCurrentDaySpots()"
                   :key="spot.planDetailId"
-                  class="spot-card bg-white rounded-lg shadow p-4"
+                  class="spot-card"
                 >
-                  <div class="flex gap-4">
-                    <div class="spot-number font-bold text-blue-500 text-lg">
-                      {{ index + 1 }}
-                    </div>
-                    <div class="flex-1">
-                      <img
-                        :src="spot.image"
-                        :alt="spot.attractionTitle"
-                        class="w-full h-48 object-cover rounded mb-3"
-                      />
-                      <h3 class="font-bold text-lg mb-2">
-                        {{ spot.attractionTitle }}
-                      </h3>
-                      <p class="text-gray-600">{{ spot.memo }}</p>
+                  <div class="spot-content">
+                    <div class="spot-number">{{ index + 1 }}</div>
+                    <div class="spot-info">
+                      <img :src="spot.image" :alt="spot.attractionTitle" />
+                      <div class="text-container">
+                        <h3>{{ spot.attractionTitle }}</h3>
+                        <p>{{ spot.memo }}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -148,10 +126,10 @@
             </div>
           </div>
 
-          <!-- 패널 크기 조절을 위한 드래그 핸들 -->
+          <!-- 패널 크기 조절 핸들 -->
           <div
             ref="dragHandle"
-            class="drag-handle absolute right-0 top-1/2 -translate-y-1/2 w-6 h-12 bg-transparent flex items-center justify-center hover:bg-transparent transition-colors z-20"
+            class="drag-handle"
             @mousedown="startDragExpand"
             @touchstart="startDragExpand"
           >
@@ -164,54 +142,50 @@
 </template>
 
 <script setup>
-// 필요한 Vue 컴포넌트와 기능들을 임포트
+// Vue 관련 임포트
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { usePlanStore } from '@/store/planStore';
+import { usePlanStore } from "@/store/planStore";
 import navBar from "@/components/navBar.vue";
 // import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 
-// 라우터와 상태관리 스토어 초기화
+// 기본 상태 설정
 const router = useRouter();
 const planStore = usePlanStore();
 
-// 상태 변수들 정의
-const selectedDay = ref("all"); // 선택된 일자
+// 상태 관리 변수들
+const selectedDay = ref("all"); // 현재 선택된 일자 (전체 or 특정 일자)
 const isExpanded = ref(false); // 패널 확장 상태
-const middleSection = ref(null); // 중간 섹션 참조
-const dragHandle = ref(null); // 드래그 핸들 참조
-const isLoading = ref(true); // 로딩 상태
+const middleSection = ref(null); // 패널 DOM 참조
+const dragHandle = ref(null); // 드래그 핸들 DOM 참조
+const isLoading = ref(true); // 데이터 로딩 상태
 
 // 패널 드래그 관련 상태
-const panelOffset = ref(0); // 패널 오프셋
-const isDragging = ref(false); // 드래그 중 여부
+const panelOffset = ref(0); // 패널 이동 거리
+const isDragging = ref(false); // 드래그 진행 중 여부
 const startX = ref(0); // 드래그 시작 X 좌표
-const currentX = ref(0); // 현재 X 좌표
-const initialPanelOffset = ref(0); // 초기 패널 오프셋
+const initialPanelOffset = ref(0); // 초기 패널 위치
+let animationFrame = null; // 애니메이션 프레임 참조
 
-// 현재 패널 너비 계산
+// 패널 너비 계산
 const currentWidth = computed(() => {
-  const baseWidth = 400;
-  const maxWidth = Math.min(window.innerWidth - 192, 1200);
+  const baseWidth = 464; // 처음 시작 너비
+  const maxWidth = Math.min(window.innerWidth - 100, 1382); // 화면의 너비에서 192를 뺀 값과 화면의 너비 중 작은 값
   return Math.min(baseWidth + panelOffset.value, maxWidth);
 });
 
-// 그리드 스타일 계산
+// 그리드 레이아웃 스타일
 const gridStyle = computed(() => ({
-  display: 'flex',
-  gap: '1.5rem',
-  width: 'max-content'
+  display: "flex",
+  gap: "2.2rem",
+  width: "max-content",
 }));
 
-// 여행 계획 데이터
+// 여행 계획 데이터 관련
 const planData = computed(() => planStore.getPlanData);
-
-let animationFrame = null;
-
-// 총 일수 계산
 const totalDays = computed(() => planData.value?.dayPlans?.length || 0);
 
-// 선택된 장소들 데이터 가공
+// 지도에 표시할 장소 데이터 처리
 const getSelectedPlaces = computed(() => {
   if (selectedDay.value === "all") {
     return planData.value.dayPlans.reduce((acc, day) => {
@@ -240,19 +214,15 @@ const getSelectedPlaces = computed(() => {
     : {};
 });
 
-// 드래그 시작 핸들러
+// 드래그 이벤트 핸들러
 const startDragExpand = (e) => {
-  if (!dragHandle.value) return;
-  if (e.type === "mousedown" && e.button !== 0) return;
+  if (!dragHandle.value || (e.type === "mousedown" && e.button !== 0)) return;
   e.preventDefault();
 
   isDragging.value = true;
   startX.value = e.type === "mousedown" ? e.clientX : e.touches[0].clientX;
   initialPanelOffset.value = panelOffset.value;
-
-  if (dragHandle.value) {
-    dragHandle.value.style.cursor = "grabbing";
-  }
+  dragHandle.value.style.cursor = "grabbing";
 
   if (e.type === "mousedown") {
     document.addEventListener("mousemove", handleDragMove);
@@ -263,64 +233,41 @@ const startDragExpand = (e) => {
   }
 };
 
-// 드래그 중 핸들러
+//화면 크기 조절 이벤트 핸들러
 const handleDragMove = (e) => {
   if (!isDragging.value) return;
 
   const clientX = e.type === "mousemove" ? e.clientX : e.touches[0].clientX;
   const delta = clientX - startX.value;
 
-  if (animationFrame) {
-    cancelAnimationFrame(animationFrame);
-  }
+  if (animationFrame) cancelAnimationFrame(animationFrame);
 
   animationFrame = requestAnimationFrame(() => {
     const newOffset = initialPanelOffset.value + delta;
-    const maxOffset = Math.min(window.innerWidth - 192, 1200) - 400;
+    const maxOffset = Math.min(window.innerWidth - 100, 1382) - 464;
     panelOffset.value = Math.max(Math.min(newOffset, maxOffset), 0);
     isExpanded.value = panelOffset.value > 100;
   });
 };
 
-// 드래그 종료 핸들러
 const stopDragExpand = () => {
   isDragging.value = false;
-  if (dragHandle.value) {
-    dragHandle.value.style.cursor = "grab";
-  }
+  if (dragHandle.value) dragHandle.value.style.cursor = "grab";
 
   document.removeEventListener("mousemove", handleDragMove);
   document.removeEventListener("mouseup", stopDragExpand);
   document.removeEventListener("touchmove", handleDragMove);
   document.removeEventListener("touchend", stopDragExpand);
 
-  if (animationFrame) {
-    cancelAnimationFrame(animationFrame);
-  }
+  if (animationFrame) cancelAnimationFrame(animationFrame);
 };
 
-// 여행 계획 데이터 가져오기
-const fetchPlanData = async () => {
-  try {
-    isLoading.value = true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    planStore.initializePlan();
-  } catch (error) {
-    console.error("Failed to fetch plan data:", error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// 날짜 범위 포맷팅
+// 데이터 관련 함수들
 const formatDateRange = (start, end) => {
   if (!start || !end || isLoading.value) return "";
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  return `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
+  return `${formatDate(new Date(start))} ~ ${formatDate(new Date(end))}`;
 };
 
-// 날짜 포맷팅
 const formatDate = (date) => {
   if (!date || !(date instanceof Date) || isNaN(date)) return "";
   const days = ["일", "월", "화", "수", "목", "금", "토"];
@@ -330,7 +277,6 @@ const formatDate = (date) => {
   )}.${String(date.getDate()).padStart(2, "0")}(${days[date.getDay()]})`;
 };
 
-// 일자별 날짜 가져오기
 const getDayDate = (day) => {
   if (!planData.value?.startDate || isLoading.value) return "";
   const start = new Date(planData.value.startDate);
@@ -339,7 +285,7 @@ const getDayDate = (day) => {
   return formatDate(start);
 };
 
-// 현재 선택된 날짜의 장소 목록 가져오기
+// 현재 선택된 날짜의 장소 목록
 const getCurrentDaySpots = () => {
   const dayPlan = planData.value.dayPlans.find(
     (day) => day.day === selectedDay.value
@@ -347,191 +293,252 @@ const getCurrentDaySpots = () => {
   return dayPlan ? dayPlan.details : [];
 };
 
-// 날짜 선택 핸들러
+// 데이터 초기화 및 저장
+const fetchPlanData = async () => {
+  try {
+    isLoading.value = true;
+    await planStore.initializePlan();
+  } catch (error) {
+    console.error("여행 계획 데이터 로드 실패:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// 이벤트 핸들러
 const selectDay = (day) => {
   selectedDay.value = day;
 };
 
-// 일정 수정 페이지로 이동
 const goToTravelCart = () => {
   router.push(`/TravelCart/${planData.value.planId}`);
 };
 
-// 계획 저장 핸들러
-const savePlan = async () => {
-  try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    planStore.savePlan();
-    alert("저장되었습니다.");
-  } catch (error) {
-    console.error("Failed to save plan:", error);
-    alert("저장에 실패했습니다.");
-  }
-};
+// 생명주기 훅
+onMounted(() => {
+  fetchPlanData();
+});
 
-// 컴포넌트 언마운트 시 이벤트 리스너 정리
 onBeforeUnmount(() => {
-  if (animationFrame) {
-    cancelAnimationFrame(animationFrame);
-  }
+  if (animationFrame) cancelAnimationFrame(animationFrame);
   document.removeEventListener("mousemove", handleDragMove);
   document.removeEventListener("mouseup", stopDragExpand);
   document.removeEventListener("touchmove", handleDragMove);
   document.removeEventListener("touchend", stopDragExpand);
 });
-
-// 컴포넌트 마운트 시 초기 데이터 로드
-onMounted(() => {
-  fetchPlanData();
-});
 </script>
 
 <style scoped>
-/* 전체 레이아웃 관련 - 화면 전체를 차지하고 스크롤 방지 */
-.detailed-travel-plan {
- height: 100vh;
- overflow: hidden;
+/* 전체 레이아웃 */
+.travel-plan {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 중앙 섹션 - 지도와 내용이 들어가는 영역 스타일링 */
-.middle-section {
- width: 400px;
- max-width: calc(100vw - 192px); /* 화면 크기에 따른 최대 너비 계산 */
- background-color: #fff;
- z-index: 10;
- will-change: transform; /* 애니메이션 성능 최적화 */
- touch-action: none; /* 터치 동작 비활성화 */
- transition: width 0.3s ease; /* 너비 변경시 부드러운 애니메이션 */
- height: calc(100vh - 64px); /* 헤더를 제외한 전체 높이 */
+.main-content {
+  flex: 1;
+  display: flex;
+  position: relative;
 }
 
-/* 내용 감싸는 영역 - 드래그 선택 방지 및 배경 처리 */
-.content-wrapper {
- position: relative;
- height: 100%;
- overflow: hidden;
- user-select: none; /* 텍스트 선택 방지 */
- background-color: rgba(255, 255, 255, 0.5);
+/* 사이드바 */
+.sidebar {
+  width: 100px;
+  height: 100%;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  color: #b4b4b4;
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 14px;
 }
 
-/* 패딩 영역 - 하단 버튼을 위한 여백 확보 */
-.p-6 {
- height: calc 100%;
- padding-right: 24px;
- display: flex;
- flex-direction: column;
+.schedule-list {
+  flex: 1;
 }
 
-/* 일정 그리드 컨테이너 - 가로 스크롤 가능한 영역 */
-.days-grid-container {
- width: 100%;
- overflow-x: auto; /* 가로 스크롤만 허용 */
- overflow-y: hidden;
- margin-bottom: 20px;
- min-height: 0;
- flex-grow: 1;
+/* 전체일정버튼, 일차버튼 */
+.schedule-btn,
+.edit-button-container {
+  width: 100%;
+  padding: 15px;
+  text-align: center;
+  transition: background 0.5s;
 }
 
-/* 일정 그리드 - 일자별 카드를 가로로 배열 */
-.days-grid {
- display: inline-flex;
- gap: 1.5rem; /* 카드 사이 간격 */
- min-height: 100%;
- padding-bottom: 16px;
- padding-right: 24px;
+.schedule-btn:hover {
+  background: #6e6156;
 }
 
-/* 일자별 컨테이너 기본 스타일 */
-.day-container {
- flex: 0 0 380px; /* 고정 너비 설정 */
- max-height: calc(100vh - 280px); /* 최대 높이 제한 */
- background-color: #fff;
+.schedule-btn.active {
+  color: #ecb27b;
+}
+/* 편집버튼 */
+.edit-button {
+  width: 100%;
+  padding: 0.5rem;
+  background: #ecb27b;
+  color: white;
+  border-radius: 0.9rem;
+  height: 50px;
 }
 
-/* 일자별 내용 영역의 스크롤 설정 */
-.day-container .space-y-4 {
- height: 100%;
- overflow-y: auto; /* 세로 스크롤 허용 */
- max-height: inherit;
+.edit-button:hover {
+  background: #6e6156;
+  transition: background 0.5s;
 }
 
-/* 세로 스크롤바 커스텀 스타일링 */
-.day-container .space-y-4::-webkit-scrollbar {
- width: 6px;
+/* 콘텐츠 영역 */
+.content-area {
+  flex: 1;
+  position: relative;
 }
 
-.day-container .space-y-4::-webkit-scrollbar-track {
- background-color: #f5f5f5;
- border-radius: 3px;
+.map-container {
+  position: absolute;
+  inset: 0;
 }
 
-.day-container .space-y-4::-webkit-scrollbar-thumb {
- background-color: #888;
- border-radius: 3px;
+/* 일정 패널 */
+.schedule-panel {
+  position: absolute; /* 절대 위치 */
+  left: 0;
+  height: 100%;
+  background: white;
+  z-index: 10;
+  transition: width 0.3s; /* 너비 변경 시 애니메이션 */
+  overflow: hidden; /* 내용이 넘칠 때 숨김 */
 }
 
-.day-container .space-y-4::-webkit-scrollbar-thumb:hover {
- background-color: #666;
+/* 드래그 패널 */
+.panel-content {
+  height: 100%;
+  overflow: hidden;
 }
 
-/* 가로 스크롤바 커스텀 스타일링 */
-.days-grid-container::-webkit-scrollbar {
- height: 6px;
- background-color: #f5f5f5;
+.schedule-detail {
+  padding: 0 24px 24px 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+/* 패널 안 여행 제목과 기간  */
+.trip-header {
+  font-family: "EliceDigitalBaeum_Bold";
+}
+.trip-header h1 {
+  font-size: 32px;
 }
 
-.days-grid-container::-webkit-scrollbar-track {
- border-radius: 3px;
- background-color: #f5f5f5;
- margin: 0 24px;
+.trip-header p {
+  margin-bottom: 30px;
+  color: #ecb27b;
+}
+/* 몇일차 하고 xxxx.xx.xx(요일) */
+.day-container h2 {
+  margin-bottom: 1.5rem;
 }
 
-.days-grid-container::-webkit-scrollbar-thumb {
- border-radius: 3px;
- background-color: #888;
+.day-container .day {
+  font-family: "EliceDigitalBaeum_Bold";
+  font-size: 20px;
+  margin-right: 5px;
 }
 
-.days-grid-container::-webkit-scrollbar-thumb:hover {
- background-color: #666;
+.day-container .date {
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 12px;
 }
 
-/* 장소 카드 호버시 애니메이션 효과 */
+/* 여행 스케줄 카드 */
 .spot-card {
- transition: transform 0.2s ease;
- background-color: #fff;
+  width: 410px;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
+  transition: transform 0.5s;
+  padding: 10px 16px;
 }
 
 .spot-card:hover {
- transform: translateY(-2px); /* 호버시 위로 살짝 이동 */
+  transform: translateY(-2px);
 }
 
-/* 드래그 핸들 (드래그 가능한 영역) 스타일링 */
+.spot-content {
+  display: flex;
+  gap: 1rem;
+}
+
+.spot-number {
+  font-family: "Pretendard-SemiBold";
+  display: flex;
+  align-items: center;
+  color: #6e6156;
+  font-size: 1.125rem;
+}
+
+.spot-info {
+  display: flex;
+  align-items: center;
+}
+/* 카드여행지 이미지 */
+.spot-info img {
+  margin-right: 1rem; /* 이미지와 텍스트 사이 간격 */
+  width: 145px;
+  height: 6rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+/* 카드여행지 이름, 설명 */
+.spot-info h3 {
+  font-family: "Pretendard-Medium";
+  font-weight: bold;
+  font-size: 1.125rem;
+}
+
+.spot-info p {
+  color: #b4b4b4;
+  font-size: 13px;
+}
+
+/* 드래그 핸들 */
 .drag-handle {
- opacity: 0.8;
- transition: opacity 0.2s ease, transform 0.2s ease;
- touch-action: none; /* 터치 동작 비활성화 */
- z-index: 30;
- cursor: grab; /* 드래그 가능 커서 표시 */
+  position: absolute;   /* 절대 위치 */
+  right: 0;          /* 오른쪽 정렬 */
+  top: 50%;       /* 세로 중앙 정렬 */
+  transform: translateY(-50%);    /* 세로 중앙 정렬 */
+  width: 1.5rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 30;
 }
 
 .drag-handle:active {
- cursor: grabbing; /* 드래그 중일 때 커서 변경 */
+  cursor: grabbing;
 }
 
-/* 좌측 사이드바 레이아웃 설정 */
-.left-sidebar {
- display: flex;
- flex-direction: column;
- height: calc(100vh - 64px); /* 헤더 제외 전체 높이 */
+/* 가로/세로 스크롤바 공통 스타일 */
+::-webkit-scrollbar {
+ width: 6px;
+ height: 6px;
 }
 
-/* 반응형 디자인 - 화면 크기가 1024px 이하일 때 */
-@media (max-width: 1024px) {
- .middle-section {
-   width: 350px; /* 중앙 섹션 너비 축소 */
- }
- .day-container {
-   width: 330px; /* 일자별 컨테이너 너비 축소 */
- }
+::-webkit-scrollbar-track {
+ background: #ffffff;
+ border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+ background: #ECB27B;
+ border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+ background: #C3A386;
 }
 </style>
