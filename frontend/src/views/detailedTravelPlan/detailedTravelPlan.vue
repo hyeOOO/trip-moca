@@ -169,7 +169,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { usePlanStore } from '@/store/planStore';
 import navBar from "@/components/navBar.vue";
-import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
+// import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 
 // 라우터와 상태관리 스토어 초기화
 const router = useRouter();
@@ -387,151 +387,151 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 전체 레이아웃 - 스크롤 방지 */
+/* 전체 레이아웃 관련 - 화면 전체를 차지하고 스크롤 방지 */
 .detailed-travel-plan {
-  height: 100vh;
-  overflow: hidden;
+ height: 100vh;
+ overflow: hidden;
 }
 
-/* 중간 섹션 - 지도와 콘텐츠 영역 */
+/* 중앙 섹션 - 지도와 내용이 들어가는 영역 스타일링 */
 .middle-section {
-  width: 400px;
-  max-width: calc(100vw - 192px);
-  background-color: #fff;
-  z-index: 10;
-  will-change: transform;
-  touch-action: none;
-  transition: width 0.3s ease;
-  height: calc(100vh - 64px);
+ width: 400px;
+ max-width: calc(100vw - 192px); /* 화면 크기에 따른 최대 너비 계산 */
+ background-color: #fff;
+ z-index: 10;
+ will-change: transform; /* 애니메이션 성능 최적화 */
+ touch-action: none; /* 터치 동작 비활성화 */
+ transition: width 0.3s ease; /* 너비 변경시 부드러운 애니메이션 */
+ height: calc(100vh - 64px); /* 헤더를 제외한 전체 높이 */
 }
 
-/* 콘텐츠 래퍼 - 드래그 방지 */
+/* 내용 감싸는 영역 - 드래그 선택 방지 및 배경 처리 */
 .content-wrapper {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-  user-select: none;
-  background-color: rgba(255, 255, 255, 0.5);
+ position: relative;
+ height: 100%;
+ overflow: hidden;
+ user-select: none; /* 텍스트 선택 방지 */
+ background-color: rgba(255, 255, 255, 0.5);
 }
 
-/* 패딩 영역 - 하단 버튼 공간 확보 */
+/* 패딩 영역 - 하단 버튼을 위한 여백 확보 */
 .p-6 {
-  height: calc 100%;
-  padding-right: 24px;
-  display: flex;
-  flex-direction: column;
+ height: calc 100%;
+ padding-right: 24px;
+ display: flex;
+ flex-direction: column;
 }
 
-/* 일정 그리드 컨테이너 - 가로 스크롤 허용 */
+/* 일정 그리드 컨테이너 - 가로 스크롤 가능한 영역 */
 .days-grid-container {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  margin-bottom: 20px;
-  min-height: 0;
-  flex-grow: 1;
+ width: 100%;
+ overflow-x: auto; /* 가로 스크롤만 허용 */
+ overflow-y: hidden;
+ margin-bottom: 20px;
+ min-height: 0;
+ flex-grow: 1;
 }
 
-/* 일정 그리드 - 일자별 카드 배치 */
+/* 일정 그리드 - 일자별 카드를 가로로 배열 */
 .days-grid {
-  display: inline-flex;
-  gap: 1.5rem;
-  min-height: 100%;
-  padding-bottom: 16px;
-  padding-right: 24px;
+ display: inline-flex;
+ gap: 1.5rem; /* 카드 사이 간격 */
+ min-height: 100%;
+ padding-bottom: 16px;
+ padding-right: 24px;
 }
 
-/* 일자별 컨테이너 스타일링 */
+/* 일자별 컨테이너 기본 스타일 */
 .day-container {
-  flex: 0 0 380px;
-  max-height: calc(100vh - 280px);
-  background-color: #fff;
+ flex: 0 0 380px; /* 고정 너비 설정 */
+ max-height: calc(100vh - 280px); /* 최대 높이 제한 */
+ background-color: #fff;
 }
 
-/* 일자별 콘텐츠 영역 스크롤바 스타일링 */
+/* 일자별 내용 영역의 스크롤 설정 */
 .day-container .space-y-4 {
-  height: 100%;
-  overflow-y: auto;
-  max-height: inherit;
+ height: 100%;
+ overflow-y: auto; /* 세로 스크롤 허용 */
+ max-height: inherit;
 }
 
-/* 스크롤바 스타일링 */
+/* 세로 스크롤바 커스텀 스타일링 */
 .day-container .space-y-4::-webkit-scrollbar {
-  width: 6px;
+ width: 6px;
 }
 
 .day-container .space-y-4::-webkit-scrollbar-track {
-  background-color: #f5f5f5;
-  border-radius: 3px;
+ background-color: #f5f5f5;
+ border-radius: 3px;
 }
 
 .day-container .space-y-4::-webkit-scrollbar-thumb {
-  background-color: #888;
-  border-radius: 3px;
+ background-color: #888;
+ border-radius: 3px;
 }
 
 .day-container .space-y-4::-webkit-scrollbar-thumb:hover {
-  background-color: #666;
+ background-color: #666;
 }
 
-/* 가로 스크롤바 스타일링 */
+/* 가로 스크롤바 커스텀 스타일링 */
 .days-grid-container::-webkit-scrollbar {
-  height: 6px;
-  background-color: #f5f5f5;
+ height: 6px;
+ background-color: #f5f5f5;
 }
 
 .days-grid-container::-webkit-scrollbar-track {
-  border-radius: 3px;
-  background-color: #f5f5f5;
-  margin: 0 24px;
+ border-radius: 3px;
+ background-color: #f5f5f5;
+ margin: 0 24px;
 }
 
 .days-grid-container::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background-color: #888;
+ border-radius: 3px;
+ background-color: #888;
 }
 
 .days-grid-container::-webkit-scrollbar-thumb:hover {
-  background-color: #666;
+ background-color: #666;
 }
 
-/* 장소 카드 호버 효과 */
+/* 장소 카드 호버시 애니메이션 효과 */
 .spot-card {
-  transition: transform 0.2s ease;
-  background-color: #fff;
+ transition: transform 0.2s ease;
+ background-color: #fff;
 }
 
 .spot-card:hover {
-  transform: translateY(-2px);
+ transform: translateY(-2px); /* 호버시 위로 살짝 이동 */
 }
 
-/* 드래그 핸들 스타일링 */
+/* 드래그 핸들 (드래그 가능한 영역) 스타일링 */
 .drag-handle {
-  opacity: 0.8;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  touch-action: none;
-  z-index: 30;
-  cursor: grab;
+ opacity: 0.8;
+ transition: opacity 0.2s ease, transform 0.2s ease;
+ touch-action: none; /* 터치 동작 비활성화 */
+ z-index: 30;
+ cursor: grab; /* 드래그 가능 커서 표시 */
 }
 
 .drag-handle:active {
-  cursor: grabbing;
+ cursor: grabbing; /* 드래그 중일 때 커서 변경 */
 }
 
-/* 왼쪽 사이드바 레이아웃 */
+/* 좌측 사이드바 레이아웃 설정 */
 .left-sidebar {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 64px);
+ display: flex;
+ flex-direction: column;
+ height: calc(100vh - 64px); /* 헤더 제외 전체 높이 */
 }
 
-/* 반응형 스타일링 */
+/* 반응형 디자인 - 화면 크기가 1024px 이하일 때 */
 @media (max-width: 1024px) {
-  .middle-section {
-    width: 350px;
-  }
-  .day-container {
-    width: 330px;
-  }
+ .middle-section {
+   width: 350px; /* 중앙 섹션 너비 축소 */
+ }
+ .day-container {
+   width: 330px; /* 일자별 컨테이너 너비 축소 */
+ }
 }
 </style>

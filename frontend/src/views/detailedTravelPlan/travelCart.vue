@@ -36,15 +36,6 @@
           class="middle-section relative"
           :class="{ collapsed: isCollapsed }"
         >
-          <div class="toggle-button" @click="toggleCollapse">
-            <i
-              class="fa-solid"
-              :class="{
-                'fa-arrow-left': !isCollapsed,
-                'fa-arrow-right': isCollapsed,
-              }"
-            ></i>
-          </div>
           <div class="header">
             <h2>장소 선택</h2>
             <p class="text-gray-500 text-sm">
@@ -95,15 +86,6 @@
 
         <!-- Right Section (장바구니) -->
         <div class="right-section" :class="{ collapsed: isRightCollapsed }">
-          <div class="toggle-button" @click="toggleRightSection">
-            <i
-              class="fa-solid"
-              :class="{
-                'fa-arrow-left': !isRightCollapsed,
-                'fa-arrow-right': isRightCollapsed,
-              }"
-            ></i>
-          </div>
           <div class="header">
             <h2>장바구니</h2>
             <button @click="clearCart" class="clear-button">
@@ -111,9 +93,7 @@
             </button>
           </div>
           <div class="selected-places" @dragover.prevent @drop="onDrop($event)">
-            <div v-if="!cartItems.length" class="empty-cart">
-            </div>
-            <div v-else class="cart-items">
+            <div v-if="cartItems.length > 0" class="cart-items ">
               <div
                 v-for="(place, index) in cartItems"
                 :key="place.attractionId"
@@ -167,16 +147,17 @@ import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { usePlanStore } from "@/store/planStore";
 import navBar from "@/components/navBar.vue";
-import TMapComponent from "@/components/Tmap/Tmap.vue";
+// import TMapComponent from "@/components/Tmap/Tmap.vue";
 import testData from "@/assets/data/testData.js";
 
 const router = useRouter();
 const planStore = usePlanStore();
 const draggedItem = ref(null);
 
+const cartData = computed(() => planStore.getCartItems);
 // 상태 관리
 const selectedDay = ref("cart");
-const cartItems = ref([]);
+const cartItems = ref(cartData.value);
 const isCollapsed = ref(false);
 const isRightCollapsed = ref(false);
 const searchQuery = ref("");
@@ -211,7 +192,7 @@ const paginatedPlaces = computed(() => {
 const getSelectedPlaces = computed(() => {
   if (selectedDay.value === "cart") {
     return {
-      0: cartItems.value.map((place) => ({  // '#FF6B6B' 대신 0을 사용
+      0: cartItems.value.map((place) => ({  
         id: place.attractionId,
         title: place.title,
         latitude: place.latitude || place.mapy,
@@ -300,11 +281,6 @@ const onDrop = async (event, targetIndex) => {
   draggedItem.value = null;
 };
 
-const toggleCollapse = () => {
-  isCollapsed.value = !isCollapsed.value;
-  setTimeout(() => tmap.value?.getMap().resize(), 300);
-};
-
 const toggleRightSection = () => {
   isRightCollapsed.value = !isRightCollapsed.value;
   setTimeout(() => tmap.value?.getMap().resize(), 300);
@@ -337,13 +313,19 @@ const removePlace = (place) => {
   );
 };
 
-const clearCart = () => (cartItems.value = []);
+const clearCart = () => {
+  planStore.clearCartItems(); //장바구니와 모든 로컬을 비움
+  cartItems.value = []; // 로컬 상태도 업데이트
+};
 
 const assignToDay = () => {
-  if (!selectedDay.value || !cartItems.value.length) return;
-  selectedPlacesByDay.value[selectedDay.value] = [...cartItems.value];
-  selectedPlacesByDay.value = { ...selectedPlacesByDay.value };
-  clearCart();
+  if (!cartItems.value.length) return; // selectedDay 체크는 제거하고 cartItems만 체크
+  
+  // 장바구니 아이템들을 store에 저장
+  planStore.setCartItems(cartItems.value);
+  
+  // modifyPlan 페이지로 이동
+  router.push(`/modify/${planData.value.planId}`);
 };
 
 const formatDate = (date) => {
@@ -358,13 +340,6 @@ const formatDateRange = (start, end) =>
   !start || !end
     ? ""
     : `${formatDate(new Date(start))} ~ ${formatDate(new Date(end))}`;
-
-const getDayDate = (day) => {
-  if (!planData.value.startDate) return "";
-  const date = new Date(planData.value.startDate);
-  date.setDate(date.getDate() + day - 1);
-  return formatDate(date);
-};
 
 // Watchers
 watch(searchQuery, () => {
@@ -407,22 +382,6 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* 토글 버튼 스타일 */
-.toggle-button {
-  position: absolute;
-  top: 20px;
-  right: 2px;
-  width: 32px;
-  height: 32px;
-  background-color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 20;
-  transition: all 0.3s ease;
-}
-
 /* 검색 섹션 스타일 */
 .search-section {
   margin: 20px 0;
@@ -456,7 +415,6 @@ onMounted(() => {
   height: calc(100vh - 200px); /* nav-bar + header + search box 높이를 뺀 값 */
   margin-right: -20px;
   padding-right: 20px;
-  scrollbar-width: thin;
   scroll-behavior: smooth;
 }
 
