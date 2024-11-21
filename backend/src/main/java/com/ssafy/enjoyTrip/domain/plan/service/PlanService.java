@@ -1,5 +1,9 @@
 package com.ssafy.enjoyTrip.domain.plan.service;
 
+import com.ssafy.enjoyTrip.domain.attraction.entity.AttractionList;
+import com.ssafy.enjoyTrip.domain.attraction.entity.SearchKeyword;
+import com.ssafy.enjoyTrip.domain.attraction.repository.AttractionRepository;
+import com.ssafy.enjoyTrip.domain.attraction.service.AttractionService;
 import com.ssafy.enjoyTrip.domain.plan.dto.detail.*;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanCreateRequest;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanResponseDto;
@@ -31,6 +35,8 @@ public class PlanService {
     private final PlanRepository planRepository;
     private final PlanDetailRepository planDetailRepository;
     private final S3Service s3Service;
+    private final AttractionService attractionService;
+    private final AttractionRepository attractionRepository;
 
     // 여행 계획 생성(상세 포함)
     public void createPlan(PlanCreateRequest request, MultipartFile image, String memberId) {
@@ -72,13 +78,22 @@ public class PlanService {
     private void saveDetailPlans(List<DayPlanRequest> dayPlans, Long planId) {
         for (DayPlanRequest dayPlan : dayPlans) {
             List<PlanDetail> dayDetails = dayPlan.getDetails().stream()
-                    .map(detail -> PlanDetail.builder()
-                            .planId(planId)
-                            .attractionId(detail.getAttractionId())
-                            .day(dayPlan.getDay())
-                            .sequence(detail.getSequence())
-                            .memo(detail.getMemo())
-                            .build())
+                    .map(detail -> {
+                        // 관광지 정보 조회
+                        AttractionList attraction = attractionRepository.findById(detail.getAttractionId())
+                                .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다."));
+
+                        // 관광지명 기준으로 인기도 업데이트
+                        attractionService.updateSearchKeyword(attraction.getTitle(), SearchKeyword.SearchType.KEYWORD);
+
+                        return PlanDetail.builder()
+                                .planId(planId)
+                                .attractionId(detail.getAttractionId())
+                                .day(dayPlan.getDay())
+                                .sequence(detail.getSequence())
+                                .memo(detail.getMemo())
+                                .build();
+                    })
                     .collect(Collectors.toList());
 
             planDetailRepository.saveAll(dayDetails);
@@ -124,6 +139,13 @@ public class PlanService {
             List<PlanDetail> newDetails = new ArrayList<>();
             for (DayPlanRequest dayPlan : request.getDayPlans()) {
                 for (PlanDetailCreateRequest detail : dayPlan.getDetails()) {
+                    // 관광지 정보 조회
+                    AttractionList attraction = attractionRepository.findById(detail.getAttractionId())
+                            .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다."));
+
+                    // 관광지명 기준으로 인기도 업데이트
+                    attractionService.updateSearchKeyword(attraction.getTitle(), SearchKeyword.SearchType.KEYWORD);
+
                     PlanDetail planDetail = PlanDetail.builder()
                             .planId(Long.parseLong(planId))
                             .attractionId(detail.getAttractionId())

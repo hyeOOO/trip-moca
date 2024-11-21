@@ -1,6 +1,7 @@
 package com.ssafy.enjoyTrip.domain.attraction.controller;
 
 import com.ssafy.enjoyTrip.domain.attraction.dto.*;
+import com.ssafy.enjoyTrip.domain.attraction.entity.SearchKeyword;
 import com.ssafy.enjoyTrip.domain.attraction.service.AttractionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,6 +50,15 @@ public class AttractionController {
         );
     }
 
+    @Operation(summary = "관광지 기본 검색", description = "지역/시,군,구/카테고리/키워드별 관광지 검색(페이징 처리x) API입니다.")
+    @GetMapping("/search/no-page")
+    public ResponseEntity<List<AttractionListResponseDto>> searchAttractionsNoPage(
+            @ModelAttribute AttractionSearchRequestDto searchRequest) {
+        return ResponseEntity.ok(
+                attractionService.searchAttractionsNoPage(searchRequest)
+        );
+    }
+
     @Operation(summary = "추천 관광지 조회", description = "이미지가 있는 관광지를 조회하는 API입니다.")
     @GetMapping("/recommended/{areaCode}")
     public ResponseEntity<List<AttractionListResponseDto>> getRecommended(
@@ -56,5 +66,12 @@ public class AttractionController {
         return ResponseEntity.ok(
                 attractionService.getRecommendedAttractions(areaCode)
         );
+    }
+
+    @Operation(summary = "인기 관광지 조회", description = "인기있는(많이 검색되거나 여행 계획에 많이 추가된) 관광지를 조회하는 API입니다.")
+    @GetMapping("/popular/keywords")
+    public ResponseEntity<List<SearchKeyword>> getPopularKeywords(
+            @RequestParam SearchKeyword.SearchType searchType) {
+        return ResponseEntity.ok(attractionService.getPopularKeywords(searchType));
     }
 }

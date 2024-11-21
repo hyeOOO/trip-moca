@@ -858,9 +858,3 @@ export default {
   padding-right: 8px; /* 스크롤바 공간 확보 */
 }
 </style>
-
-// 백엔드 API 예시 // /place 엔드포인트에서 Json 형태로 데이터를 가져와야함 // app.get("/places",
-(req, res) => { // res.json([ // { // attractionId: 12497, // title: "가마오름", // addr1:
-"제주특별자치도 제주시 한경면 청수서5길 63", // latitude: 33.3059197039, // longitude:
-126.2507039833, // image1: "http://tong.visitkorea.or.kr/cms/resource/95/3026695_image2_1.jpg", //
-}, // // 추가 데이터... // ]); // });
