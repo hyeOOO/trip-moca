@@ -19,18 +19,10 @@
           <!-- 로고 영역 -->
           <div class="logo-area">
             <router-link to="/" class="logo" v-if="!isDarkRoute">
-              <img
-                src="@/assets/image/HW&SW.png"
-                alt="HW&SW Logo"
-                class="hwsw-logo-image"
-              />
+              <img src="@/assets/image/HW&SW.png" alt="HW&SW Logo" class="hwsw-logo-image" />
             </router-link>
             <router-link to="/" class="logo" v-else>
-              <img
-                src="@/assets/image/HW&SW-dark.png"
-                alt="HW&SW Logo"
-                class="hwsw-logo-image"
-              />
+              <img src="@/assets/image/HW&SW-dark.png" alt="HW&SW Logo" class="hwsw-logo-image" />
             </router-link>
           </div>
           <div class="menu">
@@ -45,20 +37,7 @@
           </div>
 
           <!-- 검색바 영역 -->
-          <div class="search-area">
-            <div class="search-bar">
-              <input
-                type="text"
-                placeholder="Search..."
-                class="search-input"
-                v-model="searchQuery"
-                @keyup.enter="handleSearch"
-              />
-              <button class="search-btn" @click="handleSearch">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </button>
-            </div>
-          </div>
+          <SearchBar />
         </div>
       </nav>
     </div>
@@ -67,6 +46,7 @@
 
 <script>
 import navLogin from "@/components/navLogin.vue";
+import SearchBar from "@/components/SearchBar.vue";
 
 export default {
   name: "Menu",
@@ -91,6 +71,7 @@ export default {
   },
   components: {
     navLogin,
+    SearchBar,
   },
   methods: {
     handleSearch() {
