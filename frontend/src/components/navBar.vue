@@ -26,12 +26,7 @@
             </router-link>
           </div>
           <div class="menu">
-            <router-link
-              v-for="(item, i) in menuItems"
-              :key="i"
-              :to="item.path"
-              :class="{ 'dark-text': isDarkRoute }"
-            >
+            <router-link v-for="(item, i) in menuItems" :key="i" :to="item.path" :class="{ 'dark-text': isDarkRoute }">
               {{ item.name }}
             </router-link>
           </div>
@@ -56,7 +51,7 @@ export default {
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
         { name: "추천관광", path: "/" },
-        { name: "카드도감", path: "/" },
+        { name: "인기여행", path: "/popularPlace" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],
       searchQuery: "",
@@ -65,7 +60,7 @@ export default {
   computed: {
     isDarkRoute() {
       return (
-        !["/", "/mypage"].includes(this.$route.path) && !this.$route.path.startsWith("/mypage/")
+        !["/", "/mypage", "/popularPlace"].includes(this.$route.path) && !this.$route.path.startsWith("/mypage/")
       );
     },
   },
