@@ -19,6 +19,12 @@ public class PromptTemplateLoader {
     @Value("classpath:prompts/prompt-attraction-user.st")
     private Resource userPromptResource;
 
+    @Value("classpath:prompts/prompt-season-system.st")
+    private Resource seasonSystemPromptResource;
+
+    @Value("classpath:prompts/prompt-season-user.st")
+    private Resource seasonUserPromptResource;
+
     public String loadSystemPrompt() {
         try {
             return new String(FileCopyUtils.copyToByteArray(systemPromptResource.getInputStream()), StandardCharsets.UTF_8);
@@ -34,6 +40,24 @@ public class PromptTemplateLoader {
         } catch (IOException e) {
             log.error("Error loading user prompt template", e);
             throw new RuntimeException("Failed to load user prompt template", e);
+        }
+    }
+
+    public String loadSeasonSystemPrompt() {
+        try {
+            return new String(FileCopyUtils.copyToByteArray(seasonSystemPromptResource.getInputStream()), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Error loading season system prompt template", e);
+            throw new RuntimeException("Failed to load season system prompt template", e);
+        }
+    }
+
+    public String loadSeasonUserPrompt() {
+        try {
+            return new String(FileCopyUtils.copyToByteArray(seasonUserPromptResource.getInputStream()), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Error loading season user prompt template", e);
+            throw new RuntimeException("Failed to load season user prompt template", e);
         }
     }
 

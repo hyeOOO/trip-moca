@@ -27,4 +27,17 @@ public class AiPromptService {
         systemTemplate.add("day", day);
         return new SystemMessage(systemTemplate.render());
     }
+
+    public Message createSeasonUserMessage(String season) {
+        String userPromptTemplate = promptLoader.loadSeasonUserPrompt();
+        PromptTemplate userTemplate = new PromptTemplate(userPromptTemplate);
+        userTemplate.add("season", season);
+        return new UserMessage(userTemplate.render());
+    }
+
+    public Message createSeasonSystemMessage() {
+        String systemPromptTemplate = promptLoader.loadSeasonSystemPrompt();
+        PromptTemplate systemTemplate = new PromptTemplate(systemPromptTemplate);
+        return new SystemMessage(systemTemplate.render());
+    }
 }
