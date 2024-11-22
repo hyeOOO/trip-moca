@@ -68,10 +68,16 @@ public class AttractionController {
         );
     }
 
-    @Operation(summary = "인기 관광지 조회", description = "인기있는(많이 검색되거나 여행 계획에 많이 추가된) 관광지를 조회하는 API입니다.")
+    @Operation(summary = "인기 키워드/지역/카테고리 조회", description = "인기있는(많이 검색되거나 여행 계획에 많이 추가된) 키워드/지역/카테고리를 조회하는 API입니다.")
     @GetMapping("/popular/keywords")
     public ResponseEntity<List<SearchKeyword>> getPopularKeywords(
             @RequestParam SearchKeyword.SearchType searchType) {
         return ResponseEntity.ok(attractionService.getPopularKeywords(searchType));
+    }
+
+    @Operation(summary = "인기 검색어 기반 관광지 조회", description = "인기 검색어를 기반으로 인기 관광지 5개를 조회하는 API입니다.")
+    @GetMapping("/popular/attractions")
+    public ResponseEntity<List<AttractionListResponseDto>> getPopularAttractionsByKeywords() {
+        return ResponseEntity.ok(attractionService.getPopularAttractionsByKeywords());
     }
 }

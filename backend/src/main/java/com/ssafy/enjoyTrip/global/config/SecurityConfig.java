@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/webjars/**").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/signup").permitAll()
                         .requestMatchers("/domain/attraction/**").permitAll()
+                        .requestMatchers("/api/attraction/**").permitAll()
                         .anyRequest().authenticated()
                 )
 

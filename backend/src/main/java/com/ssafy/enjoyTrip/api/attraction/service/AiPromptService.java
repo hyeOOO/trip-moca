@@ -35,8 +35,21 @@ public class AiPromptService {
         return new UserMessage(userTemplate.render());
     }
 
-    public Message createSeasonSystemMessage() {
+    public Message createKeywordSystemMessage() {
         String systemPromptTemplate = promptLoader.loadSeasonSystemPrompt();
+        PromptTemplate systemTemplate = new PromptTemplate(systemPromptTemplate);
+        return new SystemMessage(systemTemplate.render());
+    }
+
+    public Message createKeywordUserMessage(String keyword) {
+        String userPromptTemplate = promptLoader.loadKeywordUserPrompt();
+        PromptTemplate userTemplate = new PromptTemplate(userPromptTemplate);
+        userTemplate.add("keyword", keyword);
+        return new UserMessage(userTemplate.render());
+    }
+
+    public Message createSeasonSystemMessage() {
+        String systemPromptTemplate = promptLoader.loadKeywordSystemPrompt();
         PromptTemplate systemTemplate = new PromptTemplate(systemPromptTemplate);
         return new SystemMessage(systemTemplate.render());
     }

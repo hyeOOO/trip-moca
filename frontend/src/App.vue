@@ -1,10 +1,12 @@
 <template>
-  <div>
-    <router-view />
-    <login-modal v-model="showLoginModal" @card-acquired="handleCardAcquired" />
-    <card-modal v-if="showCardModal" :card="acquiredCard" @close="closeCardModal" />
+  <div class="app-container">
+    <div class="main-content">
+      <router-view />
+      <login-modal v-model="showLoginModal" @card-acquired="handleCardAcquired" />
+      <card-modal v-if="showCardModal" :card="acquiredCard" @close="closeCardModal" />
+    </div>
+    <footInfo />
   </div>
-  <footInfo />
 </template>
 
 <script>
@@ -16,11 +18,11 @@ import CardModal from "@/components/cardModal.vue";
 
 export default {
   name: "App",
-  data() { },
+  data() {},
   components: {
     footInfo,
     LoginModal,
-    CardModal
+    CardModal,
   },
   setup() {
     const showLoginModal = ref(false);
@@ -56,7 +58,7 @@ export default {
       showCardModal,
       acquiredCard,
       handleCardAcquired,
-      closeCardModal
+      closeCardModal,
     };
   },
 };
@@ -74,6 +76,17 @@ body {
   flex-direction: column;
   min-height: 100vh;
   /* 전체 뷰포트 높이 */
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  position: relative;
 }
 
 /* 폰트 */

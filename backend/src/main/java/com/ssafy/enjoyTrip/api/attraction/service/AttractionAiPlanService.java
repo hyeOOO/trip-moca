@@ -87,6 +87,36 @@ public class AttractionAiPlanService {
         }
     }
 
+    public List<DayPlanDto> generateKeywordPlan(String keyword) {
+        try {
+            Message userMessage = aiPromptService.createKeywordUserMessage(keyword);
+            Message systemMessage = aiPromptService.createKeywordSystemMessage();
+            String aiResponse = chatModel.call(systemMessage, userMessage);
+
+            aiResponseParser.logJsonStructure(aiResponse);
+
+            AiPlanResponseDto planResponse = aiResponseParser.parseResponse(aiResponse);
+
+            return attractionMappingService.mapAttractionDetails(
+                    planResponse.getPlans()
+            );
+
+        } catch (JsonProcessingException e) {
+            throw new AttractionServiceException(
+                    ErrorCode.INVALID_AI_RESPONSE,
+
+                    "AI 응답을 처리할 수 없는 형식입니다: " + e.getMessage(),
+                    e
+            );
+        } catch (Exception e) {
+            throw new AttractionServiceException(
+                    ErrorCode.AI_SERVICE_ERROR,
+                    "AI 서비스 처리 중 오류가 발생했습니다: " + e.getMessage(),
+                    e
+            );
+        }
+    }
+
     private static String getString(String sidoCode) {
         String sido = null;
         switch(sidoCode){

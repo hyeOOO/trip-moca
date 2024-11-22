@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -142,6 +144,42 @@ public class AttractionService {
     // 인기 검색어 조회 메서드
     public List<SearchKeyword> getPopularKeywords(SearchKeyword.SearchType searchType) {
         return searchKeywordRepository.findTop10BySearchTypeOrderByCountDesc(searchType);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AttractionListResponseDto> getPopularAttractionsByKeywords() {
+        // 1. 인기 검색어 30개 조회
+        List<SearchKeyword> popularKeywords = searchKeywordRepository
+                .findTop30BySearchTypeOrderByCountDesc(SearchKeyword.SearchType.KEYWORD);
+
+        // 2. 각 검색어로 관광지 검색 및 결과 저장을 위한 리스트
+        List<AttractionListResponseDto> allAttractions = new ArrayList<>();
+
+        // 3. 각 키워드별로 관광지 검색
+        for (SearchKeyword keyword : popularKeywords) {
+            // 키워드로 관광지 검색
+            List<AttractionList> attractions = attractionRepository.searchAttractions(
+                    null,  // areaCode
+                    null,  // siGunGuCode
+                    keyword.getKeyword(),  // title
+                    null   // contentTypeId
+            );
+
+            // 검색 결과가 있는 경우, 첫 번째 관광지만 추가
+            if (!attractions.isEmpty()) {
+                allAttractions.add(AttractionListResponseDto.fromEntity(attractions.get(0)));
+            }
+
+            // 이미 5개의 관광지를 찾았다면 중단
+            if (allAttractions.size() >= 5) {
+                break;
+            }
+        }
+
+        // 4. 최대 5개까지만 반환
+        return allAttractions.stream()
+                .limit(5)
+                .collect(Collectors.toList());
     }
 
 }

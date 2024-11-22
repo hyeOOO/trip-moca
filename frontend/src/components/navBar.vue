@@ -26,7 +26,12 @@
             </router-link>
           </div>
           <div class="menu">
-            <router-link v-for="(item, i) in menuItems" :key="i" :to="item.path" :class="{ 'dark-text': isDarkRoute }">
+            <router-link
+              v-for="(item, i) in menuItems"
+              :key="i"
+              :to="item.path"
+              :class="{ 'dark-text': isDarkRoute }"
+            >
               {{ item.name }}
             </router-link>
           </div>
@@ -60,7 +65,10 @@ export default {
   computed: {
     isDarkRoute() {
       return (
-        !["/", "/mypage", "/popularPlace"].includes(this.$route.path) && !this.$route.path.startsWith("/mypage/")
+        !["/", "/mypage", "/popularPlace"].includes(this.$route.path) &&
+        !this.$route.path.startsWith("/mypage/") &&
+        !this.$route.path.startsWith("/season-plan/") &&
+        !this.$route.path.startsWith("/keyword-plan/")
       );
     },
   },

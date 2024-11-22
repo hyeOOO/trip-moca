@@ -9,4 +9,5 @@ import java.util.List;
 public interface SearchKeywordRepository extends MongoRepository<SearchKeyword, String> {
     SearchKeyword findByKeywordAndSearchType(String keyword, SearchKeyword.SearchType searchType);
     List<SearchKeyword> findTop10BySearchTypeOrderByCountDesc(SearchKeyword.SearchType searchType);
+    List<SearchKeyword> findTop30BySearchTypeOrderByCountDesc(SearchKeyword.SearchType searchType);
 }
