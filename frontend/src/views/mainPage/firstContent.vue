@@ -35,15 +35,15 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .first-section {
   display: flex;
   flex-direction: column;
   font-family: "EliceDigitalBaeum_Regular";
   text-align: center;
   width: 100%;
-  height: 100vh;
-  margin-top: 120px;
+  height: 100vh; /* 전체 높이를 100vh로 제한 */
+  overflow: hidden; /* 초과되는 콘텐츠를 숨김 */
 }
 
 .photo-grid {
@@ -52,22 +52,20 @@ export default {
   grid-template-columns: 2fr 1fr 1fr;
   gap: 20px;
   width: 85%;
-  height: 100%;
+  height: calc(100% - 60px); /* 제목과 여백을 제외한 높이 */
   margin: 0 auto;
 }
 
 .first-title {
   text-align: center;
   font-size: 40px;
-  margin-bottom: 60px;
+  margin-bottom: 20px; /* 간격 축소 */
 }
 
 .first-box1 p {
-  margin-left: 24px;
+  margin: 24px 140px 0 24px;
   font-size: 14px;
   text-align: left;
-  margin-right: 140px;
-  margin-top: 60px;
 }
 
 .first-box1 button {
@@ -76,7 +74,7 @@ export default {
   border: 1px solid #e0e0e0;
   border-radius: 10px;
   padding: 10px 20px;
-  margin: 40px 560px 10px 10px;
+  margin: 20px auto 10px; /* 버튼을 중앙에 정렬 */
   font-size: 16px;
   cursor: pointer;
 }
@@ -85,6 +83,7 @@ export default {
   transform: scale(1.05);
   background-color: #ffdd57;
 }
+
 .first-box4 {
   grid-column: 2 / 2;
   grid-row: 2 / 3;
@@ -95,7 +94,8 @@ export default {
 .first-box4 img {
   width: 100%;
   height: 100%;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* 부드러운 전환 효과 */
+  object-fit: cover; /* 이미지 비율 유지하며 박스에 맞춤 */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .first-box2 img:hover,

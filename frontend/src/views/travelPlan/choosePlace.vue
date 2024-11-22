@@ -117,10 +117,17 @@
             </div>
             <div v-else class="selected-day-places">
               <div
-                v-for="place in selectedPlacesByDay[dayIndex - 1]"
+                v-for="(place, index) in selectedPlacesByDay[dayIndex - 1]"
                 :key="place.attractionId"
                 class="selected-place"
+                draggable="true"
+                @dragstart="
+                  dragStartSelected($event, place, dayIndex - 1, index)
+                "
+                @dragover.prevent
+                @drop.stop="onDrop($event, dayIndex - 1, index)"
               >
+                <div class="order-number">{{ index + 1 }}</div>
                 <div class="place-image">
                   <img :src="getImageUrl(place.image1)" :alt="place.title" />
                 </div>
@@ -153,10 +160,10 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
-import { useAuthStore } from "@/store/auth"; // auth store 추가
+import Tmap from "@/components/Tmap/Tmap.vue";
+import { useAuthStore } from "@/store/auth";
 import { usePlanStore } from "@/store/planStore";
 import api from "@/plugins/axios";
-import Tmap from "@/components/Tmap.vue";
 
 export default {
   name: "ChoosePlace",
@@ -171,26 +178,30 @@ export default {
   },
   setup() {
     const planStore = usePlanStore();
-    const authStore = useAuthStore(); // auth store 설정
+    const authStore = useAuthStore();
     return { planStore, authStore };
   },
   data() {
     return {
       searchQuery: "",
-      places: [], // 빈 배열로 초기화
+      places: [],
       isCollapsed: false,
       isRightCollapsed: false,
       isStep2Active: true,
       selectedDay: null,
       showAllDays: false,
-      isLoading: false, // 로딩 상태 추가
-      error: null, // 에러 상태 추가
+      isLoading: false,
+      error: null,
       currentPage: 0,
       totalPages: 0,
       pageSize: 15,
       isLastPage: false,
       isFetching: false,
-      localSelectedPlaces: {}, // selectedPlacesByDay를 대체
+      localSelectedPlaces: {},
+      draggedItem: null,
+      draggedDay: null,
+      draggedIndex: null,
+      isSelectedPlaceDrag: false,
     };
   },
   computed: {
@@ -211,7 +222,8 @@ export default {
       const query = this.searchQuery.toLowerCase();
       return this.places.filter(
         (place) =>
-          place.title.toLowerCase().includes(query) || place.addr1.toLowerCase().includes(query)
+          place.title.toLowerCase().includes(query) || 
+          place.addr1.toLowerCase().includes(query)
       );
     },
     numberOfDays() {
@@ -252,27 +264,23 @@ export default {
         const response = await api.get(`/domain/attraction/search`, {
           params: {
             areaCode: this.areaCode,
-            title: searchQuery, // 검색어 추가
+            title: searchQuery,
             page: page,
             size: this.pageSize,
             sort: "title,asc",
           },
         });
 
-        // 데이터 설정 후 selectedPlacesByDay 갱신을 위해 computed 재계산 트리거
         if (page === 0) {
           this.places = response.data.content;
         } else {
           this.places = [...this.places, ...response.data.content];
         }
 
-        // 페이지네이션 정보 업데이트
         this.currentPage = response.data.number;
         this.totalPages = response.data.totalPages;
         this.isLastPage = response.data.last;
 
-        // 검색 결과가 변경되더라도 선택된 장소들은 유지
-        // 기존 선택된 장소들의 정보를 보존
         const currentSelectedPlaces = { ...this.selectedPlacesByDay };
         this.selectedPlacesByDay = currentSelectedPlaces;
       } catch (error) {
@@ -283,8 +291,7 @@ export default {
         this.isLoading = false;
       }
     },
-    // 새로운 메서드: 선택된 장소들의 전체 데이터 복원
-    // 새로운 메서드: store의 데이터를 사용해 선택된 장소들 복원
+
     restoreSelectedPlaces() {
       const storePlaces = this.planStore.selectedPlaces;
       const restoredPlaces = {};
@@ -292,7 +299,9 @@ export default {
       storePlaces.forEach((dayPlan) => {
         const fullPlaces = dayPlan.details
           .map((detail) => {
-            const fullPlace = this.places.find((p) => p.attractionId === detail.attractionId);
+            const fullPlace = this.places.find(
+              (p) => p.attractionId === detail.attractionId
+            );
             if (fullPlace) {
               return {
                 ...fullPlace,
@@ -312,72 +321,119 @@ export default {
       this.selectedPlacesByDay = restoredPlaces;
     },
 
-    // 스크롤 이벤트 핸들러
     async handleScroll({ target }) {
       const { scrollTop, clientHeight, scrollHeight } = target;
-
-      // 스크롤이 bottom에 가까워지면 다음 페이지 로드
-      if (!this.isLastPage && !this.isFetching && scrollTop + clientHeight >= scrollHeight - 100) {
+      if (
+        !this.isLastPage &&
+        !this.isFetching &&
+        scrollTop + clientHeight >= scrollHeight - 100
+      ) {
         await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
       }
     },
 
-    checkAndNavigateToSavePlan() {
-      // 선택된 장소가 있는지 확인
-      const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
-        (places) => places && places.length > 0
-      );
-
-      if (!hasSelectedPlaces) {
-        alert("장소를 선택해주세요!");
-        return;
-      }
-
-      // 장소가 선택되었다면 저장 페이지로 이동
-      this.saveAndNavigate();
-    },
-    // 저장하고 다음 페이지로 이동
-    saveAndNavigate() {
-      this.$router.push({
-        name: "savePlan",
-        params: {
-          name: this.name,
-          selectedPlaces: this.selectedPlacesByDay,
-        },
-        query: {
-          startDate: this.localStartDate,
-          endDate: this.localEndDate,
-          id: this.$route.query.id,
-        },
-      });
-    },
-    // 일차 선택 시 호출될 메서드
-    selectDay(dayIndex) {
-      this.selectedDay = dayIndex;
-      this.showAllDays = false;
-    },
-
-    // 전체 보기 선택 시 호출될 메서드
-    showAllMarkers() {
-      this.showAllDays = true;
-      this.selectedDay = null;
-    },
-    updateMapSize() {
-      if (this.$refs.tmap) {
-        setTimeout(() => {
-          this.$refs.tmap.getMap().resize();
-          const center = new Tmapv2.LatLng(this.latitude, this.longitude);
-          this.$refs.tmap.getMap().setCenter(center);
-        }, 400);
-      }
-    },
-    // 드래그 시작
+    // Drag and Drop methods
     dragStart(event, place) {
-      event.dataTransfer.setData("text/plain", JSON.stringify(place));
+      this.isSelectedPlaceDrag = false;
+      event.dataTransfer.setData(
+        "text/plain",
+        JSON.stringify({
+          place,
+          isNew: true,
+        })
+      );
     },
-    // 드롭 했을때
+
+    dragStartSelected(event, place, dayIndex, placeIndex) {
+      this.isSelectedPlaceDrag = true;
+      event.dataTransfer.setData(
+        "text/plain",
+        JSON.stringify({
+          place,
+          fromDay: dayIndex,
+          fromIndex: placeIndex,
+          isNew: false,
+        })
+      );
+    },
+
+    onDragPlace(event, dayIndex, targetIndex) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      try {
+        const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        const { place, fromDay, fromIndex, isNew } = data;
+
+        const currentPlaces = [...(this.selectedPlacesByDay[dayIndex] || [])];
+
+        if (!isNew) {
+          if (fromDay !== dayIndex) {
+            const fromPlaces = [...(this.selectedPlacesByDay[fromDay] || [])];
+            fromPlaces.splice(fromIndex, 1);
+            this.selectedPlacesByDay[fromDay] = fromPlaces;
+
+            if (targetIndex !== undefined) {
+              currentPlaces.splice(targetIndex, 0, place);
+            } else {
+              currentPlaces.push(place);
+            }
+          } else if (targetIndex !== undefined) {
+            currentPlaces.splice(fromIndex, 1);
+            currentPlaces.splice(targetIndex, 0, place);
+          }
+        } else {
+          if (!place.latitude && place.mapy) {
+            place.latitude = place.mapy;
+          }
+          if (!place.longitude && place.mapx) {
+            place.longitude = place.mapx;
+          }
+
+          if (targetIndex !== undefined) {
+            currentPlaces.splice(targetIndex, 0, place);
+          } else {
+            currentPlaces.push(place);
+          }
+        }
+
+        this.selectedPlacesByDay[dayIndex] = currentPlaces;
+        this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
+        this.resetDragState();
+      } catch (error) {
+        console.error('Error in onDragPlace:', error);
+      }
+    },
+
+    onDropReorder(event, dayIndex, targetIndex) {
+      event.stopPropagation();
+
+      if (!this.isSelectedPlaceDrag) return;
+
+      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      const { fromDay, fromIndex } = data;
+
+      if (fromDay === dayIndex && fromIndex !== targetIndex) {
+        const places = [...this.selectedPlacesByDay[dayIndex]];
+        const [removed] = places.splice(fromIndex, 1);
+        places.splice(targetIndex, 0, removed);
+        this.selectedPlacesByDay[dayIndex] = places;
+        this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
+      }
+
+      this.resetDragState();
+    },
+
+    resetDragState() {
+      this.draggedItem = null;
+      this.draggedDay = null;
+      this.draggedIndex = null;
+      this.isSelectedPlaceDrag = false;
+    },
+
     onDrop(event, dayIndex) {
-      const place = JSON.parse(event.dataTransfer.getData("text/plain"));
+      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      const place = data.place;
       const newPlacesByDay = { ...this.selectedPlacesByDay };
 
       if (!newPlacesByDay[dayIndex]) {
@@ -396,17 +452,53 @@ export default {
       this.selectedPlacesByDay = newPlacesByDay;
     },
 
-    updateStorePlaces() {
-      const formattedPlaces = Object.keys(this.selectedPlacesByDay).map((dayIndex) => ({
-        day: parseInt(dayIndex),
-        details: this.selectedPlacesByDay[dayIndex].map((place, index) => ({
-          attractionId: place.attractionId,
-          sequence: index,
-          memo: "",
-        })),
-      }));
+    // Navigation and UI methods
+    checkAndNavigateToSavePlan() {
+      const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
+        (places) => places && places.length > 0
+      );
 
-      this.planStore.setSelectedPlaces(formattedPlaces);
+      if (!hasSelectedPlaces) {
+        alert("장소를 선택해주세요!");
+        return;
+      }
+
+      this.saveAndNavigate();
+    },
+
+    saveAndNavigate() {
+      this.$router.push({
+        name: "savePlan",
+        params: {
+          name: this.name,
+          selectedPlaces: this.selectedPlacesByDay,
+        },
+        query: {
+          startDate: this.startDate,
+          endDate: this.endDate,
+          id: this.$route.query.id,
+        },
+      });
+    },
+
+    selectDay(dayIndex) {
+      this.selectedDay = dayIndex;
+      this.showAllDays = false;
+    },
+
+    showAllMarkers() {
+      this.showAllDays = true;
+      this.selectedDay = null;
+    },
+
+    updateMapSize() {
+      if (this.$refs.tmap) {
+        setTimeout(() => {
+          this.$refs.tmap.getMap().resize();
+          const center = new Tmapv2.LatLng(this.latitude, this.longitude);
+          this.$refs.tmap.getMap().setCenter(center);
+        }, 400);
+      }
     },
 
     removePlace(dayIndex, place) {
@@ -414,37 +506,42 @@ export default {
         (p) => p.attractionId !== place.attractionId
       );
     },
+
     clearDay(dayIndex) {
       this.selectedPlacesByDay[dayIndex] = [];
     },
+
     getImageUrl(imageUrl) {
-      return (
-        imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
-      );
+      return imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
     },
+
     getTripDate(dayIndex) {
-      if (!this.localStartDate) return "";
-      const date = new Date(this.localStartDate);
+      if (!this.startDate) return "";
+      const date = new Date(this.startDate);
       date.setDate(date.getDate() + dayIndex);
       return date;
     },
+
     formatDate(date) {
       if (!date) return "";
       const days = ["일", "월", "화", "수", "목", "금", "토"];
       return `(${days[date.getDay()]})`;
     },
+
     toggleCollapse() {
       this.isCollapsed = !this.isCollapsed;
       setTimeout(() => {
         this.updateMapSize();
       }, 300);
     },
+
     toggleRightSection() {
       this.isRightCollapsed = !this.isRightCollapsed;
       setTimeout(() => {
         this.updateMapSize();
       }, 300);
     },
+
     toggleStep2() {
       this.isStep2Active = !this.isStep2Active;
       if (!this.isStep2Active) {
@@ -456,36 +553,32 @@ export default {
       }
       this.updateMapSize();
     },
+
     async handleSearch() {
       if (!this.searchQuery.trim()) {
-        // 검색어가 비어있으면 전체 목록 조회
         await this.fetchAttractions(0);
         return;
       }
 
-      // 검색 시작 시 로딩 상태 설정
       this.isLoading = true;
       this.currentPage = 0;
-
-      // 백엔드 API 호출하여 검색 수행
       await this.fetchAttractions(0, this.searchQuery.trim());
     },
+
     goToDateSelection() {
       this.$router.push({
         name: "chooseDate",
         query: {
           name: this.name,
-          startDate: this.localStartDate,
-          endDate: this.localEndDate,
+          startDate: this.startDate,
+          endDate: this.endDate,
         },
       });
     },
   },
-  // 4.
+
   async mounted() {
-    // 컴포넌트 마운트 시 관광지 데이터 가져오기
     await this.fetchAttractions();
-    // 스크롤 이벤트 리스너 추가
     const middleSection = this.$el.querySelector(".middle-section");
     if (middleSection) {
       middleSection.addEventListener("scroll", this.handleScroll);
@@ -500,7 +593,6 @@ export default {
   },
 
   beforeUnmount() {
-    // 스크롤 이벤트 리스너 제거
     const middleSection = this.$el.querySelector(".middle-section");
     if (middleSection) {
       middleSection.removeEventListener("scroll", this.handleScroll);
@@ -675,9 +767,11 @@ export default {
 .place-image {
   width: 80px;
   height: 80px;
-  margin-right: 16px;
+  margin-right: 8px;
 }
-
+.order-number {
+  margin-right: 8px;
+}
 .place-image img {
   width: 100%;
   height: 100%;
@@ -828,6 +922,68 @@ export default {
   min-height: 0;
 }
 
+
+/* 기존 스타일 유지하고 selected-place에 대한 스타일 추가 */
+.selected-place {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  padding-left: 48px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selected-place:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.selected-place .order-number {
+  position: absolute;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  background-color: #f57c00;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.selected-place.dragging {
+  opacity: 0.5;
+}
+
+/* 드롭 영역 스타일 */
+.day-section {
+  position: relative;
+}
+
+.day-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.day-section.drag-over::after {
+  opacity: 1;
+}
 .loading-state,
 .error-state {
   text-align: center;
@@ -837,9 +993,11 @@ export default {
   margin: 10px 0;
 }
 
+
 .error-state {
   color: #dc3545;
   background: #f8d7da;
+  border: 1px solid #f5c6cb;
 }
 .loading-more {
   text-align: center;
@@ -853,8 +1011,13 @@ export default {
 
 /* places-list에 스크롤 관련 스타일 추가 */
 .places-list {
-  max-height: calc(100vh - 200px); /* 적절한 높이로 조정 */
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
-  padding-right: 8px; /* 스크롤바 공간 확보 */
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 4px;
 }
 </style>
+

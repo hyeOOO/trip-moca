@@ -1,3 +1,4 @@
+핑 찍어주는 Tmap 컴포넌트
 <template>
   <div class="map-wrapper">
     <div id="map_div"></div>

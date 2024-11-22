@@ -58,23 +58,27 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 import navBar from "@/components/navBar.vue";
 import DestinationGalleryData from "@/assets/data/DestinationGalleryData.js";
 import { usePlanStore } from "@/store/planStore";
 
-export default {
+export default defineComponent({
   name: "DestinationGallery",
-  data() {
-    return {
-      destinations: DestinationGalleryData, // 모든 여행지 데이터
-      searchQuery: "", // 검색어 저장
-    };
+  components: {
+    navBar,
   },
 
-  // Composition API를 사용하여 Pinia store 설정
   setup() {
     const planStore = usePlanStore();
     return { planStore };
+  },
+
+  data() {
+    return {
+      destinations: DestinationGalleryData,
+      searchQuery: "",
+    };
   },
 
   computed: {
@@ -88,18 +92,21 @@ export default {
       });
     },
   },
-  components: {
-    navBar,
-  },
+
   methods: {
-    // 선택한 도시의 정보를 chooseDate.vue 로 전달
     selectDestination(destination) {
-      // Pinia store에 선택된 여행지 정보 저장
-      this.planStore.setDestination({
-        areaCode: destination.id, // id를 areaCode로 저장
-        areaName: destination.nameKo, // 한글 이름을 areaName으로 저장
+      // Pinia store의 selectedDestination을 직접 업데이트
+      this.planStore.$patch({
+        selectedDestination: {
+          id: destination.id,
+          areaCode: destination.id,
+          areaName: destination.nameKo,
+          title: destination.nameKo,
+          image: destination.image
+        }
       });
 
+      // 페이지 이동
       this.$router.push({
         name: "chooseDate",
         params: { name: destination.nameKo },
@@ -107,7 +114,12 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
-<style scoped></style>
+<style scoped>
+.DestinationBackground {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+</style>

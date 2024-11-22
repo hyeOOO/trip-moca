@@ -21,8 +21,12 @@
             <router-link to="/" class="logo" v-if="!isDarkRoute">
               <img src="@/assets/image/HW&SW.png" alt="HW&SW Logo" class="hwsw-logo-image" />
             </router-link>
-            <router-link to="/" class="logo" v-else>
-              <img src="@/assets/image/HW&SW-dark.png" alt="HW&SW Logo" class="hwsw-logo-image" />
+            <router-link to="/main" class="logo" v-else>
+              <img
+                src="@/assets/image/HW&SW-dark.png"
+                alt="HW&SW Logo"
+                class="hwsw-logo-image"
+              />
             </router-link>
           </div>
           <div class="menu">
@@ -55,7 +59,7 @@ export default {
       menuItems: [
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
-        { name: "추천관광", path: "/" },
+        { name: "추천관광", path: "/plan/1" },
         { name: "인기여행", path: "/popularPlace" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],

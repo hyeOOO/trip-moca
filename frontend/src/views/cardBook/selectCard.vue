@@ -1,9 +1,6 @@
 <template>
-  <div class="section-section">
-    <p class="second-title">
-      발도장 찍고 캐릭터 GET! 내 손안의 귀여운 여행 컬렉션 📝
-      <button>카드 도감 가기</button>
-    </p>
+  <div>
+    <navBar />
     <div class="cards-container">
       <div class="cards">
         <div v-for="(card, index) in cards" :key="index" class="card">
@@ -22,6 +19,8 @@
 </template>
 
 <script setup>
+import navBar from '@/components/navBar.vue'
+
 const cards = [
   {
     imageUrl:
@@ -31,60 +30,22 @@ const cards = [
     imageUrl:
       "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_jeju.png",
   },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_seoul.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_daejeon.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_busan.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_gyeonggi.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_gyeongnam.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_jeonnam.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_ulsan.png",
-  },
-  {
-    imageUrl:
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_daegu.png",
-  },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_seoul.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_daejeon.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_busan.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_gyeonggi.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_gyeongnam.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_jeonnam.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_ulsan.png" },
+  { imageUrl: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/card_daegu.png" },
 ];
 </script>
 
 <style scoped>
-.section-section {
-  display: flex;
-  flex-direction: column;
-  font-family: "EliceDigitalBaeum_Regular";
-  text-align: center;
-  width: 100%;
-  height: 100vh;
-}
-
 .cards-container {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
-  padding-top: 30vh;
 }
-
 
 body {
   background: radial-gradient(#333, #111);
@@ -92,11 +53,14 @@ body {
 }
 
 .cards {
-  position: relative;  /* fixed 제거 */
+  bottom: 0;
   display: flex;
   height: 50vh;
   padding: 0 50px;
   justify-content: center;
+  position: fixed;
+  left: 0;
+  right: 0;
 }
 
 .card {
@@ -199,31 +163,6 @@ body {
   top: -175px;
 }
 
-.second-title {
-  color: black;
-  display: flex;
-  align-items: center;
-  text-align: left;
-  font-size: 40px;
-}
-
-
-.second-section button{
-  width: 150px;
-  background-color: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 10px 20px;
-  margin-left: 500px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.second-section button:hover{
-  transform: scale(1.05);
-  background-color: #ffdd57;
-}
-
 @keyframes fade {
   0% {
     opacity: 0.9;
@@ -234,4 +173,6 @@ body {
     transform: scale(1.15);
   }
 }
+
+
 </style>

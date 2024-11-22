@@ -18,7 +18,7 @@
 export default {};
 </script>
 
-<style>
+<style scoped>
 .third-section {
   display: flex;
   flex-direction: column;
@@ -52,6 +52,5 @@ export default {};
   height: 400px;
   background: #f0f0f0;
   border-radius: 10px;
-  margin-top: 40px;
 }
 </style>
