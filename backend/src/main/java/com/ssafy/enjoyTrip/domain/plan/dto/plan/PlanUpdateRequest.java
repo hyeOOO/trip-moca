@@ -4,11 +4,13 @@ import com.ssafy.enjoyTrip.domain.plan.dto.detail.DayPlanRequest;
 import com.ssafy.enjoyTrip.domain.plan.entity.PlanStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class PlanUpdateRequest {
     private String planTitle;              // 여행 계획 제목

@@ -15,11 +15,7 @@
             <div class="step-title">장소 선택</div>
           </div>
 
-          <div
-            class="step"
-            :class="{ active: isStep3Active }"
-            @click="toggleStep3"
-          >
+          <div class="step" :class="{ active: isStep3Active }" @click="toggleStep3">
             <div class="step-number">STEP 3</div>
             <div class="step-title">계획 생성</div>
           </div>
@@ -33,8 +29,8 @@
         </div>
         <div class="header">
           <h2>{{ name }}</h2>
-          <p v-if="localFormattedDateRange" class="date-range">
-            {{ localFormattedDateRange }}
+          <p v-if="formattedDateRange" class="date-range">
+            {{ formattedDateRange }}
           </p>
         </div>
 
@@ -57,12 +53,12 @@
               <div class="image-upload-container">
                 <div
                   class="image-preview"
-                  :class="{ 'has-image': planProfileImg }"
+                  :class="{ 'has-image': previewUrl }"
                   @click="triggerFileInput"
                 >
                   <img
-                    v-if="planProfileImg"
-                    :src="planProfileImg"
+                    v-if="previewUrl"
+                    :src="previewUrl"
                     alt="여행 대표 이미지"
                     class="preview-image"
                   />
@@ -82,25 +78,12 @@
             </div>
 
             <div class="daily-plans">
-              <div
-                v-for="(places, dayIndex) in selectedPlaces"
-                :key="dayIndex"
-                class="day-section"
-              >
-                <h3>
-                  {{ dayIndex + 1 }}일차 {{ formatDate(getTripDate(dayIndex)) }}
-                </h3>
+              <div v-for="(places, dayIndex) in selectedPlaces" :key="dayIndex" class="day-section">
+                <h3>{{ dayIndex + 1 }}일차 {{ formatDate(getTripDate(dayIndex)) }}</h3>
                 <div class="place-list">
-                  <div
-                    v-for="(place, placeIndex) in places"
-                    :key="placeIndex"
-                    class="place-item"
-                  >
+                  <div v-for="(place, placeIndex) in places" :key="placeIndex" class="place-item">
                     <div class="place-image">
-                      <img
-                        :src="getImageUrl(place.image1)"
-                        :alt="place.title"
-                      />
+                      <img :src="getImageUrl(place.image1)" :alt="place.title" />
                     </div>
                     <div class="place-info">
                       <h4>{{ place.title }}</h4>
@@ -134,6 +117,10 @@
 </template>
 
 <script>
+import { usePlanStore } from "@/store/planStore";
+import { useAuthStore } from "@/store/auth";
+import { showLoginModalFlag } from "@/eventBus";
+import api from "@/plugins/axios";
 import navBar from "@/components/navBar.vue";
 import Tmap from "@/components/Tmap/Tmap.vue";
 
@@ -154,73 +141,36 @@ export default {
     latitude: Number,
     longitude: Number,
   },
+  setup() {
+    const planStore = usePlanStore();
+    const authStore = useAuthStore();
+    return { planStore, authStore };
+  },
   data() {
     return {
-      localStartDate: "",
-      localEndDate: "",
       planTitle: "",
-      tripName: "",
-      selectedDay: null,
+      selectedFile: null, // 실제 파일 객체도 저장
+      previewUrl: null, // 미리보기용 URL
       selectedPlaces: {},
-      isStep1Active: false,
-      isCollapsed: false,
-      localFormattedDateRange: "",
       isStep3Active: true,
-      planProfileImg: "", // 추가: 프로필 이미지 URL 저장
+      isCollapsed: false,
     };
   },
   computed: {
     defaultTitle() {
-      return `${this.name || "제주도"} 여행`;
+      return `${this.name || "국내"} 여행`;
     },
-    formattedPlanData() {
-      // API 요청 형식에 맞게 데이터 구조화
-      const dayPlans = Object.entries(this.selectedPlaces).map(
-        ([day, places]) => ({
-          day: parseInt(day) + 1,
-          details: places.map((place, index) => ({
-            attractionId: place.contentId,
-            sequence: index + 1,
-            memo: "",
-          })),
-        })
-      );
-
-      return {
-        planTitle: this.planTitle || this.defaultTitle,
-        areaCode: this.getAreaCode(),
-        planProfileImg: this.planProfileImg || this.getDefaultProfileImage(),
-        startDate: this.localStartDate,
-        endDate: this.localEndDate,
-        dayPlans,
-      };
+    formattedDateRange() {
+      return this.planStore.dates.formattedDateRange;
     },
   },
-  created() {
-    const { startDate, endDate } = this.$route.query;
-    this.localStartDate = startDate;
-    this.localEndDate = endDate;
-    this.selectedPlaces = this.$route.params.selectedPlaces || {};
-    this.planTitle = this.defaultTitle;
-    this.isStep3Active = true;
-    this.formatDateRange();
+  beforeUnmount() {
+    // 컴포넌트 제거 시 미리보기 URL 정리
+    if (this.previewUrl) {
+      URL.revokeObjectURL(this.previewUrl);
+    }
   },
   methods: {
-    formatDateRange() {
-      if (this.localStartDate && this.localEndDate) {
-        const days = ["일", "월", "화", "수", "목", "금", "토"];
-        const start = new Date(this.localStartDate);
-        const end = new Date(this.localEndDate);
-        this.localFormattedDateRange = `${start.getFullYear()}.${String(
-          start.getMonth() + 1
-        ).padStart(2, "0")}.${String(start.getDate()).padStart(2, "0")}(${
-          days[start.getDay()]
-        }) - ${end.getFullYear()}.${String(end.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}.${String(end.getDate()).padStart(2, "0")}(${days[end.getDay()]})`;
-      }
-    },
     toggleStep3() {
       this.isStep3Active = !this.isStep3Active;
       if (!this.isStep3Active) {
@@ -284,94 +234,170 @@ export default {
       date.setDate(date.getDate() + dayIndex);
       return date;
     },
+    // 관광지 테이블 내 img가 없으면 이미지 없음 img 출력
     getImageUrl(imageUrl) {
       return (
-        imageUrl ||
-        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+        imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
       );
     },
     getDefaultProfileImage() {
       // 지역별 기본 이미지 매핑
       const defaultImages = {
-        "제주도": "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/jeju-island-sunset.jpg",
-        "부산": "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/busan-night-view.jpg",
-        "강원도": "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/seorak-mountain-autumn.jpg",
+        제주도:
+          "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/jeju-island-sunset.jpg",
+        부산: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/busan-night-view.jpg",
+        강원도:
+          "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/seorak-mountain-autumn.jpg",
       };
-      return defaultImages[this.name] || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
+      return (
+        defaultImages[this.name] ||
+        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+      );
     },
     getAreaCode() {
       // 지역 코드 매핑
       const areaMapping = {
-        "제주도": 39,
-        "부산": 6,
-        "강원도": 32,
-        "서울": 1,
-        "인천": 2,
-        "대전": 3,
-        "대구": 4,
-        "광주": 5,
-        "울산": 7,
-        "경기도": 31,
-        "충청북도": 33,
-        "충청남도": 34,
-        "경상북도": 35,
-        "경상남도": 36,
-        "전라북도": 37,
-        "전라남도": 38,
+        제주도: 39,
+        부산: 6,
+        강원도: 32,
+        서울: 1,
+        인천: 2,
+        대전: 3,
+        대구: 4,
+        광주: 5,
+        울산: 7,
+        경기도: 31,
+        충청북도: 33,
+        충청남도: 34,
+        경상북도: 35,
+        경상남도: 36,
+        전라북도: 37,
+        전라남도: 38,
       };
       return areaMapping[this.name] || 1;
     },
     triggerFileInput() {
       this.$refs.fileInput.click();
     },
+
     async handleImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       try {
-        // 파일 크기 체크 (5MB 제한)
         if (file.size > 5 * 1024 * 1024) {
           throw new Error("이미지 크기는 5MB를 초과할 수 없습니다.");
         }
 
-        // 이미지 타입 체크
         if (!file.type.startsWith("image/")) {
           throw new Error("이미지 파일만 업로드할 수 있습니다.");
         }
 
-        const formData = new FormData();
-        formData.append('image', file);
-        
-        // 실제 API 호출 (주석 처리)
-        // const response = await this.$api.post('/upload-image', formData);
-        // this.planProfileImg = response.data.imageUrl;
-        
-        // 임시로 File URL 사용
-        this.planProfileImg = URL.createObjectURL(file);
+        // 파일 객체 저장
+        this.selectedFile = file;
+
+        // 미리보기 URL 생성
+        if (this.previewUrl) {
+          URL.revokeObjectURL(this.previewUrl);
+        }
+        this.previewUrl = URL.createObjectURL(file);
       } catch (error) {
-        console.error('Image upload failed:', error);
-        alert(error.message || '이미지 업로드에 실패했습니다.');
+        console.error("Image selection failed:", error);
+        alert(error.message || "이미지 선택에 실패했습니다.");
       }
     },
+
+    removeImage() {
+      if (this.previewUrl) {
+        URL.revokeObjectURL(this.previewUrl);
+      }
+      this.selectedFile = null;
+      this.previewUrl = null;
+
+      // 파일 input 초기화
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = "";
+      }
+    },
+
     async savePlan() {
       try {
         if (!this.planTitle) {
           throw new Error("여행 제목을 입력해주세요.");
         }
 
-        if (Object.keys(this.selectedPlaces).length === 0) {
+        if (!this.planStore.selectedPlaces.length) {
           throw new Error("최소 하나의 여행지를 선택해주세요.");
         }
 
-        // 실제 API 호출 (주석 처리)
-        // const response = await this.$api.post('/plans', this.formattedPlanData);
-        console.log('Saving plan:', this.formattedPlanData);
-        
-        alert("여행 계획이 저장되었습니다!");
-        this.$router.push("/my-plans");
+        // 로그인 상태 체크
+        if (!this.authStore.isAuthenticated) {
+          // EventBus를 통해 로그인 모달 표시
+          showLoginModalFlag.value = true;
+
+          // 로그인 상태 변경 감시
+          const unwatch = this.$watch(
+            () => this.authStore.isAuthenticated,
+            async (newValue) => {
+              if (newValue) {
+                // 로그인 되면 watcher 제거
+                unwatch();
+                // 여행 계획 저장 로직 실행
+                await this.executeSavePlan();
+              }
+            }
+          );
+          return;
+        }
+
+        await this.executeSavePlan();
       } catch (error) {
         console.error("Error saving plan:", error);
-        alert(error.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+        alert(error.response?.data?.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+      }
+    },
+
+    async executeSavePlan() {
+      try {
+        const formData = new FormData();
+
+        // 계획 데이터 JSON 추가
+        const planData = {
+          planTitle: this.planTitle || this.defaultTitle,
+          areaCode: this.planStore.selectedDestination.areaCode,
+          startDate: this.planStore.dates.startDate,
+          endDate: this.planStore.dates.endDate,
+          dayPlans: this.planStore.selectedPlaces.map((dayPlan) => ({
+            day: dayPlan.day + 1,
+            details: dayPlan.details.map((detail) => ({
+              attractionId: detail.attractionId,
+              sequence: detail.sequence + 1,
+              memo: detail.memo,
+            })),
+          })),
+        };
+
+        formData.append("plan", new Blob([JSON.stringify(planData)], { type: "application/json" }));
+
+        // 이미지 파일이 있으면 추가
+        if (this.selectedFile) {
+          formData.append("image", this.selectedFile);
+        }
+
+        const response = await api.post("/domain/plans", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        if (response.status === 200) {
+          alert("여행 계획이 저장되었습니다!");
+          this.planStore.resetStore();
+          this.$router.push("/mypage");
+        }
+      } catch (error) {
+        console.error("Error executing save plan:", error);
+        alert(error.response?.data?.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       }
     },
   },
@@ -660,5 +686,34 @@ export default {
 
 .middle-section::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+.image-upload-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ff4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-image-btn:hover {
+  background: #ff0000;
+  transform: scale(1.1);
 }
 </style>

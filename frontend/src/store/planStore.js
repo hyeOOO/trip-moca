@@ -1,74 +1,82 @@
-import { defineStore } from 'pinia';
-import detailTestData from "@/assets/data/detailTestData.js";
+import { defineStore } from "pinia";
 
-export const usePlanStore = defineStore('plan', {
-  state: () => {
-    const savedCartItems = localStorage.getItem('cartItems');
-    return {
-      originalPlan: JSON.parse(JSON.stringify(detailTestData)), // 초기 계획
-      editingPlan: JSON.parse(JSON.stringify(detailTestData)),  // 편집 중인 계획
-      cartItems: savedCartItems ? JSON.parse(savedCartItems) : [], // localStorage에서 복원된 장바구니 항목
-    };
-  },
+export const usePlanStore = defineStore("plan", {
+  state: () => ({
+    selectedDestination: {
+      id: null,
+      areaCode: "",
+      areaName: "",
+      title: "",
+      image: "",
+    },
+    dates: {
+      startDate: "",
+      endDate: "",
+      formattedDateRange: "",
+    },
+    selectedPlaces: [],
+  }),
 
   actions: {
-    // 초기화 메서드
-    initializePlan(planData = detailTestData) {
-      this.originalPlan = JSON.parse(JSON.stringify(planData));
-      this.editingPlan = JSON.parse(JSON.stringify(planData));
-      
-      // localStorage에서 장바구니 항목 복원
-      const savedCartItems = localStorage.getItem('cartItems');
-      if (savedCartItems) {
-        this.cartItems = JSON.parse(savedCartItems);
-      }
-    },
-    
-    // 편집 중인 계획을 원본으로 재설정
-    resetToOriginal() {
-      this.editingPlan = JSON.parse(JSON.stringify(this.originalPlan));
+    setDestination(destination) {
+      this.selectedDestination = {
+        id: destination.id,
+        areaCode: destination.areaCode,
+        areaName: destination.areaName,
+        title: destination.title,
+        image: destination.image,
+      };
     },
 
-    // 편집 중인 계획 업데이트
-    updateEditingPlan(newPlan) {
-      this.editingPlan = JSON.parse(JSON.stringify(newPlan));
+    setDates(startDate, endDate) {
+      this.dates.startDate = startDate;
+      this.dates.endDate = endDate;
+      this.dates.formattedDateRange = this.formatDateRange(startDate, endDate);
     },
 
-    // 계획 저장 (원본 계획에 적용)
-    savePlan() {
-      this.originalPlan = JSON.parse(JSON.stringify(this.editingPlan));
+    // 선택된 장소들을 저장하는 액션 수정
+    setSelectedPlaces(places) {
+      this.selectedPlaces = places.map((dayPlaces) => ({
+        day: dayPlaces.day,
+        details: dayPlaces.details.map((detail) => ({
+          attractionId: detail.attractionId,
+          sequence: detail.sequence,
+          memo: detail.memo || "",
+        })),
+      }));
     },
 
-    // 장바구니 항목 전체 설정 및 localStorage에 저장
-    setCartItems(items) {
-      this.cartItems = JSON.parse(JSON.stringify(items));
-      localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+    formatDateRange(startDate, endDate) {
+      if (!startDate || !endDate) return "";
+
+      const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const days = ["일", "월", "화", "수", "목", "금", "토"];
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const dayOfWeek = days[date.getDay()];
+
+        return `${year}.${month}.${day}(${dayOfWeek})`;
+      };
+
+      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
     },
 
-    // 장바구니에 항목 추가 및 localStorage 업데이트
-    addCartItem(item) {
-      this.cartItems.push(JSON.parse(JSON.stringify(item)));
-      localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+    resetStore() {
+      this.selectedDestination = {
+        id: null,
+        areaCode: "",
+        areaName: "",
+        title: "",
+        image: "",
+      };
+      this.dates = {
+        startDate: "",
+        endDate: "",
+        formattedDateRange: "",
+      };
+      this.selectedPlaces = [];
     },
-
-    // 장바구니에서 항목 제거 및 localStorage 업데이트
-    removeCartItem(index) {
-      this.cartItems.splice(index, 1);
-      localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
-    },
-
-    // 장바구니 비우기 및 localStorage에서 삭제
-    clearCartItems() {
-      this.cartItems = [];
-      localStorage.removeItem('cartItems');
-    },
-  },
-
-  getters: {
-    // 편집 중인 계획 반환
-    getPlanData: (state) => state.editingPlan,
-
-    // 장바구니 항목 반환
-    getCartItems: (state) => state.cartItems,
   },
 });

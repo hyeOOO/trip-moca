@@ -4,11 +4,7 @@
     <div class="content-wrapper" :class="{ collapsed: isCollapsed }">
       <div class="steps-sidebar">
         <div class="steps-nav">
-          <div
-            class="step"
-            :class="{ active: isStep1Active }"
-            @click="toggleStep1"
-          >
+          <div class="step" :class="{ active: isStep1Active }" @click="toggleStep1">
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
           </div>
@@ -53,12 +49,7 @@
       </div>
 
       <div class="map-container">
-        <Tmap
-          ref="tmap"
-          :latitude="latitude"
-          :longitude="longitude"
-          :selectedPlaces="[]"
-        />
+        <Tmap ref="tmap" :latitude="latitude" :longitude="longitude" :selectedPlaces="[]" />
       </div>
     </div>
   </div>
@@ -67,6 +58,7 @@
 <script>
 import navBar from "@/components/navBar.vue";
 import Tmap from "@/components/Tmap/Tmap.vue"; // Tmap 컴포넌트 import
+import { usePlanStore } from "@/store/planStore";
 
 export default {
   name: "ChooseDate",
@@ -92,18 +84,48 @@ export default {
       required: true,
     },
   },
+
+  setup() {
+    const planStore = usePlanStore();
+    return { planStore };
+  },
+
   data() {
     return {
-      startDate: "",
-      endDate: "",
       map: null,
       markers: [],
       polylines: [],
-      formattedDateRange: "",
       isCollapsed: false,
       isStep1Active: true,
     };
   },
+
+  // 계산된 속성 정의
+  computed: {
+    // 시작 날짜의 getter와 setter
+    startDate: {
+      get() {
+        return this.planStore.dates.startDate;
+      },
+      set(value) {
+        this.planStore.setDates(value, this.planStore.dates.endDate);
+      },
+    },
+    // 종료 날짜의 getter와 setter
+    endDate: {
+      get() {
+        return this.planStore.dates.endDate;
+      },
+      set(value) {
+        this.planStore.setDates(this.planStore.dates.startDate, value);
+      },
+    },
+    // 형식화된 날짜 범위를 반환하는 computed 속성
+    formattedDateRange() {
+      return this.planStore.dates.formattedDateRange;
+    },
+  },
+
   watch: {
     startDate: {
       handler: "updateFormattedDateRange",
@@ -139,7 +161,7 @@ export default {
         name: "savePlan",
         params: {
           name: this.name,
-          selectedPlaces: this.selectedPlaces
+          selectedPlaces: this.selectedPlaces,
         },
         query: {
           startDate: this.startDate,
@@ -151,25 +173,23 @@ export default {
     },
     // 날짜 선택 후 장소 선택 페이지로 이동
     checkDateAndNavigate() {
-      if (!this.startDate || !this.endDate) {
+      // store에서 날짜 정보 가져오기
+      const startDate = this.planStore.dates.startDate;
+      const endDate = this.planStore.dates.endDate;
+
+      if (!startDate || !endDate) {
         alert("날짜를 먼저 선택해 주세요!");
         return;
       }
 
-      const formattedStart = this.formatDate(this.startDate);
-      const formattedEnd = this.formatDate(this.endDate);
-      this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
-
+      // 장소 선택 페이지로 이동
       this.$router.push({
         name: "choosePlace",
         params: {
           name: this.name,
         },
         query: {
-          startDate: this.startDate,
-          endDate: this.endDate,
-          formattedDateRange: this.formattedDateRange,
-          id: this.id,
+          id: this.planStore.selectedDestination.areaCode,
         },
       });
     },
@@ -205,22 +225,23 @@ export default {
     },
 
     savePlan() {
-      if (!this.startDate || !this.endDate) {
+      // store에서 날짜 정보 가져오기
+      const startDate = this.planStore.dates.startDate;
+      const endDate = this.planStore.dates.endDate;
+
+      if (!startDate || !endDate) {
         alert("출발 일자와 도착 일자를 모두 선택해주세요.");
         return;
       }
 
-      const formattedStart = this.formatDate(this.startDate);
-      const formattedEnd = this.formatDate(this.endDate);
-      this.formattedDateRange = `${formattedStart} - ${formattedEnd}`;
-
+      // 장소 선택 페이지로 이동
       this.$router.push({
-        path: `/choosePlace/${this.name}`,
+        name: "choosePlace",
+        params: {
+          name: this.name,
+        },
         query: {
-          startDate: this.startDate,
-          endDate: this.endDate,
-          formattedDateRange: this.formattedDateRange,
-          id: this.id,
+          id: this.planStore.selectedDestination.areaCode,
         },
       });
     },

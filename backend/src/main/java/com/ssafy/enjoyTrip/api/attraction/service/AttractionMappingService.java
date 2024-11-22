@@ -39,4 +39,26 @@ public class AttractionMappingService {
         }
         return plans;
     }
+
+    public List<DayPlanDto> mapAttractionDetails(List<DayPlanDto> plans){
+        for (DayPlanDto dayPlan : plans) {
+            List<String> attractionTitles = dayPlan.getAttractions().stream()
+                    .map(AttractionTitleDto::getTitle)
+                    .map(title -> title.replaceAll("\\s+", ""))  // 띄어쓰기 제거
+                    .collect(Collectors.toList());
+
+            List<AttractionList> flexibleResults = new ArrayList<>();
+            for (String title : attractionTitles) {
+                flexibleResults.addAll(
+                        attractionListRepository.findByTitleFlexible(title)
+                );
+            }
+            List<AttractionListResponseDto> attractionDetails = flexibleResults.stream()
+                    .map(AttractionListResponseDto::fromEntity)
+                    .collect(Collectors.toList());
+
+            dayPlan.setAttractionDetails(attractionDetails);
+        }
+        return plans;
+    }
 }

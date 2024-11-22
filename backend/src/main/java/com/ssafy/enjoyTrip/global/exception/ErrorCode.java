@@ -10,6 +10,7 @@ public enum ErrorCode {
     ATTRACTION_NOT_FOUND(1002, "관광지 정보를 찾을 수 없습니다"),
     AI_SERVICE_ERROR(1003, "AI 서비스 처리 중 오류가 발생했습니다"),
     INVALID_SIDO_CODE(1004, "잘못된 시/도 코드입니다"),
+    INVALID_CONTENT_TYPE_CODE(1004, "잘못된 시/도 코드입니다"),
     INTERNAL_SERVER_ERROR(5000, "서버 내부 오류가 발생했습니다"),
     INVALID_TOKEN(4001, "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(4002, "만료된 토큰입니다"),

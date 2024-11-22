@@ -15,6 +15,11 @@ import DetailedTravelPlan from "@/views/detailedTravelPlan/detailedTravelPlan.vu
 import TravelCart from "@/views/detailedTravelPlan/travelCart.vue";
 import WelcomeAnimation from "@/views/animationView/welcomeAnimation.vue"; //시작 애니매이션
 import SelectCard from "@/views/cardBook/selectCard.vue";
+import searchPlace from "@/views/search/searchPlace.vue";
+import popularPlace from "@/views/popular/popularPlace.vue";
+import seasonPlan from "@/views/popular/seasonPlan.vue";
+import keywordPlan from "@/views/popular/keywordPlan.vue";
+
 
 const routes = [
   {
@@ -44,8 +49,8 @@ const routes = [
   },
   {
     path: "/search",
-    name: "TmapSearch",
-    component: TmapSearch,
+    name: "searchPlace",
+    component: searchPlace,
   },
   {
     path: "/",
@@ -61,6 +66,21 @@ const routes = [
     path: "/travelPlan",
     name: "travelPlan",
     component: DestinationGallery,
+  },
+  {
+    path: "/popularPlace",
+    name: "popularPlace",
+    component: popularPlace,
+  },
+  {
+    path: "/season-plan/:season",
+    name: "seasonPlan",
+    component: seasonPlan,
+  },
+  {
+    path: "/keyword-plan/:keyword",
+    name: "keywordPlan",
+    component: keywordPlan,
   },
   {
     path: "/chooseDate/:name",
