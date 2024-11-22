@@ -1,9 +1,12 @@
 <template>
-  <div>
-    <router-view />
-    <login-modal v-model="showLoginModal" />
+  <div class="app-container">
+    <div class="main-content">
+      <router-view />
+      <login-modal v-model="showLoginModal" @card-acquired="handleCardAcquired" />
+      <card-modal v-if="showCardModal" :card="acquiredCard" @close="closeCardModal" />
+    </div>
+    <footInfo />
   </div>
-  <footInfo />
 </template>
 
 <script>
@@ -11,6 +14,7 @@ import { ref, provide, watch } from "vue";
 import { showLoginModalFlag } from "@/eventBus";
 import footInfo from "@/components/footInfo.vue";
 import LoginModal from "@/components/loginModal.vue";
+import CardModal from "@/components/cardModal.vue";
 
 export default {
   name: "App",
@@ -18,9 +22,12 @@ export default {
   components: {
     footInfo,
     LoginModal,
+    CardModal,
   },
   setup() {
     const showLoginModal = ref(false);
+    const showCardModal = ref(false);
+    const acquiredCard = ref(null);
 
     watch(showLoginModalFlag, (newValue) => {
       showLoginModal.value = newValue;
@@ -31,6 +38,16 @@ export default {
       showLoginModalFlag.value = true;
     };
 
+    const handleCardAcquired = (card) => {
+      acquiredCard.value = card;
+      showCardModal.value = true;
+    };
+
+    const closeCardModal = () => {
+      showCardModal.value = false;
+      acquiredCard.value = null;
+    };
+
     // provide를 통해 모달 컨트롤 함수 제공
     provide("modalControl", {
       openLoginModal,
@@ -38,6 +55,10 @@ export default {
 
     return {
       showLoginModal,
+      showCardModal,
+      acquiredCard,
+      handleCardAcquired,
+      closeCardModal,
     };
   },
 };
@@ -53,8 +74,21 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* 전체 뷰포트 높이 */
+  min-height: 100vh;
+  /* 전체 뷰포트 높이 */
 }
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  position: relative;
+}
+
 /* 폰트 */
 @font-face {
   font-family: "EliceDigitalBaeum_Bold";
@@ -62,6 +96,7 @@ body {
   src: url("assets/fonts/EliceDigitalBaeum_Bold.ttf");
   /* src: url('폰트가 저장 되어 있는 공간') format('truetype');*/
 }
+
 @font-face {
   font-family: "EliceDigitalBaeum_Regular";
   src: url("assets/fonts/EliceDigitalBaeum_Regular.ttf");
@@ -112,6 +147,7 @@ body {
   font-family: "Pretendard-Thin";
   src: url("assets/fonts/Pretendard-Thin.ttf");
 }
+
 // .form-input {
 //   padding: 10px;
 //   border: none;
@@ -125,6 +161,7 @@ body.modal-open {
   width: 100%;
   height: 100%;
 }
+
 .search-submit {
   width: 401px;
   height: 56px;

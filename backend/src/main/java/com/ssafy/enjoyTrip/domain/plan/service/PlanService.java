@@ -1,5 +1,9 @@
 package com.ssafy.enjoyTrip.domain.plan.service;
 
+import com.ssafy.enjoyTrip.domain.attraction.entity.AttractionList;
+import com.ssafy.enjoyTrip.domain.attraction.entity.SearchKeyword;
+import com.ssafy.enjoyTrip.domain.attraction.repository.AttractionRepository;
+import com.ssafy.enjoyTrip.domain.attraction.service.AttractionService;
 import com.ssafy.enjoyTrip.domain.plan.dto.detail.*;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanCreateRequest;
 import com.ssafy.enjoyTrip.domain.plan.dto.plan.PlanResponseDto;
@@ -8,10 +12,12 @@ import com.ssafy.enjoyTrip.domain.plan.entity.Plan;
 import com.ssafy.enjoyTrip.domain.plan.entity.PlanDetail;
 import com.ssafy.enjoyTrip.domain.plan.repository.PlanDetailRepository;
 import com.ssafy.enjoyTrip.domain.plan.repository.PlanRepository;
+import com.ssafy.enjoyTrip.global.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -28,49 +34,76 @@ import java.util.stream.Collectors;
 public class PlanService {
     private final PlanRepository planRepository;
     private final PlanDetailRepository planDetailRepository;
+    private final S3Service s3Service;
+    private final AttractionService attractionService;
+    private final AttractionRepository attractionRepository;
 
     // 여행 계획 생성(상세 포함)
-    public void createPlan(PlanCreateRequest request, String memberId) {
+    public void createPlan(PlanCreateRequest request, MultipartFile image, String memberId) {
+        String imageUrl = null;
+
         try {
-            // 1. 요청 데이터 검증
             validatePlanCreateRequest(request);
 
-            // 2. Plan 엔티티 생성 및 저장
+            if (image != null && !image.isEmpty()) {
+                imageUrl = s3Service.uploadFile(image);
+            }
+
             Plan plan = Plan.builder()
                     .planTitle(request.getPlanTitle())
                     .areaCode(request.getAreaCode())
-                    .planProfileImg(request.getPlanProfileImg())
+                    .planProfileImg(imageUrl)
                     .memberId(memberId)
                     .startDate(request.getStartDate())
                     .endDate(request.getEndDate())
                     .build();
             Plan savedPlan = planRepository.save(plan);
-            log.info("계획 생성 완료: {}", savedPlan.getPlanId());
 
-            // 3. 각 일자별 상세 계획 생성
-            for (DayPlanRequest dayPlan : request.getDayPlans()) {
-                List<PlanDetail> dayDetails = dayPlan.getDetails().stream()
-                        .map(detail -> PlanDetail.builder()
-                                .planId(savedPlan.getPlanId())
-                                .attractionId(detail.getAttractionId())
-                                .day(dayPlan.getDay())
-                                .sequence(detail.getSequence())
-                                .memo(detail.getMemo())
-                                .build())
-                        .collect(Collectors.toList());
+            // 상세 계획 저장 로직을 별도 메서드로 분리
+            saveDetailPlans(request.getDayPlans(), savedPlan.getPlanId());
 
-                planDetailRepository.saveAll(dayDetails);
-                log.info("{}일차 계획 저장 완료: {} 개의 여행지",
-                        dayPlan.getDay(), dayDetails.size());
-            }
         } catch (Exception e) {
+            if (imageUrl != null) {
+                try {
+                    s3Service.deleteFile(imageUrl);
+                } catch (Exception ex) {
+                    log.error("이미지 삭제 실패", ex);
+                }
+            }
             log.error("여행 계획 생성 실패", e);
             throw new RuntimeException("여행 계획 생성 중 오류가 발생했습니다.");
         }
     }
 
+    private void saveDetailPlans(List<DayPlanRequest> dayPlans, Long planId) {
+        for (DayPlanRequest dayPlan : dayPlans) {
+            List<PlanDetail> dayDetails = dayPlan.getDetails().stream()
+                    .map(detail -> {
+                        // 관광지 정보 조회
+                        AttractionList attraction = attractionRepository.findById(detail.getAttractionId())
+                                .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다."));
+
+                        // 관광지명 기준으로 인기도 업데이트
+                        attractionService.updateSearchKeyword(attraction.getTitle(), SearchKeyword.SearchType.KEYWORD);
+
+                        return PlanDetail.builder()
+                                .planId(planId)
+                                .attractionId(detail.getAttractionId())
+                                .day(dayPlan.getDay())
+                                .sequence(detail.getSequence())
+                                .memo(detail.getMemo())
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
+            planDetailRepository.saveAll(dayDetails);
+            log.info("{}일차 계획 저장 완료: {} 개의 여행지",
+                    dayPlan.getDay(), dayDetails.size());
+        }
+    }
+
     // 여행 계획 수정
-    public void updatePlan(PlanUpdateRequest request, String planId, String memberId) {
+    public void updatePlan(PlanUpdateRequest request, MultipartFile image,  String planId, String memberId) {
         try {
             // 1. Plan 존재 여부 및 권한 확인
             Plan plan = planRepository.findById(Long.parseLong(planId))
@@ -83,6 +116,19 @@ public class PlanService {
             // 2. 요청 데이터 검증
             validatePlanUpdateRequest(request);
 
+            // 이미지 처리
+            String newImageUrl = null;
+            if (image != null && !image.isEmpty()) {
+                // 기존 이미지가 있다면 삭제
+                if (plan.getPlanProfileImg() != null) {
+                    s3Service.deleteFile(plan.getPlanProfileImg());
+                }
+                // 새 이미지 업로드
+                newImageUrl = s3Service.uploadFile(image);
+            }
+
+            // 이미지 URL 포함하여 업데이트
+            request.setPlanProfileImg(newImageUrl != null ? newImageUrl : plan.getPlanProfileImg());
             // 3. Plan 기본 정보 업데이트
             plan.updatePlan(request);
 
@@ -93,6 +139,13 @@ public class PlanService {
             List<PlanDetail> newDetails = new ArrayList<>();
             for (DayPlanRequest dayPlan : request.getDayPlans()) {
                 for (PlanDetailCreateRequest detail : dayPlan.getDetails()) {
+                    // 관광지 정보 조회
+                    AttractionList attraction = attractionRepository.findById(detail.getAttractionId())
+                            .orElseThrow(() -> new RuntimeException("관광지를 찾을 수 없습니다."));
+
+                    // 관광지명 기준으로 인기도 업데이트
+                    attractionService.updateSearchKeyword(attraction.getTitle(), SearchKeyword.SearchType.KEYWORD);
+
                     PlanDetail planDetail = PlanDetail.builder()
                             .planId(Long.parseLong(planId))
                             .attractionId(detail.getAttractionId())
@@ -121,6 +174,11 @@ public class PlanService {
 
             if (!plan.getMemberId().equals(memberId)) {
                 throw new RuntimeException("삭제 권한이 없습니다.");
+            }
+
+            // 이미지가 있다면 S3에서 삭제
+            if (plan.getPlanProfileImg() != null) {
+                s3Service.deleteFile(plan.getPlanProfileImg());
             }
 
             planRepository.delete(plan);

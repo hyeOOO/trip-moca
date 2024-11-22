@@ -12,11 +12,7 @@
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
           </div>
-          <div
-            class="step"
-            :class="{ active: isStep2Active }"
-            @click="toggleStep2"
-          >
+          <div class="step" :class="{ active: isStep2Active }" @click="toggleStep2">
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
@@ -40,8 +36,8 @@
         </div>
         <div class="header">
           <h2>{{ name }}</h2>
-          <p v-if="localFormattedDateRange" class="date-range">
-            {{ localFormattedDateRange }}
+          <p v-if="formattedDateRange" class="date-range">
+            {{ formattedDateRange }}
           </p>
         </div>
         <div class="search-section">
@@ -56,6 +52,12 @@
           </div>
         </div>
         <div class="places-list">
+          <div v-if="isLoading && currentPage === 0" class="loading-state">
+            데이터를 불러오는 중...
+          </div>
+          <div v-else-if="error" class="error-state">
+            {{ error }}
+          </div>
           <div
             v-for="place in filteredPlaces"
             :key="place.attractionId"
@@ -70,6 +72,9 @@
               <h3 class="place-title">{{ place.title }}</h3>
               <p class="place-address">{{ place.addr1 }}</p>
             </div>
+          </div>
+          <div v-if="isFetching && currentPage > 0" class="loading-more">
+            추가 데이터를 불러오는 중...
           </div>
         </div>
       </div>
@@ -101,18 +106,13 @@
                 {{ dayIndex }}일차 {{ formatDate(getTripDate(dayIndex - 1)) }}
               </h3>
               <div class="day-header-buttons">
-                <button @click="showAllMarkers" class="view-all-button">
-                  전체보기
-                </button>
+                <button @click="showAllMarkers" class="view-all-button">전체보기</button>
                 <button @click="clearDay(dayIndex - 1)" class="clear-button">
                   <i class="fa-solid fa-rotate-left"></i> 초기화
                 </button>
               </div>
             </div>
-            <div
-              v-if="!selectedPlacesByDay[dayIndex - 1]?.length"
-              class="empty-day"
-            >
+            <div v-if="!selectedPlacesByDay[dayIndex - 1]?.length" class="empty-day">
               <p></p>
             </div>
             <div v-else class="selected-day-places">
@@ -126,10 +126,7 @@
                 </div>
                 <div class="place-info">
                   <h4>{{ place.title }}</h4>
-                  <button
-                    @click="removePlace(dayIndex - 1, place)"
-                    class="remove-button"
-                  >
+                  <button @click="removePlace(dayIndex - 1, place)" class="remove-button">
                     <i class="fa-solid fa-times"></i>
                   </button>
                 </div>
@@ -156,8 +153,9 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
-import testData from "@/assets/data/testData.js"; // 임시 데이터
-// import axios from "@/api/axiosConfig"; // 1. Axios 설정 임시 데이터 지우고 가져오삼
+import { useAuthStore } from "@/store/auth"; // auth store 추가
+import { usePlanStore } from "@/store/planStore";
+import api from "@/plugins/axios";
 import Tmap from "@/components/Tmap.vue";
 
 export default {
@@ -168,55 +166,162 @@ export default {
   },
   props: {
     name: String,
-    formattedDateRange: String,
-    startDate: String,
-    endDate: String,
     latitude: Number,
     longitude: Number,
   },
+  setup() {
+    const planStore = usePlanStore();
+    const authStore = useAuthStore(); // auth store 설정
+    return { planStore, authStore };
+  },
   data() {
     return {
-      localStartDate: this.startDate,
-      localEndDate: this.endDate,
-      localFormattedDateRange: this.formattedDateRange,
       searchQuery: "",
-      places: testData, // 2. 이거 places: [], 로 바꾸고 axios로 가져오면 될걸?
+      places: [], // 빈 배열로 초기화
       isCollapsed: false,
       isRightCollapsed: false,
       isStep2Active: true,
-      selectedPlacesByDay: {},
       selectedDay: null,
       showAllDays: false,
+      isLoading: false, // 로딩 상태 추가
+      error: null, // 에러 상태 추가
+      currentPage: 0,
+      totalPages: 0,
+      pageSize: 15,
+      isLastPage: false,
+      isFetching: false,
+      localSelectedPlaces: {}, // selectedPlacesByDay를 대체
     };
   },
   computed: {
+    startDate() {
+      return this.planStore.dates.startDate;
+    },
+    endDate() {
+      return this.planStore.dates.endDate;
+    },
+    formattedDateRange() {
+      return this.planStore.dates.formattedDateRange;
+    },
+    areaCode() {
+      return this.planStore.selectedDestination.areaCode;
+    },
     filteredPlaces() {
       if (!this.searchQuery) return this.places;
       const query = this.searchQuery.toLowerCase();
       return this.places.filter(
         (place) =>
-          place.title.toLowerCase().includes(query) ||
-          place.addr1.toLowerCase().includes(query)
+          place.title.toLowerCase().includes(query) || place.addr1.toLowerCase().includes(query)
       );
     },
     numberOfDays() {
-      if (!this.localStartDate || !this.localEndDate) return 0;
-      const start = new Date(this.localStartDate);
-      const end = new Date(this.localEndDate);
+      if (!this.startDate || !this.endDate) return 0;
+      const start = new Date(this.startDate);
+      const end = new Date(this.endDate);
       return Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    },
+    selectedPlacesByDay: {
+      get() {
+        return this.localSelectedPlaces;
+      },
+      set(newValue) {
+        this.localSelectedPlaces = newValue;
+        const formattedPlaces = Object.entries(newValue).map(([day, places]) => ({
+          day: parseInt(day),
+          details: places.map((place, index) => ({
+            attractionId: place.attractionId,
+            sequence: index,
+            memo: place.memo || "",
+          })),
+        }));
+        this.planStore.setSelectedPlaces(formattedPlaces);
+      },
     },
   },
   methods: {
-    // 3.
-    //  async fetchPlaces() {
-    //   try {
-    //     const response = await axios.get("/places"); // 백엔드 API 엔드포인트
-    //     this.places = response.data; // JSON 데이터를 상태에 저장
-    //   } catch (error) {
-    //     console.error("데이터를 가져오는 중 오류 발생:", error);
-    //     alert("장소 데이터를 가져올 수 없습니다.");
-    //   }
-    // }, -> 데이터 가져오는 메서드..?
+    async fetchAttractions(page = 0, searchQuery = "") {
+      if (!this.areaCode || this.isFetching) {
+        return;
+      }
+
+      this.isFetching = true;
+      this.error = null;
+      this.isLoading = true;
+
+      try {
+        const response = await api.get(`/domain/attraction/search`, {
+          params: {
+            areaCode: this.areaCode,
+            title: searchQuery, // 검색어 추가
+            page: page,
+            size: this.pageSize,
+            sort: "title,asc",
+          },
+        });
+
+        // 데이터 설정 후 selectedPlacesByDay 갱신을 위해 computed 재계산 트리거
+        if (page === 0) {
+          this.places = response.data.content;
+        } else {
+          this.places = [...this.places, ...response.data.content];
+        }
+
+        // 페이지네이션 정보 업데이트
+        this.currentPage = response.data.number;
+        this.totalPages = response.data.totalPages;
+        this.isLastPage = response.data.last;
+
+        // 검색 결과가 변경되더라도 선택된 장소들은 유지
+        // 기존 선택된 장소들의 정보를 보존
+        const currentSelectedPlaces = { ...this.selectedPlacesByDay };
+        this.selectedPlacesByDay = currentSelectedPlaces;
+      } catch (error) {
+        console.error("관광지 데이터 조회 실패:", error);
+        this.error = "관광지 정보를 불러오는데 실패했습니다.";
+      } finally {
+        this.isFetching = false;
+        this.isLoading = false;
+      }
+    },
+    // 새로운 메서드: 선택된 장소들의 전체 데이터 복원
+    // 새로운 메서드: store의 데이터를 사용해 선택된 장소들 복원
+    restoreSelectedPlaces() {
+      const storePlaces = this.planStore.selectedPlaces;
+      const restoredPlaces = {};
+
+      storePlaces.forEach((dayPlan) => {
+        const fullPlaces = dayPlan.details
+          .map((detail) => {
+            const fullPlace = this.places.find((p) => p.attractionId === detail.attractionId);
+            if (fullPlace) {
+              return {
+                ...fullPlace,
+                sequence: detail.sequence,
+                memo: detail.memo,
+              };
+            }
+            return null;
+          })
+          .filter((place) => place !== null);
+
+        if (fullPlaces.length > 0) {
+          restoredPlaces[dayPlan.day] = fullPlaces;
+        }
+      });
+
+      this.selectedPlacesByDay = restoredPlaces;
+    },
+
+    // 스크롤 이벤트 핸들러
+    async handleScroll({ target }) {
+      const { scrollTop, clientHeight, scrollHeight } = target;
+
+      // 스크롤이 bottom에 가까워지면 다음 페이지 로드
+      if (!this.isLastPage && !this.isFetching && scrollTop + clientHeight >= scrollHeight - 100) {
+        await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
+      }
+    },
+
     checkAndNavigateToSavePlan() {
       // 선택된 장소가 있는지 확인
       const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
@@ -273,38 +378,48 @@ export default {
     // 드롭 했을때
     onDrop(event, dayIndex) {
       const place = JSON.parse(event.dataTransfer.getData("text/plain"));
-      console.log("Dropped place full data:", place);
+      const newPlacesByDay = { ...this.selectedPlacesByDay };
 
-      // longitude와 latitude 값이 있는지 확인하고, 없다면 영어 이름의 프로퍼티에서 값을 가져옴
-      if (!place.latitude && place.mapy) {
-        place.latitude = place.mapy;
-      }
-      if (!place.longitude && place.mapx) {
-        place.longitude = place.mapx;
+      if (!newPlacesByDay[dayIndex]) {
+        newPlacesByDay[dayIndex] = [];
       }
 
-      console.log("Processed coordinates:", {
-        latitude: place.latitude,
-        longitude: place.longitude,
-      });
+      newPlacesByDay[dayIndex] = [
+        ...newPlacesByDay[dayIndex],
+        {
+          ...place,
+          sequence: newPlacesByDay[dayIndex].length,
+          memo: "",
+        },
+      ];
 
-      if (!this.selectedPlacesByDay[dayIndex]) {
-        this.selectedPlacesByDay[dayIndex] = [];
-      }
-      this.selectedPlacesByDay[dayIndex].push(place);
+      this.selectedPlacesByDay = newPlacesByDay;
     },
+
+    updateStorePlaces() {
+      const formattedPlaces = Object.keys(this.selectedPlacesByDay).map((dayIndex) => ({
+        day: parseInt(dayIndex),
+        details: this.selectedPlacesByDay[dayIndex].map((place, index) => ({
+          attractionId: place.attractionId,
+          sequence: index,
+          memo: "",
+        })),
+      }));
+
+      this.planStore.setSelectedPlaces(formattedPlaces);
+    },
+
     removePlace(dayIndex, place) {
-      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
-        dayIndex
-      ].filter((p) => p.attractionId !== place.attractionId);
+      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[dayIndex].filter(
+        (p) => p.attractionId !== place.attractionId
+      );
     },
     clearDay(dayIndex) {
       this.selectedPlacesByDay[dayIndex] = [];
     },
     getImageUrl(imageUrl) {
       return (
-        imageUrl ||
-        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+        imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
       );
     },
     getTripDate(dayIndex) {
@@ -341,8 +456,19 @@ export default {
       }
       this.updateMapSize();
     },
-    handleSearch() {
-      if (!this.searchQuery.trim()) return;
+    async handleSearch() {
+      if (!this.searchQuery.trim()) {
+        // 검색어가 비어있으면 전체 목록 조회
+        await this.fetchAttractions(0);
+        return;
+      }
+
+      // 검색 시작 시 로딩 상태 설정
+      this.isLoading = true;
+      this.currentPage = 0;
+
+      // 백엔드 API 호출하여 검색 수행
+      await this.fetchAttractions(0, this.searchQuery.trim());
     },
     goToDateSelection() {
       this.$router.push({
@@ -356,9 +482,30 @@ export default {
     },
   },
   // 4.
-  // async mounted() {
-  //   await this.fetchPlaces(); // 컴포넌트가 마운트될 때 백엔드에서 데이터 가져오는부분
-  // },
+  async mounted() {
+    // 컴포넌트 마운트 시 관광지 데이터 가져오기
+    await this.fetchAttractions();
+    // 스크롤 이벤트 리스너 추가
+    const middleSection = this.$el.querySelector(".middle-section");
+    if (middleSection) {
+      middleSection.addEventListener("scroll", this.handleScroll);
+    }
+  },
+
+  watch: {
+    areaCode: {
+      handler: "fetchAttractions",
+      immediate: true,
+    },
+  },
+
+  beforeUnmount() {
+    // 스크롤 이벤트 리스너 제거
+    const middleSection = this.$el.querySelector(".middle-section");
+    if (middleSection) {
+      middleSection.removeEventListener("scroll", this.handleScroll);
+    }
+  },
 };
 </script>
 
@@ -656,7 +803,7 @@ export default {
   padding: 12px 24px;
   font-size: 16px;
   font-weight: 500;
-  background: #2B2B2B;
+  background: #2b2b2b;
   color: white;
 }
 
@@ -680,20 +827,34 @@ export default {
   height: 100%;
   min-height: 0;
 }
-</style>
 
-// 백엔드 API 예시
-// /place 엔드포인트에서 Json 형태로 데이터를 가져와야함
-// app.get("/places", (req, res) => {
-//   res.json([
-//     {
-//       attractionId: 12497,
-//       title: "가마오름",
-//       addr1: "제주특별자치도 제주시 한경면 청수서5길 63",
-//       latitude: 33.3059197039,
-//       longitude: 126.2507039833,
-//       image1: "http://tong.visitkorea.or.kr/cms/resource/95/3026695_image2_1.jpg",
-//     },
-//     // 추가 데이터...
-//   ]);
-// });
+.loading-state,
+.error-state {
+  text-align: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.error-state {
+  color: #dc3545;
+  background: #f8d7da;
+}
+.loading-more {
+  text-align: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 10px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* places-list에 스크롤 관련 스타일 추가 */
+.places-list {
+  max-height: calc(100vh - 200px); /* 적절한 높이로 조정 */
+  overflow-y: auto;
+  padding-right: 8px; /* 스크롤바 공간 확보 */
+}
+</style>

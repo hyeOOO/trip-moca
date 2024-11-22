@@ -3,15 +3,18 @@ import Main from "@/views/mainPage/mainPage.vue";
 import DestinationGallery from "@/views/travelPlan/DestinationGallery.vue";
 import ChooseDate from "@/views/travelPlan/chooseDate.vue";
 import ChoosePlace from "@/views/travelPlan/choosePlace.vue";
-import Mypage from '@/views/mypage/mypage.vue';
-import MypagePlan from '@/views/mypage/mypagePlan.vue';
-import MypageCard from '@/views/mypage/mypageCard.vue';
-import { useAuthStore } from '@/store/auth';
-import { showLoginModalFlag } from '@/eventBus';
+import Mypage from "@/views/mypage/mypage.vue";
+import MypagePlan from "@/views/mypage/mypagePlan.vue";
+import MypageCard from "@/views/mypage/mypageCard.vue";
+import { useAuthStore } from "@/store/auth";
+import { showLoginModalFlag } from "@/eventBus";
 import SavePlan from "@/views/travelPlan/savePlan.vue";
 import TmapSearch from "@/components/TmapSearch.vue";
 import RouteSearch from "@/views/routeSearch/routeSearch.vue";
-
+import searchPlace from "@/views/search/searchPlace.vue";
+import popularPlace from "@/views/popular/popularPlace.vue";
+import seasonPlan from "@/views/popular/seasonPlan.vue";
+import keywordPlan from "@/views/popular/keywordPlan.vue";
 
 function getLatLng(cityName) {
   const coordinates = {
@@ -53,8 +56,8 @@ const routes = [
   },
   {
     path: "/search",
-    name: "TmapSearch",
-    component: TmapSearch,
+    name: "searchPlace",
+    component: searchPlace,
   },
   {
     path: "/",
@@ -62,14 +65,24 @@ const routes = [
     component: Main,
   },
   {
-    path: "/login",
-    name: "login",
-    component: Login,
-  },
-  {
     path: "/travelPlan",
     name: "travelPlan",
     component: DestinationGallery,
+  },
+  {
+    path: "/popularPlace",
+    name: "popularPlace",
+    component: popularPlace,
+  },
+  {
+    path: "/season-plan/:season",
+    name: "seasonPlan",
+    component: seasonPlan,
+  },
+  {
+    path: "/keyword-plan/:keyword",
+    name: "keywordPlan",
+    component: keywordPlan,
   },
   {
     path: "/chooseDate/:name",
@@ -101,9 +114,7 @@ const routes = [
       latitude: getLatLng(route.params.name)?.lat,
       longitude: getLatLng(route.params.name)?.lng,
       id: route.query.id,
-      selectedPlaces: route.params.selectedPlaces
-        ? JSON.parse(route.params.selectedPlaces)
-        : {}, // JSON 파싱
+      selectedPlaces: route.params.selectedPlaces ? JSON.parse(route.params.selectedPlaces) : {}, // JSON 파싱
     }),
   },
   {
@@ -122,21 +133,21 @@ const routes = [
     }),
   },
   {
-    path: '/mypage',
+    path: "/mypage",
     component: Mypage,
     meta: { requiresAuth: true }, // 인증 필요 표시
     children: [
       {
-        path: '',
-        redirect: '/mypage/plan',
+        path: "",
+        redirect: "/mypage/plan",
       },
       {
-        path: 'plan',
+        path: "plan",
         component: MypagePlan,
         meta: { requiresAuth: true },
       },
       {
-        path: 'card',
+        path: "card",
         component: MypageCard,
         meta: { requiresAuth: true },
       },
@@ -149,7 +160,7 @@ const router = createRouter({
   routes,
   scrollBehavior(to, from) {
     // savedPosition 매개변수 제거
-    if (to.path.startsWith('/mypage') && from.path.startsWith('/mypage')) {
+    if (to.path.startsWith("/mypage") && from.path.startsWith("/mypage")) {
       return false;
     }
     return { top: 0 };
@@ -165,7 +176,7 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
       showLoginModalFlag.value = true; // 로그인 모달 표시
-      next('/');
+      next("/");
     } else {
       next();
     }

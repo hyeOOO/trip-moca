@@ -31,5 +31,14 @@ public interface AttractionApiRepository extends JpaRepository<AttractionList, L
             @Param("areaCode") Long areaCode,
             @Param("title") String title
     );
+
+    @Query(value =
+            "SELECT a.* FROM attraction_list a " +
+                    "WHERE REPLACE(LOWER(a.title), ' ', '') LIKE CONCAT('%', REPLACE(LOWER(:title), ' ', ''), '%') " +
+                    "LIMIT 1",
+            nativeQuery = true)
+    List<AttractionList> findByTitleFlexible(
+            @Param("title") String title
+    );
 }
 

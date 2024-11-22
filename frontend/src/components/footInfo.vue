@@ -46,7 +46,7 @@
   margin-top: 50px; /* 이 부분 추가 */
   width: 100%;
   position: relative; /* 이 부분 추가 */
-  z-index: 10; /* 이 부분 추가 */
+  z-index: 100; /* z-index 증가 */
 }
 
 .footer-content {

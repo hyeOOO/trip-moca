@@ -15,6 +15,7 @@ public class AttractionListResponseDto {
     private Long contentId;
     private String title;
     private Long contentTypeId;
+    private String contentTypeName;
 
     // 시도/구군 정보
     private Long sidoCode;
@@ -38,7 +39,9 @@ public class AttractionListResponseDto {
                 .attractionId(entity.getAttractionId())
                 .contentId(entity.getContentId())
                 .title(entity.getTitle())
-                .contentTypeId(entity.getContentTypeId())
+                // 컨텐츠 타입 정보
+                .contentTypeId(entity.getContentType()!=null?entity.getContentType().getContentTypeId():null)
+                .contentTypeName(entity.getContentType()!=null?entity.getContentType().getContentTypeName():null)
                 // 시도 정보
                 .sidoCode(entity.getSido() != null ? entity.getSido().getSidoCode() : null)
                 .sidoName(entity.getSido() != null ? entity.getSido().getSidoName() : null)

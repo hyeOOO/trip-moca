@@ -19,18 +19,10 @@
           <!-- 로고 영역 -->
           <div class="logo-area">
             <router-link to="/" class="logo" v-if="!isDarkRoute">
-              <img
-                src="@/assets/image/HW&SW.png"
-                alt="HW&SW Logo"
-                class="hwsw-logo-image"
-              />
+              <img src="@/assets/image/HW&SW.png" alt="HW&SW Logo" class="hwsw-logo-image" />
             </router-link>
             <router-link to="/" class="logo" v-else>
-              <img
-                src="@/assets/image/HW&SW-dark.png"
-                alt="HW&SW Logo"
-                class="hwsw-logo-image"
-              />
+              <img src="@/assets/image/HW&SW-dark.png" alt="HW&SW Logo" class="hwsw-logo-image" />
             </router-link>
           </div>
           <div class="menu">
@@ -45,20 +37,7 @@
           </div>
 
           <!-- 검색바 영역 -->
-          <div class="search-area">
-            <div class="search-bar">
-              <input
-                type="text"
-                placeholder="Search..."
-                class="search-input"
-                v-model="searchQuery"
-                @keyup.enter="handleSearch"
-              />
-              <button class="search-btn" @click="handleSearch">
-                <i class="fa-solid fa-magnifying-glass"></i>
-              </button>
-            </div>
-          </div>
+          <SearchBar />
         </div>
       </nav>
     </div>
@@ -67,6 +46,7 @@
 
 <script>
 import navLogin from "@/components/navLogin.vue";
+import SearchBar from "@/components/SearchBar.vue";
 
 export default {
   name: "Menu",
@@ -76,7 +56,7 @@ export default {
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
         { name: "추천관광", path: "/" },
-        { name: "카드도감", path: "/" },
+        { name: "인기여행", path: "/popularPlace" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],
       searchQuery: "",
@@ -85,12 +65,16 @@ export default {
   computed: {
     isDarkRoute() {
       return (
-        !["/", "/mypage"].includes(this.$route.path) && !this.$route.path.startsWith("/mypage/")
+        !["/", "/mypage", "/popularPlace"].includes(this.$route.path) &&
+        !this.$route.path.startsWith("/mypage/") &&
+        !this.$route.path.startsWith("/season-plan/") &&
+        !this.$route.path.startsWith("/keyword-plan/")
       );
     },
   },
   components: {
     navLogin,
+    SearchBar,
   },
   methods: {
     handleSearch() {

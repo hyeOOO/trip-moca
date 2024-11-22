@@ -28,4 +28,18 @@ public class AttractionApiController {
             @PathVariable("day") String day) {
         return ResponseEntity.ok(attractionAiPlanService.generatePlan(sidoCode, day));
     }
+
+    @Operation(summary = "AI 계절별 여행 계획 생성", description = "사용자가 선택한 계절에 맞춰 AI가 여행을 생성해주는 API입니다.")
+    @GetMapping("/ai/plan/season/{season}")
+    public ResponseEntity<List<DayPlanDto>> getAiSeasonPlan(
+            @PathVariable("season") String season) {
+        return ResponseEntity.ok(attractionAiPlanService.generateSeasonPlan(season));
+    }
+
+    @Operation(summary = "AI 인기 관광지 여행 계획 생성", description = "사용자가 인기 관광지에 맞춰 AI가 여행을 생성해주는 API입니다.")
+    @GetMapping("/ai/plan/keyword/{keyword}")
+    public ResponseEntity<List<DayPlanDto>> getAiKeywordPlan(
+            @PathVariable("keyword") String keyword) {
+        return ResponseEntity.ok(attractionAiPlanService.generateKeywordPlan(keyword));
+    }
 }
