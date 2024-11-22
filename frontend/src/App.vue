@@ -12,7 +12,6 @@
 <script>
 import { ref, provide, watch } from "vue";
 import { showLoginModalFlag } from "@/eventBus";
-import footInfo from "@/components/footInfo.vue";
 import LoginModal from "@/components/loginModal.vue";
 import CardModal from "@/components/cardModal.vue";
 
@@ -20,7 +19,6 @@ export default {
   name: "App",
   data() {},
   components: {
-    footInfo,
     LoginModal,
     CardModal,
   },
@@ -65,17 +63,11 @@ export default {
 </script>
 
 <style lang="scss">
-/* 전체 설정 */
-body {
-  margin: 0;
-  min-height: 100vh;
-}
 
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  /* 전체 뷰포트 높이 */
+  height: 100vh; /* 전체 뷰포트 높이 */
 }
 
 .app-container {

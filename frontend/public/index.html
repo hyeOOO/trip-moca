@@ -22,8 +22,14 @@
     <script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
 
     <!-- Tmap API -->
-<script src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=<%= process.env.VUE_APP_TMAP_API_KEY %>"></script>
-
+    <script
+      crossorigin="anonymous"
+      src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=<%= process.env.VUE_APP_TMAP_API_KEY %>"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      src="https://apis.openapi.sk.com/tmap/js?version=1&appKey=<%= process.env.VUE_APP_TMAP_API_KEY %>&format=javascript"
+    ></script>
   </head>
   <body>
     <noscript>

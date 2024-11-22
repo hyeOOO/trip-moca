@@ -12,6 +12,12 @@ module.exports = defineConfig({
           @import "@/assets/scss/abstracts/abstracts.scss";
         `,
       },
+      // stylus 로더 옵션 추가
+      stylus: {
+        additionalData: `
+          @import "@/assets/stylus/variables.styl"
+        `
+      }
     },
   },
   // ESLint 설정 수정
@@ -22,6 +28,23 @@ module.exports = defineConfig({
         fs: false,
         path: false
       }
+    },
+    module: {
+      rules: [
+        {
+          test: /\.pug$/,
+          use: ['pug-plain-loader']
+        }
+      ]
     }
+  },
+  chainWebpack: config => {
+    // Pug Loader
+    config.module
+      .rule('pug')
+      .test(/\.pug$/)
+      .use('pug-plain-loader')
+      .loader('pug-plain-loader')
+      .end()
   }
 });

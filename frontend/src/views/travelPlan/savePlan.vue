@@ -122,7 +122,7 @@ import { useAuthStore } from "@/store/auth";
 import { showLoginModalFlag } from "@/eventBus";
 import api from "@/plugins/axios";
 import navBar from "@/components/navBar.vue";
-import Tmap from "@/components/Tmap.vue";
+import Tmap from "@/components/Tmap/Tmap.vue";
 
 export default {
   name: "SavePlan",
