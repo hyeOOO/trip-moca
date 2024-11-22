@@ -1,3 +1,4 @@
+숫자핑이랑 경로 찍어주는 Tmap
 <template>
   <div class="map-wrapper">
     <div id="map_div"></div>
@@ -125,8 +126,20 @@ export default {
       const end = places[places.length - 1];
       const waypoints = places.slice(1, -1);
 
+      // 좌표 유효성 검사 추가
+      if (
+        !start.latitude ||
+        !start.longitude ||
+        !end.latitude ||
+        !end.longitude
+      ) {
+        console.error("Invalid coordinates for route calculation");
+        return;
+      }
+
       // 경유지 목록 생성
       const passList = waypoints
+        .filter((place) => place.latitude && place.longitude)
         .map((place) => `${place.longitude},${place.latitude}`)
         .join("_");
 
@@ -143,41 +156,68 @@ export default {
       return new Promise((resolve) => {
         const params = {
           onComplete: (response) => {
-            const resultData = response._responseData.features;
-            const dayRoutes = [];
-
-            resultData.forEach((feature) => {
-              if (feature.geometry.type === "LineString") {
-                const path = feature.geometry.coordinates.map(
-                  (coord) => new Tmapv2.LatLng(coord[1], coord[0])
-                );
-
-                const polyline = new Tmapv2.Polyline({
-                  path: path,
-                  strokeColor: routeColors[(day - 1) % routeColors.length], // 일자에 맞는 색상 적용
-                  strokeWeight: 5,
-                  strokeStyle: "solid",
-                  map: this.map,
-                });
-
-                dayRoutes.push(polyline);
+            try {
+              const resultData = response._responseData?.features;
+              if (!resultData) {
+                console.error("No route data received");
+                resolve();
+                return;
               }
-            });
 
-            this.routePolylines[day] = dayRoutes;
-            resolve();
+              const dayRoutes = [];
+
+              resultData.forEach((feature) => {
+                if (
+                  feature?.geometry?.type === "LineString" &&
+                  feature.geometry.coordinates
+                ) {
+                  try {
+                    const path = feature.geometry.coordinates.map(
+                      (coord) => new Tmapv2.LatLng(coord[1], coord[0])
+                    );
+
+                    const polyline = new Tmapv2.Polyline({
+                      path: path,
+                      strokeColor: routeColors[(day - 1) % routeColors.length],
+                      strokeWeight: 5,
+                      strokeStyle: "solid",
+                      map: this.map,
+                    });
+
+                    dayRoutes.push(polyline);
+                  } catch (err) {
+                    console.error("Error creating polyline:", err);
+                  }
+                }
+              });
+
+              this.routePolylines[day] = dayRoutes;
+              resolve();
+            } catch (err) {
+              console.error("Error processing route response:", err);
+              resolve();
+            }
           },
           onProgress: () => {},
-          onError: () => {
-            console.error("경로 검색 중 오류가 발생했습니다.");
+          onError: (error) => {
+            console.error("경로 검색 중 오류가 발생했습니다.", error);
             resolve();
           },
         };
 
-        this.tData.getRoutePlanJson(startLatLng, endLatLng, optionObj, params);
+        try {
+          this.tData.getRoutePlanJson(
+            startLatLng,
+            endLatLng,
+            optionObj,
+            params
+          );
+        } catch (err) {
+          console.error("Error calling getRoutePlanJson:", err);
+          resolve();
+        }
       });
     },
-
     clearRoutes() {
       Object.values(this.routePolylines).forEach((routes) => {
         routes.forEach((route) => {
@@ -217,7 +257,6 @@ export default {
       });
     },
 
-    // 기존 메서드들...
     getMap() {
       return this.map;
     },

@@ -147,7 +147,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { usePlanStore } from "@/store/planStore";
 import navBar from "@/components/navBar.vue";
-// import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
+import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 
 // 기본 상태 설정
 const router = useRouter();

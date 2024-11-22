@@ -50,7 +50,7 @@ const routes = [
   {
     path: "/",
     name: "WelcomeAnimation",
-    component: WelcomeAnimation, //나중에 WelcomeAnimation 로 바꾸셈
+    component: Main, //나중에 WelcomeAnimation 로 바꾸셈
   },
   {
     path: "/main",

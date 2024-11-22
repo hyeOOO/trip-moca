@@ -1,11 +1,11 @@
-핑 찍어주는 Tmap 컴포넌트
+숫자 핑 찍어주는 Tmap 컴포넌트
 <template>
   <div class="map-wrapper">
     <div id="map_div"></div>
   </div>
 </template>
-
-<script>
+  
+  <script>
 export default {
   name: "TMapComponent",
 
@@ -23,7 +23,7 @@ export default {
       required: true,
     },
     selectedDay: {
-      type: Number,
+      type: [Number, String],
       default: null,
     },
     showAllDays: {
@@ -37,15 +37,6 @@ export default {
       map: null,
       markersByDay: {},
       defaultZoom: 11,
-      markerColors: [
-        "red",
-        "blue",
-        "green",
-        "yellow",
-        "purple",
-        "orange",
-        "pink",
-      ],
     };
   },
 
@@ -85,57 +76,36 @@ export default {
       return this.map;
     },
 
-    createMarker(place, dayIndex) {
-      console.log("Creating marker for place:", place);
-
+    createMarker(place, index, dayIndex) {
       const position = new Tmapv2.LatLng(
         Number(place.latitude),
         Number(place.longitude)
       );
 
-      const colors = [
-        "#FF6B6B",
-        "#4D96FF",
-        "#6BCB77",
-        "#FFD93D",
-        "#B983FF",
-        "#FF9F45",
-        "#4CACBC",
-        "#FF8FB1",
-        "#95CD41",
-        "#7B2869",
-      ];
+      // 마커 번호 설정 (장바구니 아이템의 순서)
+      const markerNumber = index + 1;
 
-      const markerHtml = `
-    <div style="width: 24px; height: 24px;">
-      <i class="fa-solid fa-location-dot" style="color: ${
-        colors[dayIndex % colors.length]
-      }; font-size: 24px;"></i>
-    </div>
-  `;
+      // S3에서 마커 이미지 URL
+      const markerImageUrl = `https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/red${markerNumber}.png`;
 
       const marker = new Tmapv2.Marker({
         position: position,
-        icon:
-          "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markerHtml),
-        iconHTML: markerHtml,
+        icon: markerImageUrl,
         iconSize: new Tmapv2.Size(24, 24),
         map: this.map,
         title: place.title,
-        zIndex: dayIndex + 1,
+        zIndex: markerNumber,
       });
 
       marker.addListener("click", () => {
         new Tmapv2.InfoWindow({
           position: position,
           content: `
-        <div style="padding:10px;min-width:150px;background-color:white;border-radius:5px;">
-          <div style="font-weight:bold;margin-bottom:5px;">${place.title}</div>
-          <div style="font-size:12px;color:${
-            colors[dayIndex % colors.length]
-          };">${dayIndex + 1}일차</div>
-        </div>
-      `,
+              <div style="padding:10px;min-width:150px;background-color:white;border-radius:5px;">
+                <div style="font-weight:bold;margin-bottom:5px;">${place.title}</div>
+                <div style="font-size:12px;color:#666;">장소 ${markerNumber}</div>
+              </div>
+            `,
           type: 2,
           map: this.map,
           border: "0px solid #FF0000",
@@ -143,14 +113,7 @@ export default {
         });
       });
 
-      // 마커가 생성될 때마다 해당 위치로 지도 중심 이동
       this.map.setCenter(position);
-
-      console.log(
-        "Marker created at position:",
-        position.lat(),
-        position.lng()
-      );
       return marker;
     },
 
@@ -161,7 +124,6 @@ export default {
       });
       this.markersByDay = {};
 
-      // 새로운 마커들의 위치를 저장할 배열
       let lastPosition = null;
 
       // 새로운 마커 생성
@@ -170,11 +132,10 @@ export default {
           this.markersByDay[day] = [];
         }
 
-        dayPlaces.forEach((place) => {
+        dayPlaces.forEach((place, index) => {
           try {
-            const marker = this.createMarker(place, parseInt(day));
+            const marker = this.createMarker(place, index, parseInt(day));
             this.markersByDay[day].push(marker);
-            // 마지막 마커의 위치 저장
             lastPosition = marker.getPosition();
           } catch (error) {
             console.error("Error creating marker:", error);
@@ -182,19 +143,19 @@ export default {
         });
       });
 
-      // 마지막으로 추가된 마커의 위치로 지도 중심 이동
       if (lastPosition) {
         this.map.setCenter(lastPosition);
       }
 
-      // 줌 레벨 유지
       this.map.setZoom(this.defaultZoom);
     },
 
     toggleMarkersByDay(dayIndex) {
       Object.entries(this.markersByDay).forEach(([day, markers]) => {
         markers.forEach((marker) => {
-          marker.setMap(parseInt(day) === dayIndex ? this.map : null);
+          marker.setMap(
+            dayIndex === "cart" || parseInt(day) === dayIndex ? this.map : null
+          );
         });
       });
     },
@@ -214,8 +175,8 @@ export default {
   },
 };
 </script>
-
-<style scoped>
+  
+  <style scoped>
 .map-wrapper {
   position: relative;
   width: 100%;

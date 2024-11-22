@@ -1,3 +1,4 @@
+경로 찍어주는 Tmap 컴포넌트
 <template>
   <div ref="mapContainer" class="map-container">
     <div id="map_div" style="width: 100%; height: 100%"></div>

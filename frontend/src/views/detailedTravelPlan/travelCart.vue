@@ -29,9 +29,8 @@
           </div>
         </div>
 
-        <!-- 하단 저장/취소 버튼 -->
+        <!-- 하단 취소 버튼 -->
         <div class="edit-button-container">
-          <button @click="savePlan" class="edit-button">저장</button>
           <button @click="cancelEdit" class="edit-button">취소</button>
         </div>
       </div>
@@ -111,7 +110,10 @@
                 <img :src="getImageUrl(place.image1)" :alt="place.title" />
               </div>
               <div class="place-info">
-                <h4>{{ place.title }}</h4>
+                <h3>{{ place.title }}</h3>
+                <p>{{ place.addr1 }}</p>
+              </div>
+              <div>
                 <button @click="removePlace(place)" class="remove-btn">
                   <i class="fa-solid fa-times"></i>
                 </button>
@@ -150,7 +152,7 @@ import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { usePlanStore } from "@/store/planStore";
 import navBar from "@/components/navBar.vue";
-import TMapComponent from "@/components/Tmap/Tmap.vue";
+import TMapComponent from "@/components/Tmap/TmapNumPing.vue";
 import testData from "@/assets/data/testData.js";
 
 const router = useRouter();
@@ -159,7 +161,7 @@ const draggedItem = ref(null);
 
 const cartData = computed(() => planStore.getCartItems);
 const selectedDay = ref("cart");
-const cartItems = ref(cartData.value);
+const cartItems = ref([]);
 const isCollapsed = ref(false);
 const isRightCollapsed = ref(false);
 const searchQuery = ref("");
@@ -307,23 +309,23 @@ const removePlace = (place) => {
 const clearCart = () => {
   planStore.clearCartItems();
   cartItems.value = [];
+  localStorage.removeItem('cartItems'); // localStorage에서도 제거
 };
 
 const assignToDay = () => {
   if (!cartItems.value.length) return;
   planStore.setCartItems(cartItems.value);
+  localStorage.setItem('cartItems', JSON.stringify(cartItems.value)); // localStorage 업데이트
   router.push(`/modify/${planData.value.planId}`);
-};
-
-const savePlan = () => {
-  planStore.savePlan();
-  router.push(`/plan/${planData.value.planId}`);
 };
 
 const cancelEdit = () => {
   const id = router.currentRoute.value.params.id;
   planStore.resetToOriginal();
   router.push(`/plan/${id}`);
+  planStore.clearCartItems();
+  cartItems.value = [];
+  localStorage.removeItem('cartItems'); // localStorage에서도 제거
 };
 
 const getImageUrl = (imageUrl) =>
@@ -352,13 +354,23 @@ watch(
   cartItems,
   () => {
     selectedDay.value = "cart";
+    // 장바구니에 있는 아이템과 핑을 localStorage에 저장
+    localStorage.setItem('cartItems', JSON.stringify(cartItems.value));
   },
   { deep: true }
 );
 
-onMounted(() => {
+onMounted(async () => {
   const id = router.currentRoute.value.params.id;
-  planStore.initializePlan();
+  await planStore.initializePlan();
+
+  // localStorage에서 cartItems 불러오기
+  const savedCartItems = localStorage.getItem('cartItems');
+  if (savedCartItems) {
+    cartItems.value = JSON.parse(savedCartItems);
+  } else {
+    cartItems.value = cartData.value; // store의 데이터로 초기화
+  }
 });
 </script>
 
@@ -503,6 +515,7 @@ onMounted(() => {
   margin-bottom: 1rem;
   transition: transform 0.5s;
   padding: 10px 16px;
+  cursor: grab;
 }
 
 .place-item:hover {
@@ -566,42 +579,43 @@ onMounted(() => {
   font-family: "EliceDigitalBaeum_regular";
   color: #ff6365;
   cursor: pointer;
-  padding: 15px 10px 5px 0px ;
+  padding: 15px 10px 5px 0px;
 }
 
 .clear-cart:hover {
   color: #f44336;
 }
-
+/* 장바구니 여행지 속성 */
 .cart-items {
-  max-height: calc(100vh - 200px);
+  max-height: 76vh;
   overflow-y: auto;
 }
 
 .cart-item {
-  display: flex; 
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  padding: 10px 7px;
+  margin-bottom: 1rem;
   background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  cursor: move;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  border-radius: 0.5rem;
+  cursor: grab;
+  width: 400px;
 }
 
 /* 버튼 스타일 */
 .save-cart {
   width: 100%;
   padding: 1rem;
-  background: #ECB27B;
+  background: #ecb27b;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
 }
 .save-cart:hover {
-  background: #6E6156;
+  background: #6e6156;
 }
 
 .save-cart:disabled {
@@ -609,11 +623,11 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-/* 순서 번호 */
+/* 여행지 순서 번호 */
 .order-number {
   width: 24px;
   height: 24px;
-  background: #ECB27B;
+  background: #ecb27b;
   color: white;
   border-radius: 50%;
   display: flex;
