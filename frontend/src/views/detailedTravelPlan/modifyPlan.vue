@@ -222,7 +222,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
-import { usePlanStore } from "@/store/planStore";
+import { usePlanStore } from "@/store/editPlanStore";
 import navBar from "@/components/navBar.vue";
 import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 

@@ -20,11 +20,11 @@ export const usePlanStore = defineStore("plan", {
   actions: {
     setDestination(destination) {
       this.selectedDestination = {
-        id: destination.id,
-        areaCode: destination.areaCode,
+        id: destination.id || destination.areaCode,
+        areaCode: destination.areaCode || destination.id,
         areaName: destination.areaName,
-        title: destination.title,
-        image: destination.image,
+        title: destination.title || destination.areaName,
+        image: destination.image || ''
       };
     },
 
