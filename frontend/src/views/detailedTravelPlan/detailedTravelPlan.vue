@@ -145,7 +145,7 @@
 // Vue 관련 임포트
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import { usePlanStore } from "@/store/planStore";
+import { usePlanStore } from "@/store/editPlanStore.js";
 import navBar from "@/components/navBar.vue";
 import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 

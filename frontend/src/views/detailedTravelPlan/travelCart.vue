@@ -150,7 +150,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
-import { usePlanStore } from "@/store/planStore";
+import { usePlanStore } from "@/store/editPlanStore";
 import navBar from "@/components/navBar.vue";
 import TMapComponent from "@/components/Tmap/TmapNumPing.vue";
 import testData from "@/assets/data/testData.js";
