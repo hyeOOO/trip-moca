@@ -18,7 +18,7 @@
         <div class="nav-grid">
           <!-- 로고 영역 -->
           <div class="logo-area">
-            <router-link to="/" class="logo" v-if="!isDarkRoute">
+            <router-link to="/main" class="logo" v-if="!isDarkRoute">
               <img src="@/assets/image/HW&SW.png" alt="HW&SW Logo" class="hwsw-logo-image" />
             </router-link>
             <router-link to="/main" class="logo" v-else>
@@ -59,7 +59,7 @@ export default {
       menuItems: [
         { name: "여행계획", path: "/travelPlan" },
         { name: "경로검색", path: "/routeSearch" },
-        { name: "추천관광", path: "/plan/1" },
+        { name: "추천관광", path: "/recommendTour" },
         { name: "인기여행", path: "/popularPlace" },
         { name: "마이페이지", path: "/mypage", requiresAuth: true },
       ],
@@ -69,8 +69,8 @@ export default {
   computed: {
     isDarkRoute() {
       return (
-        !["/", "/mypage", "/popularPlace"].includes(this.$route.path) &&
-        !this.$route.path.startsWith("/mypage/") &&
+        !["/", "/main", "/popularPlace"].includes(this.$route.path) &&
+        !this.$route.path.startsWith("/main/") &&
         !this.$route.path.startsWith("/season-plan/") &&
         !this.$route.path.startsWith("/keyword-plan/")
       );
@@ -223,7 +223,7 @@ export default {
 }
 
 .nav-theme .menu a:hover {
-  color: #ffdd57;
+  color: #ecb27b;
 }
 
 .nav-dark .menu a:hover {

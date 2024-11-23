@@ -1,9 +1,11 @@
 <template>
   <div class="section-section">
-    <p class="second-title">
-      발도장 찍고 캐릭터 GET! 내 손안의 귀여운 여행 컬렉션 📝
+    <div class="TitleContainer">
+      <h1 class="Title">
+        발도장 찍고 캐릭터 GET! 내 손안의 귀여운 여행 컬렉션 📝
+      </h1>
       <button>카드 도감 가기</button>
-    </p>
+    </div>
     <div class="cards-container">
       <div class="cards">
         <div v-for="(card, index) in cards" :key="index" class="card">
@@ -70,10 +72,26 @@ const cards = [
 .section-section {
   display: flex;
   flex-direction: column;
-  font-family: "EliceDigitalBaeum_Regular";
   text-align: center;
   width: 100%;
   height: 100vh;
+}
+
+.TitleContainer {
+  position: fixed;
+  top: 40px;
+  left: 0;
+  right: 0;
+  z-index: 20;
+}
+
+.Title {
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 48px;
+  color: #000000;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  margin: 0;
+  padding: 20px;
 }
 
 .cards-container {
@@ -85,14 +103,13 @@ const cards = [
   padding-top: 30vh;
 }
 
-
 body {
   background: radial-gradient(#333, #111);
   overflow: hidden;
 }
 
 .cards {
-  position: relative;  /* fixed 제거 */
+  position: relative; /* fixed 제거 */
   display: flex;
   height: 50vh;
   padding: 0 50px;
@@ -207,8 +224,7 @@ body {
   font-size: 40px;
 }
 
-
-.second-section button{
+.button {
   width: 150px;
   background-color: #f5f5f5;
   border: 1px solid #e0e0e0;
@@ -219,7 +235,7 @@ body {
   cursor: pointer;
 }
 
-.second-section button:hover{
+.button:hover {
   transform: scale(1.05);
   background-color: #ffdd57;
 }
