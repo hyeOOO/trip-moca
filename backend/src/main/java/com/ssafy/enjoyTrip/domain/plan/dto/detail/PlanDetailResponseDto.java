@@ -4,6 +4,7 @@ import com.ssafy.enjoyTrip.domain.plan.entity.PlanDetail;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -16,6 +17,8 @@ public class PlanDetailResponseDto {
     private Integer day;
     private Integer sequence;
     private String memo;
+    private BigDecimal latitude;
+    private BigDecimal longitude;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -28,6 +31,8 @@ public class PlanDetailResponseDto {
                 .day(detail.getDay())
                 .sequence(detail.getSequence())
                 .memo(detail.getMemo())
+                .latitude(detail.getAttractions().getLatitude())
+                .longitude(detail.getAttractions().getLongitude())
                 .createdAt(detail.getCreatedAt())
                 .updatedAt(detail.getUpdatedAt())
                 .build();

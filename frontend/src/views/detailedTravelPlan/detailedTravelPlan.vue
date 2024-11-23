@@ -144,13 +144,13 @@
 <script setup>
 // Vue 관련 임포트
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from 'vue-router';
 import { usePlanStore } from "@/store/editPlanStore.js";
 import navBar from "@/components/navBar.vue";
 import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 
-// 기본 상태 설정
-const router = useRouter();
+const router = useRouter(); // 라우터 조작(페이지 이동 등)
+const route = useRoute();   // 현재 라우트 정보 접근(params, query 등)
 const planStore = usePlanStore();
 
 // 상태 관리 변수들
@@ -182,7 +182,9 @@ const gridStyle = computed(() => ({
 }));
 
 // 여행 계획 데이터 관련
-const planData = computed(() => planStore.getPlanData);
+const planData = computed(() => planStore.planData || {
+  dayPlans: [] // 기본값 설정
+});
 const totalDays = computed(() => planData.value?.dayPlans?.length || 0);
 
 // 지도에 표시할 장소 데이터 처리
@@ -297,7 +299,13 @@ const getCurrentDaySpots = () => {
 const fetchPlanData = async () => {
   try {
     isLoading.value = true;
-    await planStore.initializePlan();
+    const planId = route.params.id;
+    const areaCode = route.params.areaCode;
+
+    console.log('Fetching plan details:', { planId, areaCode });
+
+    await planStore.initializePlan(planId);
+
   } catch (error) {
     console.error("여행 계획 데이터 로드 실패:", error);
   } finally {
@@ -311,7 +319,7 @@ const selectDay = (day) => {
 };
 
 const goToTravelCart = () => {
-  router.push(`/TravelCart/${planData.value.planId}`);
+  router.push(`/TravelCart/${planData.value.planId}/${planData.value.areaCode}`);
 };
 
 // 생명주기 훅

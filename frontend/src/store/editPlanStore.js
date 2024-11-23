@@ -1,65 +1,71 @@
 import { defineStore } from 'pinia';
-import detailTestData from "@/assets/data/detailTestData.js";
+import api from '@/plugins/axios';
+// import detailTestData from "@/assets/data/detailTestData.js";
 
 export const usePlanStore = defineStore('editPlanStore', {
-  state: () => {
-    const defaultPlan = {
+  state: () => ({
+    originalPlan: {
       planId: null,
       planTitle: '',
+      areaCode: null,
       startDate: '',
       endDate: '',
       dayPlans: []
-    };
-
-    try {
-      const savedCartItems = localStorage.getItem('cartItems');
-      const initialPlan = JSON.parse(JSON.stringify(detailTestData)) || defaultPlan;
-      
-      return {
-        originalPlan: initialPlan,
-        editingPlan: initialPlan,
-        cartItems: savedCartItems ? JSON.parse(savedCartItems) : [],
-      };
-    } catch (error) {
-      console.error('State initialization error:', error);
-      return {
-        originalPlan: defaultPlan,
-        editingPlan: defaultPlan,
-        cartItems: [],
-      };
-    }
-  },
+    },
+    editingPlan: {
+      planId: null,
+      planTitle: '',
+      areaCode: null,
+      startDate: '',
+      endDate: '',
+      dayPlans: []
+    },
+    cartItems: []
+  }),
 
   actions: {
     // 초기화 메서드
-    initializePlan(planData = detailTestData) {
-      try {
-        const validPlanData = planData || {
-          planId: null,
-          planTitle: '',
-          startDate: '',
-          endDate: '',
-          dayPlans: []
+    async initializePlan(planId) {
+      try {       
+        const response = await api.get(`/domain/plans/${planId}`);
+        const planData = response.data;
+
+        console.log('API 응답 데이터:', response.planData);
+
+        const formattedPlan = {
+          planId: planData.planId,
+          planTitle: planData.planTitle,
+          areaCode: planData.areaCode,
+          startDate: planData.startDate,
+          endDate: planData.endDate,
+          dayPlans: planData.dayPlans.map(day => ({
+            day: day.day,
+            date: day.date,
+            details: day.details.map(detail => ({
+              planDetailId: detail.planDetailId,
+              attractionId: detail.attractionId,
+              attractionTitle: detail.attractionTitle,
+              image: (!detail.image || detail.image.trim() === '') 
+  ? 'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png' 
+  : detail.image,
+              latitude: detail.latitude,
+              longitude: detail.longitude,
+              memo: detail.memo
+            }))
+          }))
         };
 
-        this.originalPlan = JSON.parse(JSON.stringify(validPlanData));
-        this.editingPlan = JSON.parse(JSON.stringify(validPlanData));
-        
-        // localStorage에서 장바구니 항목 복원
+        this.originalPlan = JSON.parse(JSON.stringify(formattedPlan));
+        this.editingPlan = JSON.parse(JSON.stringify(formattedPlan));
+
+        // Restore cart items if they exist
         const savedCartItems = localStorage.getItem('cartItems');
         if (savedCartItems) {
           this.cartItems = JSON.parse(savedCartItems);
         }
       } catch (error) {
         console.error('Plan initialization error:', error);
-        this.originalPlan = {
-          planId: null,
-          planTitle: '',
-          startDate: '',
-          endDate: '',
-          dayPlans: []
-        };
-        this.editingPlan = { ...this.originalPlan };
+        throw error;
       }
     },
     
@@ -136,18 +142,32 @@ export const usePlanStore = defineStore('editPlanStore', {
   },
 
   getters: {
-    // 편집 중인 계획 반환
     getPlanData: (state) => {
       return state.editingPlan || {
         planId: null,
         planTitle: '',
+        areaCode: null,
         startDate: '',
         endDate: '',
         dayPlans: []
       };
     },
 
-    // 장바구니 항목 반환
     getCartItems: (state) => state.cartItems || [],
-  },
+
+    getOriginalPlan: (state) => {
+      return state.originalPlan || {
+        planId: null,
+        planTitle: '',
+        areaCode: null,
+        startDate: '',
+        endDate: '',
+        dayPlans: []
+      };
+    },
+
+    hasChanges: (state) => {
+      return JSON.stringify(state.originalPlan) !== JSON.stringify(state.editingPlan);
+    }
+  }
 });

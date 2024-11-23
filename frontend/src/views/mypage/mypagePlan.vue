@@ -4,7 +4,7 @@
       현재 여행 계획이 없습니다.
     </div>
     <div v-else class="grid-container">
-      <div class="grid-item" v-for="(item, index) in items" :key="index">
+      <div class="grid-item" v-for="(item, index) in items" :key="index" @click="viewPlanDetails(item.planId, item.areaCode)">
         <div class="card shadow-sm">
           <span class="img" :style="{ backgroundImage: `url(${item.planProfileImg})` }"></span>
           <div class="card-body">
@@ -27,11 +27,20 @@
 <script>
 import { useMypageStore } from "@/store/mypageStore";
 import { storeToRefs } from "pinia";
+import { useRouter } from "vue-router";
 
 export default {
   setup() {
     const mypageStore = useMypageStore();
+    const router = useRouter();
     const { userPlans } = storeToRefs(mypageStore);
+
+    const viewPlanDetails = (planId, areaCode) => {
+      router.push({
+        name: 'DetailedTravelPlan',
+        params: { id: planId , areaCode: areaCode }
+      });
+    };
 
     const deletePlan = async (planId) => {
       if (confirm("정말 이 여행 계획을 삭제하시겠습니까?")) {
@@ -42,6 +51,7 @@ export default {
     return {
       items: userPlans,
       deletePlan,
+      viewPlanDetails
     };
   },
 };

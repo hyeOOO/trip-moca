@@ -28,17 +28,17 @@ const routes = [
     component: SelectCard,
   },
   {
-    path: "/plan/:id",
+    path: "/plan/:id/:areaCode",
     name: "DetailedTravelPlan",
     component: DetailedTravelPlan,
   },
   {
-    path: "/TravelCart/:id",
+    path: "/TravelCart/:id/:areaCode",
     name: "TravelCart",
     component: TravelCart,
   },
   {
-    path: "/modify/:id", // 추가: modifyPlan 경로
+    path: "/modify/:id/:areaCode", // 추가: modifyPlan 경로
     name: "ModifyPlan",
     component: () => import("@/views/detailedTravelPlan/modifyPlan.vue"),
   },
@@ -55,7 +55,7 @@ const routes = [
   {
     path: "/",
     name: "WelcomeAnimation",
-    component: WelcomeAnimation, //나중에 WelcomeAnimation 로 바꾸셈
+    component: Main, //나중에 WelcomeAnimation 로 바꾸셈
   },
   {
     path: "/main",

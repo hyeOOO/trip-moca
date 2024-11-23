@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 
-export const usePlanStore = defineStore("plan", {
+export const usePlanStore = defineStore("createPlan", {
   state: () => ({
     selectedDestination: {
       id: null,
@@ -24,7 +24,7 @@ export const usePlanStore = defineStore("plan", {
         areaCode: destination.areaCode || destination.id,
         areaName: destination.areaName,
         title: destination.title || destination.areaName,
-        image: destination.image || ''
+        image: destination.image || 'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png'
       };
     },
 
