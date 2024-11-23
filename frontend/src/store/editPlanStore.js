@@ -8,25 +8,27 @@ export const usePlanStore = defineStore('editPlanStore', {
       planId: null,
       planTitle: '',
       areaCode: null,
+      sidoName: '',
       startDate: '',
       endDate: '',
-      dayPlans: []
+      dayPlans: [],
     },
     editingPlan: {
       planId: null,
       planTitle: '',
       areaCode: null,
+      sidoName: '',
       startDate: '',
       endDate: '',
-      dayPlans: []
+      dayPlans: [],
     },
-    cartItems: []
+    cartItems: [],
   }),
 
   actions: {
     // 초기화 메서드
     async initializePlan(planId) {
-      try {       
+      try {
         const response = await api.get(`/domain/plans/${planId}`);
         const planData = response.data;
 
@@ -36,27 +38,38 @@ export const usePlanStore = defineStore('editPlanStore', {
           planId: planData.planId,
           planTitle: planData.planTitle,
           areaCode: planData.areaCode,
+          sidoName: planData.sidoName,
           startDate: planData.startDate,
           endDate: planData.endDate,
-          dayPlans: planData.dayPlans.map(day => ({
+          dayPlans: planData.dayPlans.map((day) => ({
             day: day.day,
             date: day.date,
-            details: day.details.map(detail => ({
+            details: day.details.map((detail) => ({
               planDetailId: detail.planDetailId,
               attractionId: detail.attractionId,
               attractionTitle: detail.attractionTitle,
-              image: (!detail.image || detail.image.trim() === '') 
-  ? 'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png' 
-  : detail.image,
+              image:
+                !detail.image || detail.image.trim() === ''
+                  ? 'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png'
+                  : detail.image,
+              addr1: detail.addr1,
+              addr2: detail.addr2,
+              contentTypeId: detail.contentTypeId,
+              contentTypeName: detail.contentTypeName,
               latitude: detail.latitude,
               longitude: detail.longitude,
-              memo: detail.memo
-            }))
-          }))
+              memo: detail.memo,
+            })),
+          })),
         };
+
+        console.log(formattedPlan);
 
         this.originalPlan = JSON.parse(JSON.stringify(formattedPlan));
         this.editingPlan = JSON.parse(JSON.stringify(formattedPlan));
+
+        console.log('orginalPlan : ', this.originalPlan);
+        console.log('editingPlan : ', this.editingPlan);
 
         // Restore cart items if they exist
         const savedCartItems = localStorage.getItem('cartItems');
@@ -68,7 +81,7 @@ export const usePlanStore = defineStore('editPlanStore', {
         throw error;
       }
     },
-    
+
     // 편집 중인 계획을 원본으로 재설정
     resetToOriginal() {
       try {
@@ -102,7 +115,9 @@ export const usePlanStore = defineStore('editPlanStore', {
     // 장바구니 항목 전체 설정 및 localStorage에 저장
     setCartItems(items) {
       try {
-        this.cartItems = Array.isArray(items) ? JSON.parse(JSON.stringify(items)) : [];
+        this.cartItems = Array.isArray(items)
+          ? JSON.parse(JSON.stringify(items))
+          : [];
         localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
       } catch (error) {
         console.error('Set cart items error:', error);
@@ -126,7 +141,8 @@ export const usePlanStore = defineStore('editPlanStore', {
     // 장바구니에서 항목 제거 및 localStorage 업데이트
     removeCartItem(index) {
       try {
-        if (index < 0 || index >= this.cartItems.length) throw new Error('Invalid index');
+        if (index < 0 || index >= this.cartItems.length)
+          throw new Error('Invalid index');
         this.cartItems.splice(index, 1);
         localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
       } catch (error) {
@@ -143,31 +159,39 @@ export const usePlanStore = defineStore('editPlanStore', {
 
   getters: {
     getPlanData: (state) => {
-      return state.editingPlan || {
-        planId: null,
-        planTitle: '',
-        areaCode: null,
-        startDate: '',
-        endDate: '',
-        dayPlans: []
-      };
+      return (
+        state.editingPlan || {
+          planId: null,
+          planTitle: '',
+          areaCode: null,
+          sidoName: '',
+          startDate: '',
+          endDate: '',
+          dayPlans: [],
+        }
+      );
     },
 
     getCartItems: (state) => state.cartItems || [],
 
     getOriginalPlan: (state) => {
-      return state.originalPlan || {
-        planId: null,
-        planTitle: '',
-        areaCode: null,
-        startDate: '',
-        endDate: '',
-        dayPlans: []
-      };
+      return (
+        state.originalPlan || {
+          planId: null,
+          planTitle: '',
+          areaCode: null,
+          sidoName: '',
+          startDate: '',
+          endDate: '',
+          dayPlans: [],
+        }
+      );
     },
 
     hasChanges: (state) => {
-      return JSON.stringify(state.originalPlan) !== JSON.stringify(state.editingPlan);
-    }
-  }
+      return (
+        JSON.stringify(state.originalPlan) !== JSON.stringify(state.editingPlan)
+      );
+    },
+  },
 });
