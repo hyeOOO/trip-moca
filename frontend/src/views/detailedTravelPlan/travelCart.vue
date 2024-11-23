@@ -7,22 +7,14 @@
       <div class="sidebar">
         <div class="schedule-list">
           <!-- 전체 일정 버튼 -->
-          <button
-            class="schedule-btn"
-            :class="{ active: selectedDay === 'all' }"
-            @click="selectDay('all')"
-          >
+          <button class="schedule-btn" :class="{ active: selectedDay === 'all' }" @click="selectDay('all')">
             <i class="fa-regular fa-calendar"></i><br />
             전체일정
           </button>
 
           <!-- 일자별 버튼 -->
           <div v-for="day in totalDays" :key="day" class="day-item">
-            <button
-              class="schedule-btn"
-              :class="{ active: selectedDay === day }"
-              @click="selectDay(day)"
-            >
+            <button class="schedule-btn" :class="{ active: selectedDay === day }" @click="selectDay(day)">
               <div class="day-title">DAY {{ day }}</div>
               <div class="day-date">{{ day }}일차</div>
             </button>
@@ -47,27 +39,23 @@
           </div>
           <!-- 검색창 -->
           <div class="search-box">
-            <input
-              type="text"
-              v-model="searchQuery"
-              placeholder="장소를 입력해 주세요."
-              @keyup.enter="handleSearch"
-            />
+            <input type="text" v-model="searchQuery" placeholder="장소를 입력해 주세요." @keyup.enter="handleSearch" />
             <i class="fa-solid fa-search" @click="handleSearch"></i>
           </div>
           <!-- 장소 목록 -->
           <div class="places-list" @scroll="handleScroll">
-            <div
-              v-for="place in paginatedPlaces"
-              :key="place.attractionId"
-              class="place-item"
-              draggable="true"
-              @dragstart="dragStart($event, place)"
-            >
+            <div v-for="place in paginatedPlaces" :key="place.attractionId" class="place-item" draggable="true"
+              @dragstart="dragStart($event, place)">
               <div class="place-image">
                 <img :src="getImageUrl(place.image1)" :alt="place.title" />
               </div>
               <div class="place-info">
+                <div class="flex gap-2 mb-2">
+                  <span v-if="place.contentTypeName" class="px-2 py-1 rounded-lg text-xs text-white tag"
+                    :style="{ backgroundColor: getContentTypeColor(place.contentTypeId) }">
+                    {{ place.contentTypeName }}
+                  </span>
+                </div>
                 <h3>{{ place.title }}</h3>
                 <p>{{ place.addr1 }}</p>
               </div>
@@ -84,32 +72,26 @@
         </div>
 
         <!-- 오른쪽 섹션: 장바구니 -->
-        <div
-          class="cart-section"
-          :class="{ collapsed: isRightCollapsed }"
-          @dragover.prevent
-          @drop="onDrop($event)"
-        >
+        <div class="cart-section" :class="{ collapsed: isRightCollapsed }" @dragover.prevent @drop="onDrop($event)">
           <div class="section-header">
             <h2 class="section-title">장바구니</h2>
             <button @click="clearCart" class="clear-cart">초기화</button>
           </div>
           <!-- 선택된 장소 목록 -->
           <div class="cart-items" @dragover.prevent @drop="onDrop($event)">
-            <div
-              v-for="(place, index) in cartItems"
-              :key="place.attractionId"
-              class="cart-item"
-              draggable="true"
-              @dragstart="dragStartSelected($event, place, index)"
-              @dragover.prevent
-              @drop="onDrop($event, index)"
-            >
+            <div v-for="(place, index) in cartItems" :key="place.attractionId" class="cart-item" draggable="true"
+              @dragstart="dragStartSelected($event, place, index)" @dragover.prevent @drop="onDrop($event, index)">
               <div class="order-number">{{ index + 1 }}</div>
               <div class="place-image">
                 <img :src="getImageUrl(place.image1)" :alt="place.title" />
               </div>
               <div class="place-info">
+                <div class="flex gap-2 mb-2">
+                  <span v-if="place.contentTypeName" class="px-2 py-1 rounded-lg text-xs text-white tag"
+                    :style="{ backgroundColor: getContentTypeColor(place.contentTypeId) }">
+                    {{ place.contentTypeName }}
+                  </span>
+                </div>
                 <h3>{{ place.title }}</h3>
                 <p>{{ place.addr1 }}</p>
               </div>
@@ -122,11 +104,7 @@
           </div>
           <!-- 장바구니 저장 버튼 -->
           <div class="cart-actions">
-            <button
-              @click="assignToDay"
-              class="save-cart"
-              :disabled="!cartItems.length"
-            >
+            <button @click="assignToDay" class="save-cart" :disabled="!cartItems.length">
               장바구니 저장
             </button>
           </div>
@@ -134,13 +112,8 @@
 
         <!-- 지도 표시 영역 -->
         <div class="map-container">
-          <t-map-component
-            ref="tmap"
-            :selected-places-by-day="getSelectedPlaces"
-            :latitude="33.3846"
-            :longitude="126.5534"
-            :selected-day="selectedDay"
-          />
+          <t-map-component ref="tmap" :selected-places-by-day="getSelectedPlaces" :latitude="33.3846"
+            :longitude="126.5534" :selected-day="selectedDay" />
         </div>
       </div>
     </div>
@@ -149,13 +122,14 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { usePlanStore } from "@/store/editPlanStore";
 import navBar from "@/components/navBar.vue";
 import TMapComponent from "@/components/Tmap/TmapNumPing.vue";
-import testData from "@/assets/data/testData.js";
+import api from "@/plugins/axios";
 
 const router = useRouter();
+const route = useRoute();
 const planStore = usePlanStore();
 const draggedItem = ref(null);
 
@@ -165,7 +139,7 @@ const cartItems = ref([]);
 const isCollapsed = ref(false);
 const isRightCollapsed = ref(false);
 const searchQuery = ref("");
-const places = ref(testData);
+const places = ref([]);
 const page = ref(1);
 const pageSize = ref(10);
 const loading = ref(false);
@@ -197,30 +171,78 @@ const getSelectedPlaces = computed(() => {
       0: cartItems.value.map((place) => ({
         id: place.attractionId,
         title: place.title,
-        latitude: place.latitude || place.mapy,
-        longitude: place.longitude || place.mapx,
+        latitude: place.latitude,
+        longitude: place.longitude,
       })),
     };
   }
   return {};
 });
 
+const fetchAttractions = async () => {
+  try {
+    loading.value = true;
+    const response = await api.get('/domain/attraction/search', {
+      params: {
+        areaCode: planData.value.areaCode,
+        page: page.value - 1,
+        size: pageSize.value,
+        sort: "title,asc"  // 배열이 아닌 문자열로 변경
+        // title: searchQuery.value  // 필요한 경우 추가
+      }
+    });
+
+    console.log('API Response:', response.data);  // 응답 데이터 확인
+
+    const { content, last } = response.data;
+    if (page.value === 1) {
+      places.value = content;
+    } else {
+      places.value = [...places.value, ...content];
+    }
+    hasMore.value = !last;
+  } catch (error) {
+    console.error('관광지 데이터 로드 실패:', error);
+    console.error('Error details:', error.response?.data);  // 상세 에러 확인
+  } finally {
+    loading.value = false;
+  }
+};
+
 const handleScroll = async (e) => {
   if (loading.value || !hasMore.value) return;
 
   const element = e.target;
-  const scrollBottom =
-    element.scrollHeight - element.scrollTop - element.clientHeight;
+  const scrollBottom = element.scrollHeight - element.scrollTop - element.clientHeight;
 
   if (scrollBottom < 50) {
-    loading.value = true;
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    page.value++;
+    await fetchAttractions();
+  }
+};
 
-    if (page.value * pageSize.value < filteredPlaces.value.length) {
-      page.value++;
-    } else {
-      hasMore.value = false;
-    }
+const handleSearch = async () => {
+  page.value = 1;
+  hasMore.value = true;
+  try {
+    loading.value = true;
+    // URL이 잘못되었습니다: attractions -> attraction
+    const response = await api.get('/domain/attraction/search', {  // attractions를 attraction으로 수정
+      params: {
+        areaCode: planData.value.areaCode,
+        title: searchQuery.value,  // keyword -> title로 수정
+        page: 0,
+        size: pageSize.value,
+        sort: "title,asc"  // 문자열로 변경
+      }
+    });
+
+    const { content, last } = response.data;
+    places.value = content;
+    hasMore.value = !last;
+  } catch (error) {
+    console.error('관광지 검색 실패:', error);
+  } finally {
     loading.value = false;
   }
 };
@@ -244,7 +266,7 @@ const onDrop = async (event, targetIndex) => {
   event.preventDefault();
   const data = event.dataTransfer.getData("text/plain");
 
-  if (!draggedItem.value) return; // draggedItem이 null이면 중단
+  if (!draggedItem.value) return;
 
   try {
     const parsed = JSON.parse(data);
@@ -260,7 +282,6 @@ const onDrop = async (event, targetIndex) => {
         cartItems.value = items;
       });
     } else {
-      // 새 아이템 추가
       const newItem = draggedItem.value;
       if (newItem) {
         await nextTick(() => {
@@ -287,15 +308,6 @@ const onDrop = async (event, targetIndex) => {
   draggedItem.value = null;
 };
 
-const toggleRightSection = () => {
-  isRightCollapsed.value = !isRightCollapsed.value;
-  setTimeout(() => tmap.value?.getMap().resize(), 300);
-};
-
-const handleSearch = () => {
-  if (!searchQuery.value.trim()) return;
-};
-
 const selectDay = (day) => {
   selectedDay.value = day;
 };
@@ -309,23 +321,23 @@ const removePlace = (place) => {
 const clearCart = () => {
   planStore.clearCartItems();
   cartItems.value = [];
-  localStorage.removeItem('cartItems'); // localStorage에서도 제거
+  localStorage.removeItem('cartItems');
 };
 
 const assignToDay = () => {
   if (!cartItems.value.length) return;
   planStore.setCartItems(cartItems.value);
-  localStorage.setItem('cartItems', JSON.stringify(cartItems.value)); // localStorage 업데이트
-  router.push(`/modify/${planData.value.planId}`);
+  localStorage.setItem('cartItems', JSON.stringify(cartItems.value));
+  router.push(`/modify/${planData.value.planId}/${planData.value.areaCode}`);
 };
 
 const cancelEdit = () => {
-  const id = router.currentRoute.value.params.id;
+  const id = route.params.id;
   planStore.resetToOriginal();
-  router.push(`/plan/${id}`);
+  router.push(`/plan/${id}/${planData.value.areaCode}`);
   planStore.clearCartItems();
   cartItems.value = [];
-  localStorage.removeItem('cartItems'); // localStorage에서도 제거
+  localStorage.removeItem('cartItems');
 };
 
 const getImageUrl = (imageUrl) =>
@@ -345,32 +357,51 @@ const formatDateRange = (start, end) =>
     ? ""
     : `${formatDate(new Date(start))} ~ ${formatDate(new Date(end))}`;
 
+const getContentTypeColor = (contentType) => {
+  const colorMap = {
+    12: '#ecb27b',
+    14: '#6E6156',
+    15: '#433629',
+    25: '#332417',
+    28: '#988D82',
+    32: '#C3A386',
+    38: '#ecb27b',
+    39: '#6E6156'
+  };
+  return colorMap[contentType] || '#ecb27b';  // 기본값으로 #ecb27b 반환
+};
+
 watch(searchQuery, () => {
   page.value = 1;
   hasMore.value = true;
+  if (searchQuery.value.trim()) {
+    handleSearch();
+  } else {
+    fetchAttractions();
+  }
 });
 
 watch(
   cartItems,
   () => {
     selectedDay.value = "cart";
-    // 장바구니에 있는 아이템과 핑을 localStorage에 저장
     localStorage.setItem('cartItems', JSON.stringify(cartItems.value));
   },
   { deep: true }
 );
 
 onMounted(async () => {
-  const id = router.currentRoute.value.params.id;
-  await planStore.initializePlan();
+  const id = route.params.id;
+  await planStore.initializePlan(id);
 
-  // localStorage에서 cartItems 불러오기
   const savedCartItems = localStorage.getItem('cartItems');
   if (savedCartItems) {
     cartItems.value = JSON.parse(savedCartItems);
   } else {
-    cartItems.value = cartData.value; // store의 데이터로 초기화
+    cartItems.value = cartData.value;
   }
+
+  await fetchAttractions();
 });
 </script>
 
@@ -387,7 +418,8 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   position: relative;
-  overflow: hidden; /* 추가 */
+  overflow: hidden;
+  /* 추가 */
 }
 
 /* 사이드바 */
@@ -528,18 +560,22 @@ onMounted(async () => {
   object-fit: cover;
   border-radius: 8px;
 }
+
 .place-image {
-  margin-right: 1rem; /* 이미지와 텍스트 사이 간격 */
+  margin-right: 1rem;
+  /* 이미지와 텍스트 사이 간격 */
   width: 145px;
   height: 6rem;
   object-fit: cover;
   border-radius: 0.5rem;
 }
+
 .place-info {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
+
 /* 카드 여행지 이름, 설명 */
 .place-info h3 {
   font-family: "Pretendard-Medium";
@@ -549,6 +585,7 @@ onMounted(async () => {
 
 .place-info p {
   color: #b4b4b4;
+  font-family: 'Pretendard-Regular';
   font-size: 13px;
 }
 
@@ -562,6 +599,7 @@ onMounted(async () => {
   flex-direction: column;
   overflow: hidden;
 }
+
 /* 장바구니 상단 문구 */
 .section-header {
   display: flex;
@@ -569,11 +607,13 @@ onMounted(async () => {
   align-items: center;
   margin-bottom: 10px;
 }
+
 /* 장바구니 문구 */
 .section-title {
   font-family: "EliceDigitalBaeum_Bold";
   font-size: 30px;
 }
+
 /* 초기화버튼 */
 .clear-cart {
   font-family: "EliceDigitalBaeum_regular";
@@ -585,6 +625,7 @@ onMounted(async () => {
 .clear-cart:hover {
   color: #f44336;
 }
+
 /* 장바구니 여행지 속성 */
 .cart-items {
   max-height: 76vh;
@@ -614,6 +655,7 @@ onMounted(async () => {
   border-radius: 8px;
   cursor: pointer;
 }
+
 .save-cart:hover {
   background: #6e6156;
 }
@@ -655,6 +697,11 @@ onMounted(async () => {
 
 .loading i {
   margin-right: 0.5rem;
+}
+
+.tag {
+  font-family: 'Pretendard-SemiBold';
+  font-size: 12px;
 }
 
 /* 패널 상태 */

@@ -1,68 +1,87 @@
 import { defineStore } from 'pinia';
-import detailTestData from "@/assets/data/detailTestData.js";
+import api from '@/plugins/axios';
+// import detailTestData from "@/assets/data/detailTestData.js";
 
 export const usePlanStore = defineStore('editPlanStore', {
-  state: () => {
-    const defaultPlan = {
+  state: () => ({
+    originalPlan: {
       planId: null,
       planTitle: '',
+      areaCode: null,
+      sidoName: '',
       startDate: '',
       endDate: '',
-      dayPlans: []
-    };
-
-    try {
-      const savedCartItems = localStorage.getItem('cartItems');
-      const initialPlan = JSON.parse(JSON.stringify(detailTestData)) || defaultPlan;
-      
-      return {
-        originalPlan: initialPlan,
-        editingPlan: initialPlan,
-        cartItems: savedCartItems ? JSON.parse(savedCartItems) : [],
-      };
-    } catch (error) {
-      console.error('State initialization error:', error);
-      return {
-        originalPlan: defaultPlan,
-        editingPlan: defaultPlan,
-        cartItems: [],
-      };
-    }
-  },
+      dayPlans: [],
+    },
+    editingPlan: {
+      planId: null,
+      planTitle: '',
+      areaCode: null,
+      sidoName: '',
+      startDate: '',
+      endDate: '',
+      dayPlans: [],
+    },
+    cartItems: [],
+  }),
 
   actions: {
     // 초기화 메서드
-    initializePlan(planData = detailTestData) {
+    async initializePlan(planId) {
       try {
-        const validPlanData = planData || {
-          planId: null,
-          planTitle: '',
-          startDate: '',
-          endDate: '',
-          dayPlans: []
+        const response = await api.get(`/domain/plans/${planId}`);
+        const planData = response.data;
+
+        console.log('API 응답 데이터:', response.planData);
+
+        const formattedPlan = {
+          planId: planData.planId,
+          planTitle: planData.planTitle,
+          areaCode: planData.areaCode,
+          sidoName: planData.sidoName,
+          startDate: planData.startDate,
+          endDate: planData.endDate,
+          dayPlans: planData.dayPlans.map((day) => ({
+            day: day.day,
+            date: day.date,
+            details: day.details.map((detail) => ({
+              planDetailId: detail.planDetailId,
+              attractionId: detail.attractionId,
+              attractionTitle: detail.attractionTitle,
+              image:
+                !detail.image || detail.image.trim() === ''
+                  ? 'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png'
+                  : detail.image,
+              addr1: detail.addr1,
+              addr2: detail.addr2,
+              contentTypeId: detail.contentTypeId,
+              contentTypeName: detail.contentTypeName,
+              latitude: detail.latitude,
+              longitude: detail.longitude,
+              memo: detail.memo,
+            })),
+          })),
         };
 
-        this.originalPlan = JSON.parse(JSON.stringify(validPlanData));
-        this.editingPlan = JSON.parse(JSON.stringify(validPlanData));
-        
-        // localStorage에서 장바구니 항목 복원
+        console.log(formattedPlan);
+
+        this.originalPlan = JSON.parse(JSON.stringify(formattedPlan));
+        this.editingPlan = JSON.parse(JSON.stringify(formattedPlan));
+
+        console.log('orginalPlan : ', this.originalPlan);
+        console.log('editingPlan : ', this.editingPlan);
+
+        // Restore cart items if they exist
         const savedCartItems = localStorage.getItem('cartItems');
         if (savedCartItems) {
           this.cartItems = JSON.parse(savedCartItems);
         }
       } catch (error) {
         console.error('Plan initialization error:', error);
-        this.originalPlan = {
-          planId: null,
-          planTitle: '',
-          startDate: '',
-          endDate: '',
-          dayPlans: []
-        };
-        this.editingPlan = { ...this.originalPlan };
+        throw error;
       }
     },
-    
+
     // 편집 중인 계획을 원본으로 재설정
     resetToOriginal() {
       try {
@@ -96,7 +115,9 @@ export const usePlanStore = defineStore('editPlanStore', {
     // 장바구니 항목 전체 설정 및 localStorage에 저장
     setCartItems(items) {
       try {
-        this.cartItems = Array.isArray(items) ? JSON.parse(JSON.stringify(items)) : [];
+        this.cartItems = Array.isArray(items)
+          ? JSON.parse(JSON.stringify(items))
+          : [];
         localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
       } catch (error) {
         console.error('Set cart items error:', error);
@@ -120,7 +141,8 @@ export const usePlanStore = defineStore('editPlanStore', {
     // 장바구니에서 항목 제거 및 localStorage 업데이트
     removeCartItem(index) {
       try {
-        if (index < 0 || index >= this.cartItems.length) throw new Error('Invalid index');
+        if (index < 0 || index >= this.cartItems.length)
+          throw new Error('Invalid index');
         this.cartItems.splice(index, 1);
         localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
       } catch (error) {
@@ -136,18 +158,40 @@ export const usePlanStore = defineStore('editPlanStore', {
   },
 
   getters: {
-    // 편집 중인 계획 반환
     getPlanData: (state) => {
-      return state.editingPlan || {
-        planId: null,
-        planTitle: '',
-        startDate: '',
-        endDate: '',
-        dayPlans: []
-      };
+      return (
+        state.editingPlan || {
+          planId: null,
+          planTitle: '',
+          areaCode: null,
+          sidoName: '',
+          startDate: '',
+          endDate: '',
+          dayPlans: [],
+        }
+      );
     },
 
-    // 장바구니 항목 반환
     getCartItems: (state) => state.cartItems || [],
+
+    getOriginalPlan: (state) => {
+      return (
+        state.originalPlan || {
+          planId: null,
+          planTitle: '',
+          areaCode: null,
+          sidoName: '',
+          startDate: '',
+          endDate: '',
+          dayPlans: [],
+        }
+      );
+    },
+
+    hasChanges: (state) => {
+      return (
+        JSON.stringify(state.originalPlan) !== JSON.stringify(state.editingPlan)
+      );
+    },
   },
 });
