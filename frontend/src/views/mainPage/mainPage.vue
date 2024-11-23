@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="scroll-container">
     <!-- 첫 번째 섹션 -->
-    <section class="background">
+    <section class="background first-section" id="section1">
       <navBar />
       <div
         class="main-section"
@@ -13,102 +13,64 @@
           </h1>
         </div>
         <div class="box2">
-          <div class="search-form">
-            <div class="search-group">
-              <div>
-                <p class="text1">당신만의 힙한 여행,<br />여기서 시작해요✨</p>
-              </div>
-              <br />
-              <div>
-                <p class="text2">출발일자</p>
-                <input
-                  type="date"
-                  v-model="startDate"
-                  @focus="showPlaceholder = false"
-                  @blur="showPlaceholder = !startDate"
-                  placeholder=" "
-                />
-                <span v-if="showPlaceholder" class="custom-placeholder"
-                  >선택하세요</span
-                >
-              </div>
-              <div>
-                <p class="text2">도착일자</p>
-                <input
-                  type="date"
-                  v-model="startDate"
-                  @focus="showPlaceholder = false"
-                  @blur="showPlaceholder = !startDate"
-                  placeholder=" "
-                />
-                <span v-if="showPlaceholder" class="custom-placeholder"
-                  >선택하세요</span
-                >
-              </div>
-              <div>
-                <p class="text2">인원 수</p>
-                <input type="number" class="form-input" min="0" />
-              </div>
-              <div>
-                <p class="text2">지역(선택)</p>
-                <select
-                  v-model="result"
-                  style="
-                    text-align: center;
-                    width: 395px;
-                    height: 42px;
-                    border: 1px solid #ffffff;
-                  "
-                >
-                  <option
-                    v-for="(region, index) in 지역"
-                    :key="index"
-                    :value="region.value"
-                  >
-                    {{ region.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <button class="search-submit">출 발 하 기</button>
-          </div>
+          <searchForm />
         </div>
+      </div>
+      <div class="scroll-indicator">
+        <div class="arrow arrow-first"></div>
+        <div class="arrow arrow-second"></div>
       </div>
     </section>
 
     <!-- 두 번째 섹션 -->
-    <section v-intersect class="fade-in-section">
+    <section v-intersect class="fade-in-section" id="section2">
       <firstContent />
+      <div class="scroll-indicator">
+        <div class="arrow arrow-first"></div>
+        <div class="arrow arrow-second"></div>
+      </div>
     </section>
 
     <!-- 세 번째 섹션 -->
-    <section v-intersect class="fade-in-section">
+    <section v-intersect class="fade-in-section" id="section3">
       <secondContent />
+      <div class="scroll-indicator">
+        <div class="arrow arrow-first"></div>
+        <div class="arrow arrow-second"></div>
+      </div>
     </section>
 
     <!-- 네 번째 섹션 -->
-    <section v-intersect class="fade-in-section">
+    <section v-intersect class="fade-in-section" id="section4">
       <thirdContent />
+      <div class="scroll-indicator">
+        <div class="arrow arrow-first"></div>
+        <div class="arrow arrow-second"></div>
+      </div>
     </section>
 
     <!-- 다섯 번째 섹션 -->
-    <section v-intersect class="fade-in-section">
+    <section v-intersect class="fade-in-section" id="section5">
       <fourthContent />
+      <div class="scroll-indicator">
+        <div class="arrow arrow-first"></div>
+        <div class="arrow arrow-second"></div>
+      </div>
     </section>
 
     <!-- Footer -->
-    <section>
+    <section v-intersect class="fade-in-section" id="section6">
       <footInfo />
     </section>
   </div>
 </template>
-
 
 <script>
 import firstContent from "@/views/mainPage/firstContent.vue";
 import secondContent from "@/views/mainPage/secondContent.vue";
 import thirdContent from "@/views/mainPage/thirdContent.vue";
 import fourthContent from "@/views/mainPage/fourthContent.vue";
+import searchForm from "@/views/mainPage/searchForm.vue";
 import footInfo from "@/components/footInfo.vue";
 import region from "@/assets/data/region.js";
 import navBar from "@/components/navBar.vue";
@@ -118,17 +80,117 @@ export default {
   data() {
     return {
       지역: region,
-      searchQuery: "", //검색어를 저장할 데이터 추가
-      searchResults: [], //검색 결과를 저장할 배열
+      searchQuery: "",
+      searchResults: [],
+      currentSection: 1,
+      isAnimating: false,
+      totalSections: 6,
     };
   },
   components: {
-    navBar: navBar,
-    firstContent: firstContent,
-    secondContent: secondContent,
-    thirdContent: thirdContent,
-    fourthContent: fourthContent,
-    footInfo: footInfo,
+    navBar,
+    firstContent,
+    secondContent,
+    thirdContent,
+    fourthContent,
+    footInfo,
+    searchForm,
+  },
+  mounted() {
+    window.addEventListener("wheel", this.handleScroll, { passive: false });
+    this.initializeSections();
+  },
+  beforeUnmount() {
+    window.removeEventListener("wheel", this.handleScroll);
+  },
+  methods: {
+    initializeSections() {
+      document.getElementById("section1").classList.add("active");
+      for (let i = 2; i <= this.totalSections; i++) {
+        document.getElementById(`section${i}`).classList.add("next");
+      }
+      this.isAnimating = false;
+    },
+
+    handleScroll(event) {
+      if (this.isAnimating) return;
+      event.preventDefault();
+
+      const delta = Math.sign(event.deltaY);
+
+      if (delta > 0 && this.currentSection < this.totalSections) {
+        this.isAnimating = true;
+        const currentEl = document.getElementById(
+          `section${this.currentSection}`
+        );
+        const nextEl = document.getElementById(
+          `section${this.currentSection + 1}`
+        );
+
+        currentEl.classList.remove("active");
+        currentEl.classList.add("prev");
+        nextEl.classList.remove("next");
+        nextEl.classList.add("active");
+
+        this.currentSection++;
+
+        setTimeout(() => {
+          this.isAnimating = false;
+        }, 1000);
+      } else if (delta < 0 && this.currentSection > 1) {
+        this.isAnimating = true;
+        const currentEl = document.getElementById(
+          `section${this.currentSection}`
+        );
+        const prevEl = document.getElementById(
+          `section${this.currentSection - 1}`
+        );
+
+        currentEl.classList.remove("active");
+        currentEl.classList.add("next");
+        prevEl.classList.remove("prev");
+        prevEl.classList.add("active");
+
+        this.currentSection--;
+
+        setTimeout(() => {
+          this.isAnimating = false;
+        }, 1000);
+      }
+      // Footer에 도달했을 때 스크롤 인디케이터 숨기기
+      if (this.currentSection === this.totalSections) {
+        document.querySelector(".scroll-indicator").style.display = "none";
+      } else {
+        document.querySelector(".scroll-indicator").style.display = "block";
+      }
+    },
+
+    scrollToSection(sectionNumber) {
+      if (this.isAnimating || this.currentSection === sectionNumber) return;
+
+      this.isAnimating = true;
+      const currentEl = document.getElementById(
+        `section${this.currentSection}`
+      );
+      const targetEl = document.getElementById(`section${sectionNumber}`);
+
+      currentEl.classList.remove("active");
+      targetEl.classList.add("active");
+
+      if (sectionNumber > this.currentSection) {
+        currentEl.classList.add("prev");
+        targetEl.classList.remove("next");
+      } else {
+        currentEl.classList.add("next");
+        targetEl.classList.remove("prev");
+      }
+
+      this.currentSection = sectionNumber;
+
+      setTimeout(() => {
+        this.isAnimating = false;
+      }, 1000);
+    },
   },
   directives: {
     intersect: {
@@ -150,19 +212,53 @@ export default {
 </script>
 
 <style scoped>
-/* 배경 이미지 */
-.background {
+.scroll-container {
   height: 100vh;
-  margin: 0;
+  overflow: hidden;
+  position: relative;
+  /* background-color: #C3A386; */
+}
+
+section {
+  position: absolute;
+  width: 100%;
+  height: 100vh;
+  transition: all 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+  overflow: visible;
+  /* background-color: #C3A386;  */
+}
+
+section.active {
+  transform: translateY(0);
+  opacity: 1;
+  z-index: 2;
+}
+
+section:not(.active) {
+  opacity: 0;
+  pointer-events: none;
+  /* background-color: #C3A386; */
+}
+
+section.next {
+  transform: translateY(100%);
+  z-index: 1;
+}
+
+section.prev {
+  transform: translateY(-100%);
+  z-index: 1;
+}
+
+.background {
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   background-color: rgba(0, 0, 0, 0.3);
-  z-index: 0;
   animation: carousel 30s infinite;
 }
 
-.background::before {
+.first-section::before {
   content: "";
   position: absolute;
   top: 0;
@@ -180,10 +276,8 @@ export default {
 
 .main-section {
   position: relative;
-  height: 100vh; /* 100% 화면 높이로 설정 */
+  height: 88vh;
   padding: 100px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   align-items: center;
   text-align: center;
   color: white;
@@ -201,63 +295,71 @@ export default {
   margin-left: 140px;
   align-self: center;
   background: rgba(0, 0, 0, 0.5);
-  height: auto; /* 내용물에 따라 자동 높이 */
+  height: auto;
   width: 450px;
   padding: 30px;
   border-radius: 20px;
 }
 
-.search-submit {
-  width: 395px;
-  height: 56px;
-  border-radius: 8px;
-  background: #ecb27b;
-  font-weight: bold;
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
   cursor: pointer;
-  margin-top: 40px;
 }
 
-.search-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.h1-text {
-  font-family: "EliceDigitalBaeum_Regular";
-  font-size: 56px;
-  text-align: left;
-}
-
-.text1 {
-  font-family: "EliceDigitalBaeum_Regular";
-  text-align: left;
-  font-size: 24px;
-}
-
-.text2 {
-  font-family: "EliceDigitalBaeum_Regular";
-  text-align: left;
-}
-
-/* 섹션 공통 스타일 */
-.fade-in-section {
-  height: 100vh; /* 각 섹션도 100vh로 설정 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.arrow {
   opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 2s ease-out, transform 2s ease-out;
+  position: relative;
+  transform-origin: 50% 50%;
 }
 
-.fade-in-section.visible {
-  opacity: 1;
-  transform: translateY(0);
+.arrow-first {
+  animation: arrow-movement 2s ease-in-out infinite;
 }
 
-/* 캐러셀 */
+.arrow-second {
+  animation: arrow-movement 2s 1s ease-in-out infinite;
+}
+
+.arrow:before,
+.arrow:after {
+  background: #ecb27b;
+  content: "";
+  display: block;
+  height: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 30px;
+}
+
+.arrow:before {
+  transform: rotate(45deg) translateX(-23%);
+  transform-origin: top left;
+}
+
+.arrow:after {
+  transform: rotate(-45deg) translateX(23%);
+  transform-origin: top right;
+}
+
+@keyframes arrow-movement {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 @keyframes carousel {
   0% {
     background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
@@ -271,16 +373,5 @@ export default {
   100% {
     background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
   }
-}
-
-/* 스크롤 스냅 설정 */
-html {
-  scroll-snap-type: y mandatory;
-}
-
-.background,
-.fade-in-section {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
 }
 </style>
