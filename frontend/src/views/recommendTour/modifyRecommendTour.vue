@@ -88,8 +88,8 @@
         <div class="map-container">
           <tmap-multipath
             :selected-places-by-day="getSelectedPlaces"
-            :latitude="33.3846"
-            :longitude="126.5534"
+            :latitude="mapCoordinates.latitude"
+            :longitude="mapCoordinates.longitude"
             :selected-day="selectedDay === 'all' ? null : selectedDay"
             :show-all-days="selectedDay === 'all'"
           />
@@ -106,11 +106,8 @@
             <div class="schedule-detail">
               <!-- 여행 제목과 기간 -->
               <div class="trip-header" v-if="!isLoading">
-                <h1>{{ planData.planTitle }}</h1>
-                <!-- 여기 여행계획 이름으로 받아와야해-->
-                <p>
-                  {{ formatDateRange(planData.startDate, planData.endDate) }}
-                </p>
+                <h1>{{ displayTitle }}</h1>
+                <p>{{ tripDuration }}</p>
               </div>
 
               <!-- 전체 일정 뷰 -->
@@ -130,7 +127,7 @@
                     <div class="cart-items">
                       <div
                         v-for="(spot, index) in dayPlan.details"
-                        :key="spot.planDetailId"
+                        :key="spot.attractionId"
                         class="cart-item"
                         draggable="true"
                         @dragstart="dragStart($event, spot, index, dayPlan.day)"
@@ -148,9 +145,8 @@
                         </div>
                         <div class="place-info">
                           <h3>{{ spot.attractionTitle }}</h3>
-                          <p>{{ spot.memo }}</p>
+                          <p>{{ spot.addr1 }}</p>
                         </div>
-
                         <div>
                           <button
                             @click="removePlace(dayPlan.day, index)"
@@ -174,7 +170,7 @@
                 <div class="cart-items">
                   <div
                     v-for="(spot, index) in getCurrentDaySpots()"
-                    :key="spot.planDetailId"
+                    :key="spot.attractionId"
                     class="cart-item"
                     draggable="true"
                     @dragstart="dragStart($event, spot, index, selectedDay)"
@@ -188,7 +184,7 @@
                     </div>
                     <div class="place-info">
                       <h3>{{ spot.attractionTitle }}</h3>
-                      <p>{{ spot.memo }}</p>
+                      <p>{{ spot.addr1 }}</p>
                     </div>
                     <div>
                       <button
@@ -218,16 +214,18 @@
     </div>
   </div>
 </template>
-  
+
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { useRouter } from "vue-router";
-import { usePlanStore } from "@/store/editPlanStore";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import navBar from "@/components/navBar.vue";
 import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
+import { useAiRecommendPlanStore } from "@/store/aiRecommendPlanStore";
 
+// 라우터 및 스토어 설정
 const router = useRouter();
-const planStore = usePlanStore();
+const route = useRoute();
+const aiRecommendStore = useAiRecommendPlanStore();
 
 // --- 상태 관리 변수들 ---
 const selectedDay = ref("all");
@@ -242,29 +240,37 @@ const panelOffset = ref(0);
 const draggedItem = ref(null);
 const isRightCollapsed = ref(false);
 const isLoading = ref(true);
+const cartItems = ref([]); // 장바구니 아이템
 let animationFrame = null;
 
 // --- Computed Properties ---
-const planData = computed(() => planStore.getPlanData);
+const planData = computed(() => aiRecommendStore.getPlanData);
 
-const gridStyle = computed(() => ({
-  display: "flex",
-  gap: "2.2rem",
-  width: "max-content",
-}));
+const totalDays = computed(() => aiRecommendStore.getTotalDays);
 
-// 총 일수 계산
-const totalDays = computed(() => {
-  if (!planData.value || !planData.value.dayPlans) return 0;
-  return planData.value.dayPlans.length;
+const displayTitle = computed(() => {
+  return `${aiRecommendStore.selectedDestination?.areaName} 여행`;
 });
 
-// 지도에 표시할 장소들
+const tripDuration = computed(() => {
+  const days = aiRecommendStore.selectedDestination?.numberOfDays || 0;
+  return `${days - 1}박 ${days}일`;
+});
+
+const mapCoordinates = computed(() => {
+  return aiRecommendStore.getMapCoordinates;
+});
+
 const getSelectedPlaces = computed(() => {
-  if (!planData.value || !planData.value.dayPlans) return {};
+  if (!planData.value || !Array.isArray(planData.value.dayPlans)) return {};
 
   if (selectedDay.value === "all") {
     return planData.value.dayPlans.reduce((acc, day) => {
+      if (!day || !Array.isArray(day.details)) {
+        acc[day?.day || 0] = [];
+        return acc;
+      }
+
       acc[day.day] = day.details.map((spot) => ({
         id: spot.attractionId,
         title: spot.attractionTitle,
@@ -276,72 +282,86 @@ const getSelectedPlaces = computed(() => {
   }
 
   const dayPlan = planData.value.dayPlans.find(
-    (day) => day.day === selectedDay.value
+    (day) => day?.day === selectedDay.value
   );
-  return dayPlan
-    ? {
-        [selectedDay.value]: dayPlan.details.map((spot) => ({
-          id: spot.attractionId,
-          title: spot.attractionTitle,
-          latitude: Number(spot.latitude),
-          longitude: Number(spot.longitude),
-        })),
-      }
-    : {};
+
+  if (!dayPlan || !Array.isArray(dayPlan.details)) {
+    return { [selectedDay.value]: [] };
+  }
+
+  return {
+    [selectedDay.value]: dayPlan.details.map((spot) => ({
+      id: spot.attractionId,
+      title: spot.attractionTitle,
+      latitude: Number(spot.latitude),
+      longitude: Number(spot.longitude),
+    })),
+  };
 });
 
-// 장바구니 아이템
-const cartItems = computed(() => {
-  return planStore.getCartItems.map((item) => ({
-    ...item,
-    image: item.image1 || item.image || item.firstimage || "",
-    title: item.title || item.attractionTitle,
-    addr1: item.addr1 || item.address,
-  }));
-});
+// --- 초기화 함수 ---
+const initializeData = async () => {
+  try {
+    isLoading.value = true;
+
+    // 제주도(39)가 아니거나 3일이 아닌 경우 리다이렉트
+    if (
+      aiRecommendStore.selectedDestination?.areaCode !== "39" ||
+      aiRecommendStore.selectedDestination?.numberOfDays !== 3
+    ) {
+      console.log("Currently only available for Jeju 3-day trips");
+      router.push("/recommendTour");
+      return;
+    }
+
+    // 더미데이터 로드
+    const aiRecommendData = (await import("@/assets/data/aiRecommendData.js"))
+      .default;
+
+    // 장바구니에 추가할 장소들 (예: 각 날짜의 첫 번째 장소)
+    cartItems.value = [];
+
+    // 일정 데이터 설정
+    if (!aiRecommendStore.getPlanData?.dayPlans?.length) {
+      const formattedData = aiRecommendData.map((dayPlan, index) => ({
+        day: dayPlan.day,
+        details: dayPlan.attractionDetails.map((detail) => ({
+          attractionId: detail.attractionId,
+          attractionTitle: detail.title,
+          image: detail.image1,
+          latitude: detail.latitude,
+          longitude: detail.longitude,
+          addr1: detail.addr1,
+          memo: "",
+        })),
+      }));
+
+      await aiRecommendStore.setRecommendPlan(formattedData);
+    }
+  } catch (error) {
+    console.error("Data initialization error:", error);
+    router.push("/recommendTour");
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 // --- 유틸리티 함수들 ---
-// 현재 날짜의 장소들 가져오기
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl)
+    return "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
+  return imageUrl;
+};
+
+const getDayDate = (day) => {
+  return `${day}일차`;
+};
+
 const getCurrentDaySpots = () => {
   const dayPlan = planData.value.dayPlans.find(
     (day) => day.day === selectedDay.value
   );
   return dayPlan ? dayPlan.details : [];
-};
-
-// 이미지 URL 처리
-const getImageUrl = (imageUrl) => {
-  if (!imageUrl)
-    return "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
-  if (typeof imageUrl === "object") {
-    return (
-      imageUrl.image1 ||
-      imageUrl.firstimage ||
-      "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
-    );
-  }
-  return imageUrl;
-};
-
-// 날짜 포맷팅
-const formatDateRange = (start, end) => {
-  if (!start || !end || isLoading.value) return "";
-  return `${formatDate(new Date(start))} ~ ${formatDate(new Date(end))}`;
-};
-
-const formatDate = (date) => {
-  const days = ["일", "월", "화", "수", "목", "금", "토"];
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}.${String(date.getDate()).padStart(2, "0")}(${days[date.getDay()]})`;
-};
-
-const getDayDate = (day) => {
-  if (!planData.value?.startDate || isLoading.value) return "";
-  const start = new Date(planData.value.startDate);
-  start.setDate(start.getDate() + day - 1);
-  return formatDate(start);
 };
 
 // --- 패널 크기 조절 관련 ---
@@ -368,29 +388,20 @@ const handleDragMove = (e) => {
   const clientX = e.type === "mousemove" ? e.clientX : e.touches[0].clientX;
   const delta = clientX - startX.value;
 
-  // 이전 애니메이션 프레임 취소
   if (animationFrame) cancelAnimationFrame(animationFrame);
 
-  // 새로운 애니메이션 프레임 요청
   animationFrame = requestAnimationFrame(() => {
-    // 베이스 너비와 최대 너비 계산
     const baseWidth = 464;
     const maxWidth = Math.min(window.innerWidth - 100, 1350);
-
-    // 새로운 너비 계산 (부드러운 제한)
     const targetWidth = baseWidth + delta;
     const smoothWidth = Math.max(baseWidth, Math.min(targetWidth, maxWidth));
-
-    // 변화량에 따른 부드러운 전환
     const smoothingFactor = 0.1;
     const smoothedWidth =
       currentWidth.value + (smoothWidth - currentWidth.value) * smoothingFactor;
 
-    // 상태 업데이트
     currentWidth.value = smoothedWidth;
     isExpanded.value = smoothedWidth > baseWidth;
 
-    // 패널 요소에 transform 적용
     if (middleSection.value) {
       middleSection.value.style.width = `${smoothedWidth}px`;
     }
@@ -399,12 +410,10 @@ const handleDragMove = (e) => {
 
 const stopDragExpand = () => {
   isDragging.value = false;
-
   document.removeEventListener("mousemove", handleDragMove);
   document.removeEventListener("mouseup", stopDragExpand);
   document.removeEventListener("touchmove", handleDragMove);
   document.removeEventListener("touchend", stopDragExpand);
-
   if (animationFrame) cancelAnimationFrame(animationFrame);
 };
 
@@ -416,40 +425,40 @@ const clearDragOverStyles = () => {
   });
 };
 
-// 드래그 시작 - 일정에서
 const dragStart = (event, place, index, fromDay) => {
   draggedItem.value = { place, type: "day", index, fromDay };
   event.dataTransfer.effectAllowed = "move";
-  // 드래그 데이터 설정 추가
-  event.dataTransfer.setData('text/plain', JSON.stringify({
-    type: 'day',
-    index,
-    fromDay
-  }));
+  event.dataTransfer.setData(
+    "text/plain",
+    JSON.stringify({
+      type: "day",
+      index,
+      fromDay,
+    })
+  );
 };
 
-// 드래그 시작 - 장바구니에서
 const dragStartCart = (event, item, index) => {
-  // 드래그 아이템 데이터 정규화
   const normalizedItem = {
     ...item,
-    attractionId: item.attractionId || item.id,
+    attractionId: item.attractionId,
     title: item.title || item.attractionTitle,
     attractionTitle: item.title || item.attractionTitle,
-    latitude: Number(item.latitude || item.mapy),
-    longitude: Number(item.longitude || item.mapx),
+    latitude: Number(item.latitude),
+    longitude: Number(item.longitude),
   };
 
   draggedItem.value = { item: normalizedItem, type: "cart", index };
   event.dataTransfer.effectAllowed = "move";
-  // 드래그 데이터 설정 추가
-  event.dataTransfer.setData('text/plain', JSON.stringify({
-    type: 'cart',
-    index
-  }));
+  event.dataTransfer.setData(
+    "text/plain",
+    JSON.stringify({
+      type: "cart",
+      index,
+    })
+  );
 };
 
-// 드롭 처리
 const handleDrop = (event, targetDay, targetIndex) => {
   event.preventDefault();
   if (!draggedItem.value) return;
@@ -458,29 +467,30 @@ const handleDrop = (event, targetDay, targetIndex) => {
   const targetDayPlan = newPlan.dayPlans.find((plan) => plan.day === targetDay);
   if (!targetDayPlan) return;
 
-  // 같은 날짜 내에서의 이동인 경우
-  if (draggedItem.value.type === "day" && draggedItem.value.fromDay === targetDay) {
+  if (
+    draggedItem.value.type === "day" &&
+    draggedItem.value.fromDay === targetDay
+  ) {
     const details = targetDayPlan.details;
     const [movedItem] = details.splice(draggedItem.value.index, 1);
-    
-    // targetIndex가 원래 인덱스보다 크면 하나 감소 (항목이 제거되었으므로)
-    const adjustedTargetIndex = targetIndex > draggedItem.value.index ? targetIndex - 1 : targetIndex;
+    const adjustedTargetIndex =
+      targetIndex > draggedItem.value.index ? targetIndex - 1 : targetIndex;
     details.splice(adjustedTargetIndex, 0, movedItem);
-  }
-  // 다른 날짜로의 이동이거나 장바구니에서의 추가
-  else {
+  } else {
     if (draggedItem.value.type === "cart") {
       const newPlace = {
         attractionId: draggedItem.value.item.attractionId,
-        attractionTitle: draggedItem.value.item.title || draggedItem.value.item.attractionTitle,
-        image: draggedItem.value.item.image || draggedItem.value.item.image1 || draggedItem.value.item.firstimage,
-        latitude: Number(draggedItem.value.item.latitude || draggedItem.value.item.mapy),
-        longitude: Number(draggedItem.value.item.longitude || draggedItem.value.item.mapx),
-        addr1: draggedItem.value.item.addr1 || draggedItem.value.item.address,
+        attractionTitle:
+          draggedItem.value.item.title ||
+          draggedItem.value.item.attractionTitle,
+        image: draggedItem.value.item.image,
+        latitude: draggedItem.value.item.latitude,
+        longitude: draggedItem.value.item.longitude,
+        addr1: draggedItem.value.item.addr1,
         memo: "",
       };
 
-      if (typeof targetIndex === 'number') {
+      if (typeof targetIndex === "number") {
         targetDayPlan.details.splice(targetIndex, 0, newPlace);
       } else {
         targetDayPlan.details.push(newPlace);
@@ -490,8 +500,11 @@ const handleDrop = (event, targetDay, targetIndex) => {
         (plan) => plan.day === draggedItem.value.fromDay
       );
       if (sourceDayPlan) {
-        const [movedPlace] = sourceDayPlan.details.splice(draggedItem.value.index, 1);
-        if (typeof targetIndex === 'number') {
+        const [movedPlace] = sourceDayPlan.details.splice(
+          draggedItem.value.index,
+          1
+        );
+        if (typeof targetIndex === "number") {
           targetDayPlan.details.splice(targetIndex, 0, movedPlace);
         } else {
           targetDayPlan.details.push(movedPlace);
@@ -500,12 +513,11 @@ const handleDrop = (event, targetDay, targetIndex) => {
     }
   }
 
-  planStore.updateEditingPlan(newPlan);
+  aiRecommendStore.updatePlan(newPlan);
   draggedItem.value = null;
   clearDragOverStyles();
 };
 
-// 드래그 오버 처리
 const handleDragOver = (event, targetDay, targetIndex) => {
   event.preventDefault();
   const dragCard = event.target.closest(".place-card");
@@ -520,28 +532,18 @@ const handleDragOver = (event, targetDay, targetIndex) => {
   dragCard.classList.add(isAbove ? "drag-over-top" : "drag-over-bottom");
 };
 
-const removeFromCart = (item) => {
-  cartItems.value = cartItems.value.filter(
-    (p) => p.attractionId !== item.attractionId
-  );
-};
-
 const onDrop = async (event, targetIndex) => {
   event.preventDefault();
-  
   try {
-    const data = event.dataTransfer.getData('text/plain');
+    const data = event.dataTransfer.getData("text/plain");
     if (!data || !draggedItem.value) return;
 
     const parsed = JSON.parse(data);
-    
-    // 장바구니 내에서의 순서 변경은 처리하지 않음
-    if (parsed.type === 'cart' && draggedItem.value.type === 'cart') {
+    if (parsed.type === "cart" && draggedItem.value.type === "cart") {
       return;
     }
-
   } catch (error) {
-    console.error('Drop handling error:', error);
+    console.error("Drop handling error:", error);
   }
   draggedItem.value = null;
 };
@@ -553,35 +555,39 @@ const selectDay = (day) => {
 
 const removePlace = (day, index) => {
   const newPlan = JSON.parse(JSON.stringify(planData.value));
-  newPlan.dayPlans[day - 1].details.splice(index, 1);
-  planStore.updateEditingPlan(newPlan);
+  const dayPlanIndex = day - 1;
+  if (newPlan.dayPlans[dayPlanIndex]) {
+    newPlan.dayPlans[dayPlanIndex].details.splice(index, 1);
+    aiRecommendStore.updatePlan(newPlan);
+  }
 };
 
 const saveModifiedPlan = () => {
-  planStore.savePlan();
-  router.push(`/plan/${planData.value.planId}`);
+  router.push(`/plan/${route.params.id}`);
 };
 
 const goToTravelCart = () => {
-  router.push(`/TravelCart/${planData.value.planId}`);
+  alert("준비 중인 기능입니다.");
 };
 
 const cancelModify = () => {
-  planStore.setCartItems(cartItems.value);
-  router.push(`/plan/${planData.value.planId}`);
+  router.push(`/plan/${route.params.id}`);
 };
 
 // --- 생명주기 훅 ---
 onMounted(async () => {
-  try {
-    isLoading.value = true;
-    await planStore.initializePlan();
-  } catch (error) {
-    console.error("여행 계획 데이터 로드 실패:", error);
-  } finally {
-    isLoading.value = false;
-  }
+  await initializeData();
 });
+
+watch(
+  () => route.params.id,
+  async (newId) => {
+    if (newId) {
+      await initializeData();
+    }
+  },
+  { immediate: true }
+);
 
 onBeforeUnmount(() => {
   if (animationFrame) cancelAnimationFrame(animationFrame);

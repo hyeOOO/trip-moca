@@ -19,9 +19,21 @@ import searchPlace from "@/views/search/searchPlace.vue";
 import popularPlace from "@/views/popular/popularPlace.vue";
 import seasonPlan from "@/views/popular/seasonPlan.vue";
 import keywordPlan from "@/views/popular/keywordPlan.vue";
+import recommendGallery from "@/views/recommendTour/recommendGallery.vue";
+import ModifyRecommendTour from "@/views/recommendTour/modifyRecommendTour.vue";
 
 
 const routes = [
+  {
+    path: "/recommendTour",
+    name: "recommendGallery",
+    component: recommendGallery,
+  },
+  {
+    path: "/modifyRecommendTour/:id",
+    name: "modifyRecommendTour",
+    component: ModifyRecommendTour,
+  },
   {
     path: "/selectCard",
     name: "SelectCard",
@@ -55,7 +67,7 @@ const routes = [
   {
     path: "/",
     name: "WelcomeAnimation",
-    component: WelcomeAnimation, //나중에 WelcomeAnimation 로 바꾸셈
+    component: Main, //나중에 WelcomeAnimation 로 바꾸셈
   },
   {
     path: "/main",
