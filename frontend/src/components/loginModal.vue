@@ -320,7 +320,8 @@ export default {
         console.error('Error response:', error.response?.data);
         console.groupEnd();
 
-        if (error.response?.data) {
+        // axios 에러인지 확인
+        if (error.isAxiosError && error.response?.data) {
           const { code, message } = error.response.data;
 
           switch (code) {
