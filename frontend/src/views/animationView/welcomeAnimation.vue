@@ -1,13 +1,12 @@
 <script setup>
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, defineEmits } from 'vue';
 
-const router = useRouter();
+const emit = defineEmits(['animation-complete']);
 
 onMounted(() => {
-  // 7초 후에 main 페이지로 이동 (애니메이션 총 시간 고려)
+  // 7초 후에 애니메이션 완료 이벤트 발생
   setTimeout(() => {
-    router.push('/main');
+    emit('animation-complete');
   }, 7000);
 });
 </script>
@@ -53,19 +52,12 @@ onMounted(() => {
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap");
-/**
-* get random number.
-* @param {number} min - min number.
-* @param {number} max - max number.
-*/
-/*
-* variable
-*/
 html,
 body {
   height: 100vh;
   width: 100vw;
 }
+
 body {
   font-family: 'Montserrat', sans-serif;
   background: #fff;
@@ -74,14 +66,28 @@ body {
   font-size: 100%;
   text-align: center;
 }
+
+.animation-container {
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background: #fff; /* 배경색 추가 */
+  display: flex; /* Flexbox 추가 */
+  justify-content: center; /* 가로 중앙 정렬 */
+  align-items: center; /* 세로 중앙 정렬 */
+}
+
 .criterion {
   font-size: 1.6rem;
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: relative; /* absolute에서 relative로 변경 */
   height: 0;
   width: 0;
-  transform: translate(-20px, -20px);
+  /* transform 제거하고 margin으로 미세 조정 */
+  margin-left: -20px;
+  margin-top: -20px;
 }
 /*
 * background
