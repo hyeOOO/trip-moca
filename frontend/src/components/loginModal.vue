@@ -150,6 +150,9 @@ export default {
     },
   },
   methods: {
+    toggleForm() {
+      this.isSignUp = !this.isSignUp;
+    },
     validateLoginId() {
       const idRegex = /^[a-zA-Z0-9]{4,20}$/;
       if (!this.loginForm.id) {
