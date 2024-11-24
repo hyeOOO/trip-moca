@@ -34,7 +34,7 @@
             }"
           ></i>
         </div>
-        <div class="header">
+        <div class="middleHeader">
           <h2>{{ name }}</h2>
           <p v-if="formattedDateRange" class="date-range">
             {{ formattedDateRange }}
@@ -45,7 +45,7 @@
             <input
               type="text"
               v-model="searchQuery"
-              placeholder="여행지를 검색하세요"
+              placeholder="장소를 입력해주세요."
               @keyup.enter="handleSearch"
             />
             <i class="fa-solid fa-search" @click="handleSearch"></i>
@@ -91,7 +91,7 @@
           ></i>
         </div>
         <div class="header">
-          <h2>선택한 장소</h2>
+
         </div>
         <div class="selected-places">
           <div
@@ -602,7 +602,7 @@ export default {
 </script>
 
 <style scoped>
-/* Base layout */
+/* 기본 레이아웃 설정 */
 .layout-container {
   display: flex;
   flex-direction: column;
@@ -612,7 +612,7 @@ export default {
 
 .content-wrapper {
   display: grid;
-  grid-template-columns: 200px 380px 380px 1fr;
+  grid-template-columns: 107px 370px 370px minmax(0, 1fr); /* 좌측 사이드바, 중앙섹션, 우측섹션, 지도영역 */
   grid-template-rows: 1fr;
   height: calc(100vh - 64px);
   overflow: hidden;
@@ -620,7 +620,7 @@ export default {
   gap: 0;
 }
 
-/* Collapse states */
+/* 섹션 접힘/펼침 상태 */
 .content-wrapper.collapsed {
   grid-template-columns: 200px 0 380px 1fr;
 }
@@ -633,21 +633,28 @@ export default {
   grid-template-columns: 200px 0 0 1fr;
 }
 
-/* Common section styles */
+/* 공통 섹션 스타일 */
 .steps-sidebar,
 .middle-section,
 .right-section {
   background: white;
-  padding: 20px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee;
   height: 100%;
-  overflow-y: auto;
   position: relative;
+}
+
+.steps-sidebar,
+.middle-section {
+  padding: 10px;
+}
+
+.middle-section,
+.right-section {
+  padding: 10px;
+  overflow-y: auto;
   transition: all 0.3s ease;
 }
 
-/* Section collapse states */
+/* 섹션 접힘 상태 스타일 */
 .content-wrapper.collapsed .middle-section,
 .content-wrapper.right-collapsed .right-section {
   width: 0;
@@ -656,46 +663,55 @@ export default {
   opacity: 0;
 }
 
-/* Common scrollbar styles */
-.middle-section::-webkit-scrollbar,
-.right-section::-webkit-scrollbar {
-  width: 8px;
+/* 가로/세로 스크롤바 공통 스타일 */
+::-webkit-scrollbar {
+ width: 6px;
+ height: 6px;
 }
 
-.middle-section::-webkit-scrollbar-track,
-.right-section::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+::-webkit-scrollbar-track {
+ background: #ffffff;
+ border-radius: 3px;
 }
 
-.middle-section::-webkit-scrollbar-thumb,
-.right-section::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+::-webkit-scrollbar-thumb {
+ background: #ECB27B;
+ border-radius: 3px;
 }
 
-.middle-section::-webkit-scrollbar-thumb:hover,
-.right-section::-webkit-scrollbar-thumb:hover {
-  background: #555;
+::-webkit-scrollbar-thumb:hover {
+ background: #C3A386;
 }
 
-/* Header styles */
-.header {
+/* 헤더 영역 스타일 */
+.middleHeader {
   margin-bottom: 24px;
 }
 
-.header h2 {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
+.middleHeader h2 {
+  font-family: "EliceDigitalBaeum_bold";
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+.header {
+  margin-bottom: 50px;
 }
 
 .date-range {
-  color: #f57c00;
+  font-family: "EliceDigitalBaeum_regular";
+  color: #ECB27B;
   font-size: 14px;
 }
 
-/* Step styles */
+/* 단계 네비게이션 스타일 */
+.steps-nav {
+  text-align: center;
+  font-family: "EliceDigitalBaeum_Regular";
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .step {
   display: flex;
   flex-direction: column;
@@ -704,25 +720,39 @@ export default {
   text-decoration: none;
   color: inherit;
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-.step:hover,
-.step.active {
-  background-color: #f5f5f5;
+.step-number,
+.step-title {
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 14px;
+  color: #B4B4B4;
 }
 
 .step-number {
-  font-size: 14px;
-  font-weight: bold;
-  color: #f57c00;
   margin-bottom: 4px;
 }
 
-/* Search styles */
+.step:hover .step-number,
+.step:hover .step-title,
+.step.active .step-number,
+.step.active .step-title {
+  color: #ECB27B;
+}
+
+/* 검색 영역 스타일 */
 .search-box {
   position: relative;
   margin-bottom: 20px;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 40px 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 25px;
+  font-size: 14px;
 }
 
 .search-box i {
@@ -734,22 +764,17 @@ export default {
   cursor: pointer;
 }
 
-.search-box input {
-  width: 100%;
-  padding: 12px 40px 12px 16px;
-  border: 1px solid #ddd;
-  border-radius: 25px;
-  font-size: 14px;
-}
-
-/* Place item styles */
+/* 장소 목록 스타일 */
 .places-list {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 0 4px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 0 4px;
 }
 
+/* 장소 아이템 공통 스타일 */
 .place-item,
 .selected-place {
   display: flex;
@@ -759,19 +784,12 @@ export default {
   padding: 8px 12px;
 }
 
-.place-item {
-  cursor: move;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
 .place-image {
   width: 80px;
   height: 80px;
   margin-right: 8px;
 }
-.order-number {
-  margin-right: 8px;
-}
+
 .place-image img {
   width: 100%;
   height: 100%;
@@ -781,6 +799,12 @@ export default {
 
 .place-info {
   flex: 1;
+}
+
+/* 장소 아이템 세부 스타일 */
+.place-item {
+  cursor: move;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .place-title {
@@ -795,9 +819,43 @@ export default {
   color: #666;
 }
 
-/* Day section styles */
+/* 선택된 장소 스타일 */
+.selected-place {
+  position: relative;
+  padding-left: 48px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selected-place:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.selected-place .order-number {
+  position: absolute;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  background-color: #ECB27B;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.selected-place.dragging {
+  opacity: 0.5;
+}
+
+/* 일자별 섹션 스타일 */
 .day-section {
-  background-color: #f8f9fa;
+  position: relative;
   border-radius: 5px;
   padding: 10px;
   margin-bottom: 16px;
@@ -825,22 +883,32 @@ export default {
   gap: 8px;
 }
 
-.empty-day {
-  text-align: center;
-  padding: 20px;
-  background: #fff;
-  border: 2px dashed #ddd;
+/* 드래그 앤 드롭 영역 스타일 */
+.day-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
   border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
-/* Button styles */
+.day-section.drag-over::after {
+  opacity: 1;
+}
+
+/* 버튼 스타일 */
 .toggle-button {
   position: absolute;
   top: 20px;
   right: 10px;
   width: 32px;
   height: 32px;
-  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -855,14 +923,11 @@ export default {
   transition: color 0.3s ease;
 }
 
-.toggle-button:hover {
-  transform: scale(1.1);
-}
-
 .toggle-button:hover i {
-  color: #f57c00;
+  color: #ECB27B;
 }
 
+/* 액션 버튼 스타일 */
 .action-buttons {
   display: flex;
   gap: 8px;
@@ -901,7 +966,7 @@ export default {
   color: white;
 }
 
-/* Map container */
+/* 지도 컨테이너 스타일 */
 .map-container {
   position: relative;
   width: 100%;
@@ -922,102 +987,28 @@ export default {
   min-height: 0;
 }
 
-
-/* 기존 스타일 유지하고 selected-place에 대한 스타일 추가 */
-.selected-place {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 8px;
-  padding: 8px 12px;
-  padding-left: 48px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: move;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.selected-place:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.selected-place .order-number {
-  position: absolute;
-  left: 12px;
-  width: 24px;
-  height: 24px;
-  background-color: #f57c00;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.selected-place.dragging {
-  opacity: 0.5;
-}
-
-/* 드롭 영역 스타일 */
-.day-section {
-  position: relative;
-}
-
-.day-section::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.day-section.drag-over::after {
-  opacity: 1;
-}
+/* 로딩 및 에러 상태 스타일 */
 .loading-state,
-.error-state {
-  text-align: center;
-  padding: 20px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin: 10px 0;
-}
-
-
-.error-state {
-  color: #dc3545;
-  background: #f8d7da;
-  border: 1px solid #f5c6cb;
-}
+.error-state,
 .loading-more {
   text-align: center;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
   margin: 10px 0;
+}
+
+.error-state {
+  color: #ECB27B;
+}
+
+.loading-more {
+  padding: 16px;
   font-size: 14px;
   color: #666;
 }
 
-/* places-list에 스크롤 관련 스타일 추가 */
-.places-list {
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  padding-right: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0 4px;
+/* 빈 일정 상태 스타일 */
+.empty-day {
+  text-align: center;
+  padding: 44px;
+  border-radius: 8px;
 }
 </style>
-

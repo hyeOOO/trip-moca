@@ -31,10 +31,10 @@
           >선택하세요</span
         >
       </div>
-      <div>
+      <!-- <div>
         <p class="text2">인원 수</p>
         <input type="number" class="form-input" min="0" />
-      </div>
+      </div> -->
       <div>
         <p class="text2">지역(선택)</p>
         <select
@@ -84,7 +84,7 @@
 export default {};
 </script>
 
-<style>
+<style scoped>
 .search-group {
   display: flex;
   flex-direction: column;

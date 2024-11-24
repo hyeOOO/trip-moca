@@ -269,46 +269,62 @@ export default {
 </script>
 
 <style scoped>
-/* Base layout */
+/* 기본 레이아웃 컨테이너 - 전체 페이지 래퍼 */
 .layout-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  max-width: none;
   overflow: hidden;
 }
 
+/* 메인 컨텐츠 영역 - 사이드바, 중앙 섹션, 지도 컨테이너를 포함하는 그리드 */
 .content-wrapper {
   display: grid;
-  grid-template-columns: 200px 320px 1fr;
+  grid-template-columns: 107px 370px minmax(0, 1fr); /* 왼쪽 사이드바, 중앙 섹션, 오른쪽 지도 영역 */
   grid-template-rows: 1fr;
-  height: calc(100vh - 64px);
+  height: calc(100vh - 64px); /* 네비게이션 바 높이 제외 */
   overflow: hidden;
   transition: all 0.3s ease;
   gap: 0;
 }
 
+/* 중앙 섹션이 접혔을 때의 그리드 레이아웃 */
 .content-wrapper.collapsed {
   grid-template-columns: 200px 0 1fr;
 }
 
-/* Common section styles */
+/* 사이드바와 중앙 섹션의 공통 스타일 */
 .steps-sidebar,
 .middle-section {
   background: white;
-  padding: 24px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  border-right: 1px solid #eee;
+  padding: 10px;
   height: 100%;
-  overflow-y: auto;
 }
 
-/* Step styles */
+/* 중앙 섹션 기본 스타일 */
+.middle-section {
+  position: relative;
+  min-width: 0;
+}
+
+/* 중앙 섹션이 접혔을 때의 스타일 */
+.content-wrapper.collapsed .middle-section {
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
+}
+
+/* 단계 네비게이션 영역 스타일 */
 .steps-nav {
+  text-align: center;
+  font-family: "EliceDigitalBaeum_Regular";
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
+/* 각 단계 버튼 스타일 */
 .step {
   display: flex;
   flex-direction: column;
@@ -320,35 +336,27 @@ export default {
   transition: all 0.3s ease;
 }
 
-.step:hover,
-.step.active {
-  background-color: #f5f5f5;
+/* 단계 번호와 제목의 공통 스타일 */
+.step-number,
+.step-title {
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 14px;
+  color: #B4B4B4;
 }
 
 .step-number {
-  font-size: 14px;
-  font-weight: bold;
-  color: #f57c00;
   margin-bottom: 4px;
 }
 
-.step-title {
-  font-size: 16px;
+/* 단계 버튼 호버/활성화 상태 스타일 */
+.step:hover .step-number,
+.step:hover .step-title,
+.step.active .step-number,
+.step.active .step-title {
+  color: #ECB27B;
 }
 
-/* Middle section styles */
-.middle-section {
-  position: relative;
-  min-width: 0;
-}
-
-.content-wrapper.collapsed .middle-section {
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
-}
-
-/* Toggle button styles */
+/* 접기/펼치기 토글 버튼 스타일 */
 .toggle-button {
   position: absolute;
   top: 20px;
@@ -364,10 +372,6 @@ export default {
   transition: transform 0.3s ease;
 }
 
-.toggle-button:hover {
-  transform: scale(1.1);
-}
-
 .toggle-button i {
   font-size: 18px;
   color: #666;
@@ -375,76 +379,84 @@ export default {
 }
 
 .toggle-button:hover i {
-  color: #f57c00;
+  color: #ECB27B;
 }
 
-/* Header styles */
+/* 헤더 영역 스타일 */
 .header {
   margin-bottom: 24px;
 }
 
 .header h2 {
-  font-size: 24px;
-  font-weight: bold;
+  font-family: "EliceDigitalBaeum_bold";
+  font-size: 32px;
   margin-bottom: 8px;
 }
 
 .date-range {
-  color: #f57c00;
+  font-family: "EliceDigitalBaeum_regular";
+  color: #ECB27B;
   font-size: 14px;
 }
 
-/* Form styles */
+/* 날짜 입력 폼 스타일 */
 .input-group {
+  color: #000000;
   margin-bottom: 16px;
 }
 
+/* 입력 필드 레이블 스타일 */
 .input-group label {
+  font-family: "EliceDigitalBaeum_regular";
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
-  color: #666;
 }
 
+/* 날짜 입력 필드 스타일 */
 .date-input {
   width: 100%;
-  padding: 8px;
+  padding: 11px;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 15px;
+  font-family: "EliceDigitalBaeum_regular";
   font-size: 14px;
-  color: #333;
+  color: #B4B4B4;
   background-color: #fff;
   transition: all 0.3s ease;
+  text-align: center;
 }
 
+/* 날짜 입력 필드 포커스/호버 상태 */
 .date-input:focus {
   outline: none;
-  border-color: #f57c00;
+  border-color: #ECB27B;
   box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
 }
 
 .date-input:hover {
-  border-color: #bbb;
+  border-color: #ECB27B;
 }
 
-/* Button styles */
+/* 저장 버튼 스타일 */
 .save-button {
   width: 100%;
   padding: 12px;
-  background-color: #333;
+  background-color: #ECB27B;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 15px;
   cursor: pointer;
   font-size: 16px;
   transition: background-color 0.3s ease;
+  margin-top: 40px;
 }
 
 .save-button:hover {
-  background-color: #555;
+  background-color: #6e6156;
 }
 
-/* Map container styles */
+/* 지도 컨테이너 스타일 */
 .map-container {
   position: relative;
   width: 100%;
@@ -457,6 +469,7 @@ export default {
   margin: 0;
 }
 
+/* 지도 래퍼 컴포넌트 스타일 (하위 컴포넌트 스타일 설정) */
 .map-container :deep(.map-wrapper) {
   flex: 1;
   position: relative;

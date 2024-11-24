@@ -1,19 +1,19 @@
 <template>
-  <div class="DestinationBackground">
+  <div class="destination-background">
     <navBar />
-    <div class="container mx-auto px-4 py-8">
-      <h1 class="text-3xl font-bold text-center mb-8">지금 당장 생각나는 곳은?</h1>
-      <div class="relative max-w-2xl mx-auto mb-12">
+    <div class="container">
+      <h1 class="title">지금 당장 생각나는 곳은?</h1>
+      <div class="search-container">
         <input
           type="text"
-          class="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:border-gray-500"
+          class="search-input"
           placeholder="지역명을 입력해주세요"
           v-model="searchQuery"
         />
-        <button class="absolute right-4 top-1/2 transform -translate-y-1/2">
+        <button class="search-button">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6 text-gray-400"
+            class="search-icon"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -29,26 +29,22 @@
       </div>
 
       <!-- 도시 그리드 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="destination-grid">
         <div
           v-for="destination in filteredDestinations"
           :key="destination.id"
-          class="group cursor-pointer"
+          class="destination-item"
           @click="selectDestination(destination)"
         >
-          <div class="relative overflow-hidden rounded-lg shadow-lg">
+          <div class="destination-image-container">
             <img
               :src="destination.image"
               :alt="destination.nameKo"
-              class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+              class="destination-image"
             />
-            <div
-              class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4"
-            >
-              <h3 class="text-white text-xl font-bold">
-                {{ destination.nameKo }}
-              </h3>
-              <p class="text-white/80">{{ destination.nameEn }}</p>
+            <div class="destination-overlay">
+              <h3 class="destination-name-ko">{{ destination.nameKo }}</h3>
+              <p class="destination-name-en">{{ destination.nameEn }}</p>
             </div>
           </div>
         </div>
@@ -58,7 +54,7 @@
 </template>
 
 <script>
-import { defineComponent } from 'vue';
+import { defineComponent } from "vue";
 import navBar from "@/components/navBar.vue";
 import DestinationGalleryData from "@/assets/data/DestinationGalleryData.js";
 import { usePlanStore } from "@/store/planStore";
@@ -102,8 +98,8 @@ export default defineComponent({
           areaCode: destination.id,
           areaName: destination.nameKo,
           title: destination.nameKo,
-          image: destination.image
-        }
+          image: destination.image,
+        },
       });
 
       // 페이지 이동
@@ -118,8 +114,122 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.DestinationBackground {
+.destination-background {
   min-height: 100vh;
   background-color: #f8f9fa;
+}
+
+.container {
+  max-width: 1650px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.title {
+  font-family: "EliceDigitalBaeum_Bold";
+  font-size: 40px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.search-container {
+  font-family: "Pretendard-Light";
+  position: relative;
+  max-width: 768px;
+  margin: 0 auto 3rem;
+}
+
+.search-input {
+  font-family: "Pretendard-Light";
+  width: 100%;
+  padding: 0.75rem 17px;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #6b7280;
+}
+
+.search-button {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.search-icon {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: #9ca3af;
+}
+
+.search-icon:hover {
+  color: #6b7280;
+}
+
+.destination-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 30px;
+}
+
+@media (min-width: 768px) {
+  .destination-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .destination-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.destination-item {
+  cursor: pointer;
+}
+
+.destination-image-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.destination-image {
+  width: 100%;
+  height: 16rem;
+  object-fit: cover;
+  transition: transform 0.3s ease-in-out;
+}
+
+.destination-item:hover .destination-image {
+  transform: scale(1.1);
+}
+
+.destination-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  padding: 1rem;
+}
+
+.destination-name-ko {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.destination-name-en {
+  color: rgba(255, 255, 255, 0.8);
 }
 </style>
