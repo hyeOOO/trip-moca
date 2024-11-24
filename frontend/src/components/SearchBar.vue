@@ -159,11 +159,12 @@ export default {
 
 .search-input {
   padding: 8px 40px 8px 16px;
-  background-color: rgba(255, 255, 255, 0.99);
+  background-color: rgba(255, 255, 255, 0.9);
   width: 200px;
   font-size: 14px;
   opacity: 0.5;
   transition: opacity 0.3s ease;
+  border-radius: 10px;
 }
 
 .search-input:focus {
@@ -184,6 +185,8 @@ export default {
   opacity: 1 !important; /* 완전 불투명하게 설정 */
   font-family: "Pretendard-Reegular";
   font-size: 12px;
+  border-radius: 10px;
+  overflow: hidden; 
 }
 
 .popular-header {

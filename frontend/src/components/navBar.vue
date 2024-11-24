@@ -19,11 +19,15 @@
           <!-- 로고 영역 -->
           <div class="logo-area">
             <router-link to="/main" class="logo" v-if="!isDarkRoute">
-              <img src="@/assets/image/HW&SW.png" alt="HW&SW Logo" class="hwsw-logo-image" />
+              <img
+                src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/logo-white-5.png"
+                alt="HW&SW Logo"
+                class="hwsw-logo-image"
+              />
             </router-link>
             <router-link to="/main" class="logo" v-else>
               <img
-                src="@/assets/image/HW&SW-dark.png"
+                src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/logo-black-6.png"
                 alt="HW&SW Logo"
                 class="hwsw-logo-image"
               />
@@ -35,8 +39,10 @@
               :key="i"
               :to="item.path"
               :class="{ 'dark-text': isDarkRoute }"
+              active-class="active"
             >
               {{ item.name }}
+              <span class="dot"></span>
             </router-link>
           </div>
 
@@ -57,22 +63,29 @@ export default {
   data() {
     return {
       menuItems: [
-        { name: "여행계획", path: "/travelPlan" },
-        { name: "경로검색", path: "/routeSearch" },
-        { name: "추천관광", path: "/recommendTour" },
-        { name: "인기여행", path: "/popularPlace" },
-        { name: "마이페이지", path: "/mypage", requiresAuth: true },
+        { name: "여행계획", path: "/travelPlan", subPaths: ["/chooseDate", "/choosePlace"], active: false },
+        { name: "경로검색", path: "/routeSearch", active: false },
+        { name: "추천관광", path: "/recommendTour", active: false },
+        { name: "인기여행", path: "/popularPlace", active: false },
+        {
+          name: "마이페이지",
+          path: "/mypage",
+          requiresAuth: true,
+          active: false,
+        },
       ],
       searchQuery: "",
     };
   },
   computed: {
+    // 흰색 테마로 하고 싶은 페이지들 밑에 경로 추가하면댐
     isDarkRoute() {
       return (
         !["/", "/main", "/popularPlace"].includes(this.$route.path) &&
         !this.$route.path.startsWith("/main/") &&
         !this.$route.path.startsWith("/season-plan/") &&
-        !this.$route.path.startsWith("/keyword-plan/")
+        !this.$route.path.startsWith("/keyword-plan/") &&
+        !this.$route.path.startsWith("/mypage")
       );
     },
   },
@@ -80,7 +93,22 @@ export default {
     navLogin,
     SearchBar,
   },
+  watch: {
+    $route(to) {
+      this.setActiveItemByRoute(to.path);
+    },
+  },
   methods: {
+    setActiveItem(index) {
+      this.menuItems.forEach((item, i) => {
+        item.active = i === index;
+      });
+    },
+    setActiveItemByRoute(path) {
+      this.menuItems.forEach((item) => {
+        item.active = path.startsWith(item.path) || (item.subPaths && item.subPaths.some(subPath => path.startsWith(subPath)));
+      });
+    },
     handleSearch() {
       if (this.searchQuery.trim()) {
         // 검색어를 쿼리 파라미터로 전달
@@ -93,6 +121,9 @@ export default {
       }
     },
   },
+  created() {
+    this.setActiveItemByRoute(this.$route.path);
+  },
 };
 </script>
 
@@ -103,16 +134,15 @@ export default {
 
 /* Top Navigation Styles */
 .nav-top {
-  height: 36px;
   color: var(--nav-text-color);
 }
 
 .info-top {
-  margin-left: 170px;
+  margin-left: 140px;
   grid-column: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .info-top-text {
@@ -120,7 +150,8 @@ export default {
   opacity: 1;
   z-index: 2;
   font-family: "Pretendard-Light";
-  font-size: 15px;
+  padding-right: 38px;
+  font-size: 14px;
 }
 
 .nav-dark .info-top-text {
@@ -133,19 +164,18 @@ export default {
 
 /* Division Line */
 .top-division-line {
-  border-top: 1.5px solid rgba(255, 255, 255, 1);
-  margin: 10px 0;
+  border-top: 0.1px solid #d9d9d9;
   position: relative;
   z-index: 2;
 }
 
 .top-division-line.dark-line {
-  border-top: 1.5px solid rgba(0, 0, 0, 1);
+  border-top: 0.1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* Bottom Navigation Styles */
 .nav-bottom {
-  padding: 25px;
+  padding: 28px;
   z-index: 2;
   position: relative;
   margin-top: 0;
@@ -161,16 +191,14 @@ export default {
 
 .nav-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 4fr 1fr;
   align-items: center;
-  max-width: 100%;
-  margin: -5px 50px;
   padding: 0;
 }
 
 /* Logo Styles */
 .logo-area {
-  justify-self: center;
+  margin-left: 144px;
 }
 
 .logo {
@@ -180,8 +208,8 @@ export default {
 }
 
 .hwsw-logo-image {
-  height: 40px;
-  width: 100px;
+  height: 35px;
+  width: 100%;
   object-fit: contain;
   transition: transform 0.2s ease;
 }
@@ -196,8 +224,8 @@ export default {
   display: flex;
   gap: 80px;
   z-index: 2;
-  font-family: "EliceDigitalBaeum_BOLD";
-  font-size: 18px;
+  font-family: "EliceDigitalBaeum_regular";
+  font-size: 16px;
   font-weight: 300;
   padding: 15px;
   color: var(--nav-text-color);
@@ -229,13 +257,45 @@ export default {
 .nav-dark .menu a:hover {
   color: #ecb27b;
 }
+.nav-theme .menu a.active {
+  color: #ecb27b;
+}
 
+.nav-dark .menu a.active {
+  color: #ecb27b;
+}
+
+.menu a {
+  position: relative;
+}
+
+.menu a .dot {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  background-color: transparent;
+  border-radius: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.nav-theme .menu a.active .dot {
+  background-color: #ecb27b;
+}
+
+.nav-dark .menu a.active .dot {
+  background-color: #ecb27b;
+}
 /* Search Bar Styles */
 .search-area {
   justify-self: center;
+  margin-right: 120px;
 }
 
 .search-bar {
+  margin-right: 113px;
   position: relative;
   opacity: 0.5;
 }
@@ -244,7 +304,6 @@ export default {
   border: 1px solid black;
   padding: 8px 40px 8px 16px;
   border-radius: 20px;
-  background-color: rgba(255, 255, 255, 0.99);
   width: 200px;
   font-size: 14px;
 }

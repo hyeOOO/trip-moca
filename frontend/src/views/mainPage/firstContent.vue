@@ -1,20 +1,4 @@
 <template>
-  <!-- 배경으로 사용할 갤러리 컨테이너 -->
-  <div class="background-container">
-    <div class="Container">
-      <div
-        v-for="(picture, index) in pictures"
-        :key="index"
-        class="Picture"
-        :style="picture.style"
-        @mousedown="startDrag($event, index)"
-        @touchstart="startDrag($event, index)"
-      >
-        <img class="Picture-img" :src="picture.src" :alt="picture.alt" />
-      </div>
-    </div>
-  </div>
-
   <!-- 메인 컨텐츠 -->
   <div class="main-container">
     <!-- 이미지 로더 -->
@@ -78,120 +62,9 @@ const images = [
   "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/sunrise-6090933_1280.jpg",
 ];
 
-const pictures = ref([
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/aPalaceOnTheWater.jpg",
-    note: "Over the clouds",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/bundo-kim-hipcPLJE4uk-unsplash.jpg",
-    note: "Golden Gate Bridge",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/clark-gu-5fa8Z9NXLqI-unsplash.jpg",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/damyang-3381419_1280.jpg",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/damyang-3396598_1280.jpg",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/eveningPalace.jpg",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gangneung-7111058_1280.jpg",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gangneung.png",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gwanganBridge.jpg",
-    style: {},
-  },
-]);
-
-const calculatePositions = (() => {
-  const cache = new Map();
-
-  return (index, screenWidth, screenHeight, columns, rows) => {
-    const cacheKey = `${index}-${screenWidth}-${screenHeight}`;
-    if (cache.has(cacheKey)) return cache.get(cacheKey);
-
-    const col = index % columns;
-    const row = Math.floor(index / columns) % rows;
-    const baseX = (screenWidth / columns) * (col + 0.5);
-    const baseY = (screenHeight / rows) * (row + 0.5);
-    const offsetX = (Math.random() - 0.5) * ((screenWidth / columns) * 0.5);
-    const offsetY = (Math.random() - 0.5) * ((screenHeight / rows) * 0.5);
-
-    const result = {
-      x: baseX + offsetX,
-      y: baseY + offsetY,
-    };
-
-    cache.set(cacheKey, result);
-    return result;
-  };
-})();
-
-function debounce(fn, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn.apply(this, args), delay);
-  };
-}
-
 onMounted(() => {
-  // 모든 이미지 프리로드
-  [...images, ...pictures.value.map((p) => p.src)].forEach(preloadImage);
-
-  const updatePositions = () => {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const columns = 3;
-    const rows = 3;
-
-    pictures.value.forEach((picture, index) => {
-      const { x, y } = calculatePositions(
-        index,
-        screenWidth,
-        screenHeight,
-        columns,
-        rows
-      );
-      const randomRotate = Math.random() * 30 - 15;
-
-      picture.style = {
-        top: `${y}px`,
-        left: `${x}px`,
-        transform: `translate(-50%, -50%) rotate(${randomRotate}deg)`,
-        zIndex: Math.floor(Math.random() * 10),
-        opacity: "0.8",
-      };
-    });
-  };
-
-  // 초기 위치 설정
-  updatePositions();
-
-  // 리사이즈 핸들러
-  const handleResize = debounce(updatePositions, 150);
-  window.addEventListener("resize", handleResize);
-
-  // 컴포넌트 언마운트 시 이벤트 리스너 제거
-  onUnmounted(() => {
-    window.removeEventListener("resize", handleResize);
-  });
+  // 이미지 프리로드
+  images.forEach(preloadImage);
 });
 </script>
 
@@ -209,14 +82,6 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
   url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/sunrise-6090933_1280.jpg");
 
 // 믹스인
-@mixin fixed-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-}
-
 @mixin page-dimensions {
   width: 420px;
   height: 450px;
@@ -235,14 +100,6 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
   box-sizing: border-box;
 }
 
-// 레이아웃 컴포넌트
-.background-container {
-  @include fixed-fullscreen;
-  z-index: -1;
-  pointer-events: none;
-  overflow: hidden;
-}
-
 .main-container {
   position: relative;
   z-index: 1;
@@ -252,7 +109,7 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
   position: relative;
   width: 840px;
   height: 630px;
-  margin: 0 auto; // 가운데 정렬을 위해 추가
+  margin: 0 auto;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
@@ -415,32 +272,6 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
         animation: nextFlip#{$i} $speed * 5 $speed * -4 infinite steps(1);
       }
     }
-  }
-}
-
-// 갤러리 스타일
-.Container {
-  @include fixed-fullscreen;
-}
-
-.Picture {
-  position: fixed;
-  border: 5px solid #fff;
-  border-radius: 3px;
-  background: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  transform: translate(-50%, -50%);
-  user-select: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  opacity: 0.8;
-
-  &-img {
-    display: block;
-    width: 350px; // 250px에서 350px로 수정
-    height: 350px; // 250px에서 350px로 수정
-    pointer-events: none;
-    object-fit: cover;
   }
 }
 

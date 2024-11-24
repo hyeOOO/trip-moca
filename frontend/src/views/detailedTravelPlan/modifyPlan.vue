@@ -956,6 +956,6 @@ onBeforeUnmount(() => {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #c3a386;
+  background: #6e6156;
 }
 </style>

@@ -100,7 +100,7 @@ const cards = [
   align-items: center;
   justify-content: center;
   position: relative;
-  padding-top: 30vh;
+  padding-top: 57vh;
 }
 
 body {

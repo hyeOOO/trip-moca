@@ -629,7 +629,7 @@ input {
 }
 
 .forgot-pass {
-  margin-top: 15px;
+  margin-top: 120px;
   text-align: center;
   font-size: 12px;
   color: #cfcfcf;
