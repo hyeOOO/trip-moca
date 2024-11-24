@@ -11,4 +11,5 @@ import java.util.List;
 @Repository
 public interface AttractionListRepository extends JpaRepository<AttractionList, Long> {
     List<AttractionList> findByOverviewIsNullOrHomepageIsNull();
+    boolean existsByAreaCodeAndSiGunGuCode(Long area_code, Long si_gun_gu_code);
 }
