@@ -1,8 +1,8 @@
-<!-- src/components/LoginModal.vue -->
 <template>
   <div class="modal-wrap" v-show="modelValue" @click.self="closeModal">
     <div class="modal-container" :class="{ 's--signup': isSignUp }" @click.stop="">
-      <div class="form sign-in">
+      <!-- 로그인 폼 -->
+      <div class="form sign-in" v-show="!isForgotPassword">
         <h2>트립 모카와 함께 출발하기,</h2>
         <label>
           <span>ID</span>
@@ -14,12 +14,34 @@
           <input type="password" v-model="loginForm.password" @input="validateLoginPassword" />
           <p class="error-message" v-if="loginErrors.password">{{ loginErrors.password }}</p>
         </label>
-        <p class="forgot-pass">비밀번호를 잊어버리셨나요?</p>
+        <p class="forgot-pass" @click="showForgotPassword">비밀번호를 잊어버리셨나요?</p>
         <button type="button" class="modal-btn submit" @click="handleLogin" :disabled="!isLoginFormValid">
           로그인
         </button>
         <button type="button" class="modal-btn close" @click="closeModal">닫기</button>
       </div>
+
+      <!-- 비밀번호 찾기 폼 -->
+      <div class="form forgot-password" v-show="isForgotPassword">
+        <h2>비밀번호 찾기</h2>
+        <p class="subtitle">가입 시 등록한 정보를 입력해주세요.</p>
+        <label>
+          <span>ID</span>
+          <input type="text" v-model="resetForm.id" @input="validateResetId" />
+          <p class="error-message" v-if="resetErrors.id">{{ resetErrors.id }}</p>
+        </label>
+        <label>
+          <span>Email</span>
+          <input type="email" v-model="resetForm.email" @input="validateResetEmail" />
+          <p class="error-message" v-if="resetErrors.email">{{ resetErrors.email }}</p>
+        </label>
+        <button type="button" class="modal-btn submit" @click="handlePasswordReset" :disabled="!isResetFormValid">
+          임시 비밀번호 발급
+        </button>
+        <button type="button" class="modal-btn close" @click="backToLogin">로그인으로 돌아가기</button>
+      </div>
+
+      <!-- 회원가입 섹션 -->
       <div class="sub-cont">
         <div class="img">
           <div class="img__text m--up">
@@ -94,6 +116,15 @@ export default {
   },
   data() {
     return {
+      isForgotPassword: false, // 비밀번호 찾기 모드
+      resetForm: {
+        id: "",
+        email: "",
+      },
+      resetErrors: {
+        id: "",
+        email: "",
+      },
       isSignUp: false,
       loginForm: {
         id: "",
@@ -118,6 +149,14 @@ export default {
     };
   },
   computed: {
+    isResetFormValid() {
+      return (
+        !this.resetErrors.id &&
+        !this.resetErrors.email &&
+        this.resetForm.id &&
+        this.resetForm.email
+      );
+    },
     isLoginFormValid() {
       return (
         !this.loginErrors.id &&
@@ -150,8 +189,78 @@ export default {
     },
   },
   methods: {
+    showForgotPassword() {
+      this.isForgotPassword = true;
+      this.isSignUp = false;
+    },
+
+    backToLogin() {
+      this.isForgotPassword = false;
+      this.resetForm = {
+        id: "",
+        email: "",
+      };
+      this.resetErrors = {
+        id: "",
+        email: "",
+      };
+    },
+
+    validateResetId() {
+      const idRegex = /^[a-zA-Z0-9]{4,20}$/;
+      if (!this.resetForm.id) {
+        this.resetErrors.id = "아이디를 입력해주세요.";
+      } else if (!idRegex.test(this.resetForm.id)) {
+        this.resetErrors.id = "아이디는 영문과 숫자로 4~20자 사이로 입력해주세요.";
+      } else {
+        this.resetErrors.id = "";
+      }
+    },
+
+    validateResetEmail() {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!this.resetForm.email) {
+        this.resetErrors.email = "이메일을 입력해주세요.";
+      } else if (!emailRegex.test(this.resetForm.email)) {
+        this.resetErrors.email = "올바른 이메일 형식이 아닙니다.";
+      } else {
+        this.resetErrors.email = "";
+      }
+    },
+
+    async handlePasswordReset() {
+      if (!this.isResetFormValid) return;
+
+      try {
+        const response = await api.post("/domain/member/reset-password", {
+          memberId: this.resetForm.id,
+          email: this.resetForm.email,
+        });
+
+        alert("임시 비밀번호가 이메일로 발송되었습니다.");
+        this.backToLogin();
+      } catch (error) {
+        if (error.response?.status === 404) {
+          alert("존재하지 않는 사용자입니다.");
+        } else {
+          alert("비밀번호 재설정 중 오류가 발생했습니다.");
+        }
+        console.error("Password reset error:", error);
+      }
+    },
     toggleForm() {
       this.isSignUp = !this.isSignUp;
+      // 비밀번호 찾기 모드 해제
+      this.isForgotPassword = false;
+      // 비밀번호 찾기 폼 초기화
+      this.resetForm = {
+        id: "",
+        email: "",
+      };
+      this.resetErrors = {
+        id: "",
+        email: "",
+      };
     },
     validateLoginId() {
       const idRegex = /^[a-zA-Z0-9]{4,20}$/;
@@ -219,25 +328,15 @@ export default {
     },
     resetForms() {
       this.isSignUp = false;
-      this.loginForm = {
+      this.isForgotPassword = false;
+      // 기존 폼 초기화 코드 유지
+      this.resetForm = {
         id: "",
-        password: "",
-      };
-      this.signupForm = {
-        id: "",
-        password: "",
         email: "",
-        name: "",
       };
-      this.loginErrors = {
+      this.resetErrors = {
         id: "",
-        password: "",
-      };
-      this.signupErrors = {
-        id: "",
-        password: "",
         email: "",
-        name: "",
       };
     },
     async handleLogin() {
@@ -477,6 +576,32 @@ body.modal-open {
   color: #000;
 }
 
+/* subtitle 스타일 추가 */
+.subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  margin: 10px 0 30px;
+  /* 여백 조정 */
+  font-family: "Pretendard-Regular";
+}
+
+.forgot-password {
+  position: relative;
+  /* absolute에서 relative로 변경 */
+  width: 640px;
+  /* 로그인 폼과 동일한 너비 */
+  height: 100%;
+  transition: transform 1.2s ease-in-out;
+  padding: 50px 30px 0;
+  background: white;
+}
+
+.form.forgot-password h2 {
+  margin-bottom: 10px;
+  /* 제목 아래 여백 추가 */
+}
+
 .img {
   overflow: hidden;
   z-index: 10;
@@ -640,6 +765,18 @@ input {
 
 .sign-in {
   transition-timing-function: ease-out;
+}
+
+.forgot-pass {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 12px;
+  color: #cfcfcf;
+  cursor: pointer;
+}
+
+.forgot-pass:hover {
+  text-decoration: underline;
 }
 
 .modal-container.s--signup .sign-in {
