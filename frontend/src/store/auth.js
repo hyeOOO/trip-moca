@@ -5,15 +5,34 @@ import { jwtDecode } from 'jwt-decode';
 
 export const useAuthStore = defineStore('auth', {
   // 인증 관련 상태 관리
-  state: () => ({
-    // localStorage에서 토큰을 가져오거나 없으면 null
-    accessToken: localStorage.getItem('accessToken') || null,
-    // 로그인 상태
-    isAuthenticated: false,
-    memberId: null,
-    // 로그인 필요한 작업을 저장할 상태 추가
-    pendingAction: null,
-  }),
+  state: () => {
+    // 초기 상태를 localStorage에서 복원
+    const accessToken = localStorage.getItem('accessToken');
+    let isAuthenticated = false;
+    let memberId = null;
+
+    // 저장된 토큰이 있다면 디코딩하여 상태 복원
+    if (accessToken) {
+      try {
+        const decoded = jwtDecode(accessToken);
+        memberId = decoded.sub;
+        isAuthenticated = true;
+        // API 인스턴스의 헤더도 복원
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      } catch (error) {
+        // 토큰이 유효하지 않은 경우 localStorage 정리
+        localStorage.removeItem('accessToken');
+        accessToken = null;
+      }
+    }
+
+    return {
+      accessToken,
+      isAuthenticated,
+      memberId,
+      pendingAction: null,
+    };
+  },
 
   actions: {
     // 보류 중인 작업 설정
