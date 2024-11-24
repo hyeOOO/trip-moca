@@ -38,42 +38,22 @@
           <div class="plan-form">
             <div class="form-group">
               <label for="planTitle">여행 제목</label>
-              <input
-                type="text"
-                id="planTitle"
-                v-model="planTitle"
-                :placeholder="defaultTitle"
-                class="plan-title-input"
-              />
+              <input type="text" id="planTitle" v-model="planTitle" :placeholder="defaultTitle"
+                class="plan-title-input" />
             </div>
 
-            <!-- 대표 이미지 업로드 섹션 추가 -->
+            <!-- 대표 이미지 업로드 섹션 -->
             <div class="form-group">
               <label for="planProfileImg">나만의 여행지 사진</label>
               <div class="image-upload-container">
-                <div
-                  class="image-preview"
-                  :class="{ 'has-image': previewUrl }"
-                  @click="triggerFileInput"
-                >
-                  <img
-                    v-if="previewUrl"
-                    :src="previewUrl"
-                    alt="여행 대표 이미지"
-                    class="preview-image"
-                  />
+                <div class="image-preview" :class="{ 'has-image': previewUrl }" @click="triggerFileInput">
+                  <img v-if="previewUrl" :src="previewUrl" alt="여행 대표 이미지" class="preview-image" />
                   <div v-else class="upload-placeholder">
                     <i class="fa-solid fa-camera"></i>
                     <p>클릭하여 이미지 업로드</p>
                   </div>
                 </div>
-                <input
-                  type="file"
-                  ref="fileInput"
-                  @change="handleImageUpload"
-                  accept="image/*"
-                  class="hidden-input"
-                />
+                <input type="file" ref="fileInput" @change="handleImageUpload" accept="image/*" class="hidden-input" />
               </div>
             </div>
 
@@ -103,14 +83,8 @@
 
       <!-- Map Section -->
       <div class="map-container">
-        <Tmap
-          ref="tmap"
-          :latitude="latitude"
-          :longitude="longitude"
-          :selected-places-by-day="selectedPlaces"
-          :selected-day="selectedDay"
-          :show-all-days="true"
-        />
+        <Tmap ref="tmap" :latitude="latitude" :longitude="longitude" :selected-places-by-day="selectedPlaces"
+          :selected-day="selectedDay" :show-all-days="true" />
       </div>
     </div>
   </div>
@@ -149,8 +123,8 @@ export default {
   data() {
     return {
       planTitle: "",
-      selectedFile: null, // 실제 파일 객체도 저장
-      previewUrl: null, // 미리보기용 URL
+      selectedFile: null,
+      previewUrl: null,
       selectedPlaces: {},
       isStep3Active: true,
       isCollapsed: false,
@@ -171,6 +145,57 @@ export default {
     }
   },
   methods: {
+    triggerFileInput() {
+      this.$refs.fileInput.click();
+    },
+
+    async handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        // 파일 크기 체크 (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error("이미지 크기는 5MB를 초과할 수 없습니다.");
+        }
+
+        // 파일 타입 체크
+        if (!file.type.startsWith("image/")) {
+          throw new Error("이미지 파일만 업로드할 수 있습니다.");
+        }
+
+        // 기존 URL 정리
+        if (this.previewUrl) {
+          URL.revokeObjectURL(this.previewUrl);
+        }
+
+        // 새 파일 설정
+        this.selectedFile = file;
+        this.previewUrl = URL.createObjectURL(file);
+      } catch (error) {
+        console.error("Image selection failed:", error);
+        alert(error.message || "이미지 선택에 실패했습니다.");
+
+        // 에러 발생 시 파일 입력 초기화
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = "";
+        }
+        this.selectedFile = null;
+        this.previewUrl = null;
+      }
+    },
+
+    removeImage() {
+      if (this.previewUrl) {
+        URL.revokeObjectURL(this.previewUrl);
+      }
+      this.selectedFile = null;
+      this.previewUrl = null;
+      if (this.$refs.fileInput) {
+        this.$refs.fileInput.value = "";
+      }
+    },
+
     toggleStep3() {
       this.isStep3Active = !this.isStep3Active;
       if (!this.isStep3Active) {
@@ -182,6 +207,7 @@ export default {
         this.updateMapSize();
       }, 300);
     },
+
     toggleCollapse() {
       this.isCollapsed = !this.isCollapsed;
       setTimeout(() => {
@@ -190,6 +216,7 @@ export default {
         }
       }, 300);
     },
+
     updateMapSize() {
       if (this.$refs.tmap) {
         this.$refs.tmap.getMap().resize();
@@ -197,6 +224,7 @@ export default {
         this.$refs.tmap.getMap().setCenter(center);
       }
     },
+
     goToDateSelection() {
       this.$router.push({
         name: "chooseDate",
@@ -210,6 +238,7 @@ export default {
         },
       });
     },
+
     checkDateAndNavigate() {
       this.$router.push({
         name: "choosePlace",
@@ -223,106 +252,27 @@ export default {
         },
       });
     },
+
     formatDate(date) {
       if (!date) return "";
       const days = ["일", "월", "화", "수", "목", "금", "토"];
       return `(${days[date.getDay()]})`;
     },
+
     getTripDate(dayIndex) {
       if (!this.localStartDate) return null;
       const date = new Date(this.localStartDate);
       date.setDate(date.getDate() + dayIndex);
       return date;
     },
-    // 관광지 테이블 내 img가 없으면 이미지 없음 img 출력
+
     getImageUrl(imageUrl) {
-      return (
-        imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
-      );
-    },
-    getDefaultProfileImage() {
-      // 지역별 기본 이미지 매핑
-      const defaultImages = {
-        제주도:
-          "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/jeju-island-sunset.jpg",
-        부산: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/busan-night-view.jpg",
-        강원도:
-          "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/seorak-mountain-autumn.jpg",
-      };
-      return (
-        defaultImages[this.name] ||
-        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
-      );
-    },
-    getAreaCode() {
-      // 지역 코드 매핑
-      const areaMapping = {
-        제주도: 39,
-        부산: 6,
-        강원도: 32,
-        서울: 1,
-        인천: 2,
-        대전: 3,
-        대구: 4,
-        광주: 5,
-        울산: 7,
-        경기도: 31,
-        충청북도: 33,
-        충청남도: 34,
-        경상북도: 35,
-        경상남도: 36,
-        전라북도: 37,
-        전라남도: 38,
-      };
-      return areaMapping[this.name] || 1;
-    },
-    triggerFileInput() {
-      this.$refs.fileInput.click();
-    },
-
-    async handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      try {
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error("이미지 크기는 5MB를 초과할 수 없습니다.");
-        }
-
-        if (!file.type.startsWith("image/")) {
-          throw new Error("이미지 파일만 업로드할 수 있습니다.");
-        }
-
-        // 파일 객체 저장
-        this.selectedFile = file;
-
-        // 미리보기 URL 생성
-        if (this.previewUrl) {
-          URL.revokeObjectURL(this.previewUrl);
-        }
-        this.previewUrl = URL.createObjectURL(file);
-      } catch (error) {
-        console.error("Image selection failed:", error);
-        alert(error.message || "이미지 선택에 실패했습니다.");
-      }
-    },
-
-    removeImage() {
-      if (this.previewUrl) {
-        URL.revokeObjectURL(this.previewUrl);
-      }
-      this.selectedFile = null;
-      this.previewUrl = null;
-
-      // 파일 input 초기화
-      if (this.$refs.fileInput) {
-        this.$refs.fileInput.value = "";
-      }
+      return imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
     },
 
     async savePlan() {
       try {
-        if (!this.planTitle) {
+        if (!this.planTitle && !this.defaultTitle) {
           throw new Error("여행 제목을 입력해주세요.");
         }
 
@@ -332,17 +282,13 @@ export default {
 
         // 로그인 상태 체크
         if (!this.authStore.isAuthenticated) {
-          // EventBus를 통해 로그인 모달 표시
           showLoginModalFlag.value = true;
 
-          // 로그인 상태 변경 감시
           const unwatch = this.$watch(
             () => this.authStore.isAuthenticated,
             async (newValue) => {
               if (newValue) {
-                // 로그인 되면 watcher 제거
                 unwatch();
-                // 여행 계획 저장 로직 실행
                 await this.executeSavePlan();
               }
             }
@@ -353,7 +299,7 @@ export default {
         await this.executeSavePlan();
       } catch (error) {
         console.error("Error saving plan:", error);
-        alert(error.response?.data?.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+        alert(error.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
       }
     },
 
@@ -361,7 +307,6 @@ export default {
       try {
         const formData = new FormData();
 
-        // 계획 데이터 JSON 추가
         const planData = {
           planTitle: this.planTitle || this.defaultTitle,
           areaCode: this.planStore.selectedDestination.areaCode,
@@ -379,7 +324,6 @@ export default {
 
         formData.append("plan", new Blob([JSON.stringify(planData)], { type: "application/json" }));
 
-        // 이미지 파일이 있으면 추가
         if (this.selectedFile) {
           formData.append("image", this.selectedFile);
         }
@@ -518,6 +462,55 @@ export default {
   border-radius: 8px;
   font-size: 16px;
   width: 100%;
+}
+
+/* Image Upload Styles */
+.image-upload-container {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.image-preview {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.image-preview:hover {
+  border-color: #ecb27b;
+}
+
+.image-preview.has-image {
+  border: none;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.upload-placeholder {
+  text-align: center;
+  color: #666;
+}
+
+.upload-placeholder i {
+  font-size: 48px;
+  margin-bottom: 8px;
+  color: #ddd;
+}
+
+.hidden-input {
+  display: none;
 }
 
 /* Day Section Styles */
@@ -688,32 +681,29 @@ export default {
   background: #555;
 }
 
-.image-upload-container {
-  position: relative;
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto;
-}
-
-.remove-image-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #ff4444;
-  color: white;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Save Button Hover Effect */
+.save-button:hover {
+  background: #6e6156;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
 
-.remove-image-btn:hover {
-  background: #ff0000;
-  transform: scale(1.1);
+.save-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Font Styles */
+.place-info h3,
+h4 {
+  font-family: "Pretendard-Bold";
+  font-size: 1.125rem;
+}
+
+.place-info p {
+  color: #b4b4b4;
+  font-size: 14px;
+  font-family: 'Pretendard-Regular';
 }
 </style>

@@ -15,7 +15,7 @@ export const setRouterGetter = (routerFn) => {
 // axios 인스턴스 생성
 const api = axios.create({
   baseURL: 'http://localhost:8081',
-  timeout: 60000,
+  timeout: 180000, // 3분으로 설정
 });
 
 // 요청 인터셉터 설정

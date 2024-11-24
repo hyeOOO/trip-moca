@@ -175,7 +175,7 @@ export default {
       error: null,
       currentPage: 0,
       totalPages: 0,
-      pageSize: 15,
+      pageSize: 50,
       isLastPage: false,
       isFetching: false,
       localSelectedPlaces: {},
@@ -183,6 +183,8 @@ export default {
       draggedDay: null,
       draggedIndex: null,
       isSelectedPlaceDrag: false,
+      scrollTimeout: null,
+      middleSectionRef: null,
     };
   },
   computed: {
@@ -233,13 +235,16 @@ export default {
   },
   methods: {
     async fetchAttractions(page = 0, searchQuery = "") {
-      if (!this.areaCode || this.isFetching) {
+      // 이미 데이터를 가져오는 중이거나 마지막 페이지인 경우 중단
+      if (!this.areaCode || this.isFetching || (page > 0 && this.isLastPage)) {
         return;
       }
 
       this.isFetching = true;
-      this.error = null;
-      this.isLoading = true;
+      if (page === 0) {
+        this.isLoading = true;
+        this.error = null;
+      }
 
       try {
         const response = await api.get(`/domain/attraction/search`, {
@@ -252,18 +257,22 @@ export default {
           },
         });
 
+        // 검색어가 변경되었거나 첫 페이지인 경우 데이터 초기화
         if (page === 0) {
           this.places = response.data.content;
         } else {
-          this.places = [...this.places, ...response.data.content];
+          // 중복 데이터 방지를 위한 체크
+          const newPlaces = response.data.content.filter(
+            newPlace => !this.places.some(
+              existingPlace => existingPlace.attractionId === newPlace.attractionId
+            )
+          );
+          this.places = [...this.places, ...newPlaces];
         }
 
         this.currentPage = response.data.number;
         this.totalPages = response.data.totalPages;
         this.isLastPage = response.data.last;
-
-        const currentSelectedPlaces = { ...this.selectedPlacesByDay };
-        this.selectedPlacesByDay = currentSelectedPlaces;
       } catch (error) {
         console.error("관광지 데이터 조회 실패:", error);
         this.error = "관광지 정보를 불러오는데 실패했습니다.";
@@ -302,15 +311,25 @@ export default {
       this.selectedPlacesByDay = restoredPlaces;
     },
 
-    async handleScroll({ target }) {
-      const { scrollTop, clientHeight, scrollHeight } = target;
-      if (
-        !this.isLastPage &&
-        !this.isFetching &&
-        scrollTop + clientHeight >= scrollHeight - 100
-      ) {
-        await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
+    handleScroll(event) {
+      // 스크롤 디바운스 처리
+      if (this.scrollTimeout) {
+        clearTimeout(this.scrollTimeout);
       }
+
+      this.scrollTimeout = setTimeout(async () => {
+        const target = event.target;
+        const { scrollTop, clientHeight, scrollHeight } = target;
+
+        // 스크롤이 바닥에 가까워졌을 때 다음 페이지 로드
+        if (
+          !this.isLastPage &&
+          !this.isFetching &&
+          scrollTop + clientHeight >= scrollHeight - 100
+        ) {
+          await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
+        }
+      }, 200); // 200ms 디바운스
     },
 
     getContentTypeColor(contentType) {
@@ -324,7 +343,7 @@ export default {
         38: '#ecb27b',
         39: '#6E6156'
       };
-      return colorMap[contentType] || '#ecb27b';  // 기본값으로 #ecb27b 반환
+      return colorMap[contentType] || '#ecb27b';
     },
 
     // Drag and Drop methods
@@ -550,13 +569,10 @@ export default {
     },
 
     async handleSearch() {
-      if (!this.searchQuery.trim()) {
-        await this.fetchAttractions(0);
-        return;
-      }
-
-      this.isLoading = true;
+      // 검색 시 상태 초기화
       this.currentPage = 0;
+      this.isLastPage = false;
+      this.places = [];
       await this.fetchAttractions(0, this.searchQuery.trim());
     },
 
@@ -572,26 +588,38 @@ export default {
     },
   },
 
-  async mounted() {
-    await this.fetchAttractions();
-    const middleSection = this.$el.querySelector(".middle-section");
-    if (middleSection) {
-      middleSection.addEventListener("scroll", this.handleScroll);
+  mounted() {
+    // 컴포넌트 마운트 시 초기 데이터 로드 및 스크롤 이벤트 리스너 설정
+    this.fetchAttractions();
+    this.middleSectionRef = this.$el.querySelector(".middle-section");
+    if (this.middleSectionRef) {
+      this.middleSectionRef.addEventListener("scroll", this.handleScroll);
+    }
+  },
+
+  beforeUnmount() {
+    // 컴포넌트 언마운트 시 이벤트 리스너 및 타이머 정리
+    if (this.middleSectionRef) {
+      this.middleSectionRef.removeEventListener("scroll", this.handleScroll);
+    }
+    if (this.scrollTimeout) {
+      clearTimeout(this.scrollTimeout);
     }
   },
 
   watch: {
+    // areaCode가 변경될 때 데이터 초기화 및 새로운 데이터 로드
     areaCode: {
-      handler: "fetchAttractions",
+      handler(newVal) {
+        if (newVal) {
+          this.currentPage = 0;
+          this.isLastPage = false;
+          this.places = [];
+          this.fetchAttractions();
+        }
+      },
       immediate: true,
     },
-  },
-
-  beforeUnmount() {
-    const middleSection = this.$el.querySelector(".middle-section");
-    if (middleSection) {
-      middleSection.removeEventListener("scroll", this.handleScroll);
-    }
   },
 };
 </script>
@@ -649,7 +677,42 @@ export default {
   transition: all 0.3s ease;
 }
 
-/* 섹션 접힘 상태 스타일 */
+
+/* 중간 섹션 레이아웃 */
+.middle-section {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.right-section .header {
+  flex-shrink: 0;
+}
+
+.selected-places {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.right-section .save-button {
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+
+.middle-section .header,
+.middle-section .search-section {
+  flex-shrink: 0;
+}
+
+.places-list {
+  flex-grow: 1;
+}
 .content-wrapper.collapsed .middle-section,
 .content-wrapper.right-collapsed .right-section {
   width: 0;
@@ -981,8 +1044,7 @@ export default {
   min-height: 0;
 }
 
-
-/* 기존 스타일 유지하고 selected-place에 대한 스타일 추가 */
+/* selected-place 스타일 */
 .selected-place {
   position: relative;
   display: flex;
@@ -1061,15 +1123,6 @@ export default {
   font-size: 14px;
   color: #666;
 }
-
-/* 빈 일정 상태 스타일 */
-.empty-day {
-  text-align: center;
-  padding: 44px;
-  border-radius: 8px;
-}
-
-
 .tag {
   font-family: 'Pretendard-SemiBold';
   font-size: 12px;

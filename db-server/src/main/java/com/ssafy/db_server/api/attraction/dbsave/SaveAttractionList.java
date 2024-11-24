@@ -4,6 +4,7 @@ import com.ssafy.db_server.api.attraction.entity.AttractionList;
 import com.ssafy.db_server.api.attraction.repository.AttractionListRepository;
 import com.ssafy.db_server.api.config.OpenApiSecretInfo;
 import jakarta.annotation.PostConstruct;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
@@ -19,7 +20,9 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -44,7 +47,6 @@ public class SaveAttractionList {
         try {
             fetchAndSaveBasicData(attractions);
             log.info("Successfully completed basic attraction data save");
-            // 기본 데이터 저장 완료 후 비동기로 상세 정보 업데이트 시작
             updateDetailsAsync();
             log.info("Started async detail update process");
         } catch (Exception e) {
@@ -62,9 +64,18 @@ public class SaveAttractionList {
     private void fetchAndSaveBasicData(List<AttractionList> attractions) {
         long idCounter = 1;
         int totalProcessed = 0;
+        int totalSaved = 0;
         Instant batchStartTime = Instant.now();
 
+        Map<Integer, Integer> contentTypeCount = new HashMap<>();
+        Map<Integer, Integer> savedContentTypeCount = new HashMap<>();
         for (int contentTypeId : CONTENT_TYPE_IDS) {
+            contentTypeCount.put(contentTypeId, 0);
+            savedContentTypeCount.put(contentTypeId, 0);
+        }
+
+        for (int contentTypeId : CONTENT_TYPE_IDS) {
+            log.info("Starting to fetch data for contentTypeId: {}", contentTypeId);
             for (int areaCode : AREA_CODES) {
                 try {
                     log.info("Fetching data for contentTypeId: {} and areaCode: {}", contentTypeId, areaCode);
@@ -77,21 +88,39 @@ public class SaveAttractionList {
                     }
 
                     List<AttractionList> areaAttractions = parseAttractionData(responseDataBody, idCounter);
+                    contentTypeCount.put(contentTypeId, contentTypeCount.get(contentTypeId) + areaAttractions.size());
+                    totalProcessed += areaAttractions.size();
 
                     if (!areaAttractions.isEmpty()) {
-                        attractions.addAll(areaAttractions);
-                        idCounter += areaAttractions.size();
-                        totalProcessed += areaAttractions.size();
-
-                        if (attractions.size() >= BATCH_SIZE) {
-                            saveBatch(attractions);
+                        List<AttractionList> validAttractions = new ArrayList<>();
+                        for (AttractionList attraction : areaAttractions) {
+                            if (isValidAttraction(attraction)) {
+                                validAttractions.add(attraction);
+                            }
                         }
+
+                        if (!validAttractions.isEmpty()) {
+                            attractions.addAll(validAttractions);
+                            idCounter += validAttractions.size();
+                            savedContentTypeCount.put(contentTypeId,
+                                    savedContentTypeCount.get(contentTypeId) + validAttractions.size());
+                            totalSaved += validAttractions.size();
+
+                            if (attractions.size() >= BATCH_SIZE) {
+                                saveBatch(attractions);
+                            }
+                        }
+                    } else {
+                        log.warn("No attractions found for contentTypeId: {} and areaCode: {}",
+                                contentTypeId, areaCode);
                     }
 
                     Instant areaEndTime = Instant.now();
                     Duration areaDuration = Duration.between(areaStartTime, areaEndTime);
-                    log.info("Processed areaCode: {} and contentTypeId: {} in {} seconds, attractions found: {}",
-                            areaCode, contentTypeId, areaDuration.toSeconds(), areaAttractions.size());
+                    log.info("Processed areaCode: {} and contentTypeId: {} in {} seconds, " +
+                                    "attractions found: {}, valid attractions: {}",
+                            areaCode, contentTypeId, areaDuration.toSeconds(),
+                            areaAttractions.size(), attractions.size());
 
                     Thread.sleep(100);
                 } catch (Exception e) {
@@ -100,17 +129,29 @@ public class SaveAttractionList {
                     continue;
                 }
             }
+
+            log.info("Completed processing contentTypeId: {}. Total found: {}, Total saved: {}",
+                    contentTypeId, contentTypeCount.get(contentTypeId),
+                    savedContentTypeCount.get(contentTypeId));
         }
 
-        // 남은 데이터 처리
         if (!attractions.isEmpty()) {
             saveBatch(attractions);
         }
 
+        log.info("Final statistics:");
+        log.info("Total attractions found: {}", totalProcessed);
+        log.info("Total attractions saved: {}", totalSaved);
+        log.info("Content type statistics:");
+        for (int contentTypeId : CONTENT_TYPE_IDS) {
+            log.info("ContentTypeId: {}, Found: {}, Saved: {}", contentTypeId,
+                    contentTypeCount.get(contentTypeId),
+                    savedContentTypeCount.get(contentTypeId));
+        }
+
         Instant batchEndTime = Instant.now();
         Duration totalDuration = Duration.between(batchStartTime, batchEndTime);
-        log.info("Total attractions processed: {}, Total processing time: {} hours, {} minutes, {} seconds",
-                totalProcessed,
+        log.info("Total processing time: {} hours, {} minutes, {} seconds",
                 totalDuration.toHours(),
                 totalDuration.toMinutesPart(),
                 totalDuration.toSecondsPart());
@@ -133,22 +174,52 @@ public class SaveAttractionList {
                     "&contentTypeId=" + contentTypeId +
                     "&areaCode=" + areaCode;
 
+            log.debug("Requesting URL: {}", url.replaceAll("serviceKey=[^&]+", "serviceKey=***"));
+
             ResponseEntity<String> responseData = restTemplate.getForEntity(url, String.class);
+            log.debug("Response status: {}", responseData.getStatusCode());
+
+            if (responseData.getBody() == null) {
+                log.warn("Null response body received for contentTypeId: {} and areaCode: {}",
+                        contentTypeId, areaCode);
+                return null;
+            }
+
+            JSONParser parser = new JSONParser();
+            JSONObject jsonResponse = (JSONObject) parser.parse(responseData.getBody());
+            JSONObject response = (JSONObject) jsonResponse.get("response");
+            JSONObject body = (JSONObject) response.get("body");
+
+            if (body != null) {
+                long totalCount = (Long) body.get("totalCount");
+                log.info("Total count for contentTypeId: {} and areaCode: {}: {}",
+                        contentTypeId, areaCode, totalCount);
+            }
+
             return responseData.getBody();
         } catch (Exception e) {
-            log.error("Error fetching attraction data: {}", e.getMessage());
+            log.error("Error fetching attraction data for contentTypeId: {} and areaCode: {}: {}",
+                    contentTypeId, areaCode, e.getMessage(), e);
             return null;
         }
     }
 
+    @Transactional
     private void saveBatch(List<AttractionList> attractions) {
         try {
             log.info("Saving batch of {} attractions...", attractions.size());
-            attractionListRepository.saveAll(attractions);
-            log.info("Successfully saved batch of attractions");
+            List<AttractionList> savedAttractions = attractionListRepository.saveAll(attractions);
+            log.info("Successfully saved {} attractions", savedAttractions.size());
             attractions.clear();
         } catch (Exception e) {
             log.error("Error saving batch: {}", e.getMessage());
+            if (!attractions.isEmpty()) {
+                AttractionList firstItem = attractions.get(0);
+                log.error("First item in failed batch - ContentId: {}, ContentTypeId: {}, AreaCode: {}, SiGunGuCode: {}",
+                        firstItem.getContentId(), firstItem.getContentTypeId(),
+                        firstItem.getAreaCode(), firstItem.getSiGunGuCode());
+            }
+            attractions.clear();  // Clear the failed batch to continue with next one
         }
     }
 
@@ -169,11 +240,20 @@ public class SaveAttractionList {
             JSONObject body = getJsonObject(response, "body");
             if (body == null) return attractions;
 
+            // totalCount 확인 및 로깅
+            Long totalCount = (Long) body.get("totalCount");
+            if (totalCount != null && totalCount == 0) {
+                log.info("API returned totalCount of 0");
+                return attractions;
+            }
+
             JSONObject items = getJsonObject(body, "items");
             if (items == null) return attractions;
 
             JSONArray item = getJsonArray(items, "item");
             if (item == null) return attractions;
+
+            log.info("Found {} items in response", item.size());
 
             for (int i = 0; i < item.size(); i++) {
                 try {
@@ -181,6 +261,8 @@ public class SaveAttractionList {
                     AttractionList attraction = createAttractionFromJson(tmp, startId + i);
                     if (isValidAttraction(attraction)) {
                         attractions.add(attraction);
+                    } else {
+                        log.warn("Invalid attraction data at index {}", i);
                     }
                 } catch (Exception e) {
                     log.warn("Error parsing attraction at index {}: {}", i, e.getMessage());
@@ -191,6 +273,7 @@ public class SaveAttractionList {
             log.error("Error parsing attraction data: {}", e.getMessage());
         }
 
+        log.info("Successfully parsed {} attractions", attractions.size());
         return attractions;
     }
 
@@ -215,21 +298,83 @@ public class SaveAttractionList {
     }
 
     private boolean isValidAttraction(AttractionList attraction) {
-        return attraction != null
-                && attraction.getContentId() != null
-                && attraction.getTitle() != null
-                && !attraction.getTitle().trim().isEmpty();
+        if (attraction == null) {
+            log.debug("Attraction is null");
+            return false;
+        }
+
+        // ContentId 검증
+        if (attraction.getContentId() == null) {
+            log.debug("ContentId is null for attraction");
+            return false;
+        }
+
+        // Title 검증
+        if (attraction.getTitle() == null || attraction.getTitle().trim().isEmpty()) {
+            log.debug("Title is null or empty for contentId: {}", attraction.getContentId());
+            return false;
+        }
+
+        // AreaCode와 SiGunGuCode 검증
+        if (attraction.getAreaCode() == null) {
+            log.debug("AreaCode is null for contentId: {}", attraction.getContentId());
+            return false;
+        }
+
+        if (attraction.getSiGunGuCode() == null) {
+            log.debug("SiGunGuCode is null for contentId: {}", attraction.getContentId());
+            return false;
+        }
+
+        // gugun_list 테이블 참조 검증
+        try {
+            boolean exists = attractionListRepository.existsByAreaCodeAndSiGunGuCode(
+                    attraction.getAreaCode(),
+                    attraction.getSiGunGuCode()
+            );
+
+            if (!exists) {
+                log.debug("No matching gugun_list entry for contentId: {}, areaCode: {}, sigunguCode: {}",
+                        attraction.getContentId(), attraction.getAreaCode(), attraction.getSiGunGuCode());
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Error checking gugun_list existence for contentId: {}: {}",
+                    attraction.getContentId(), e.getMessage());
+            return false;
+        }
+
+        return true;
     }
 
     private AttractionList createAttractionFromJson(JSONObject json, long id) {
         try {
+            Long contentId = safeParseLong(json.get("contentid"));
+            Long areaCode = safeParseLong(json.get("areacode"));
+            Long siGunGuCode = safeParseLong(json.get("sigungucode"));
+            String title = (String) json.get("title");
+
+            // 디버깅을 위한 상세 로깅
+            if (contentId == null) {
+                log.debug("Failed to parse contentid from: {}", json.get("contentid"));
+            }
+            if (areaCode == null) {
+                log.debug("Failed to parse areacode from: {}", json.get("areacode"));
+            }
+            if (siGunGuCode == null) {
+                log.debug("Failed to parse sigungucode from: {}", json.get("sigungucode"));
+            }
+            if (title == null) {
+                log.debug("Title is null for id: {}", id);
+            }
+
             return new AttractionList(
                     id,
-                    safeParseLong(json.get("contentid")),
-                    (String) json.get("title"),
+                    contentId,
+                    title,
                     safeParseLong(json.get("contenttypeid")),
-                    safeParseLong(json.get("areacode")),
-                    safeParseLong(json.get("sigungucode")),
+                    areaCode,
+                    siGunGuCode,
                     (String) json.get("firstimage"),
                     (String) json.get("firstimage2"),
                     safeParseInteger(json.get("mlevel")),
@@ -240,7 +385,7 @@ public class SaveAttractionList {
                     (String) json.get("addr2")
             );
         } catch (Exception e) {
-            log.error("Error creating attraction from JSON: {}", e.getMessage());
+            log.error("Error creating attraction from JSON: {} - Error: {}", json, e.getMessage());
             return null;
         }
     }
