@@ -1,10 +1,7 @@
 <template>
   <div class="layout-container">
     <navBar />
-    <div
-      class="content-wrapper"
-      :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }"
-    >
+    <div class="content-wrapper" :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }">
       <!-- Left Sidebar -->
       <div class="steps-sidebar">
         <div class="steps-nav">
@@ -26,13 +23,10 @@
       <!-- Middle Section -->
       <div class="middle-section">
         <div class="toggle-button" @click="toggleCollapse">
-          <i
-            class="fa-solid"
-            :class="{
-              'fa-arrow-left': !isCollapsed,
-              'fa-arrow-right': isCollapsed,
-            }"
-          ></i>
+          <i class="fa-solid" :class="{
+            'fa-arrow-left': !isCollapsed,
+            'fa-arrow-right': isCollapsed,
+          }"></i>
         </div>
         <div class="middleHeader">
           <h2>{{ name }}</h2>
@@ -58,17 +52,18 @@
           <div v-else-if="error" class="error-state">
             {{ error }}
           </div>
-          <div
-            v-for="place in filteredPlaces"
-            :key="place.attractionId"
-            class="place-item"
-            draggable="true"
-            @dragstart="dragStart($event, place)"
-          >
+          <div v-for="place in filteredPlaces" :key="place.attractionId" class="place-item" draggable="true"
+            @dragstart="dragStart($event, place)">
             <div class="place-image">
               <img :src="getImageUrl(place.image1)" :alt="place.title" />
             </div>
             <div class="place-info">
+              <div class="flex gap-2 mb-2">
+                <span v-if="place.contentTypeName" class="px-2 py-1 rounded-lg text-xs text-white tag"
+                  :style="{ backgroundColor: getContentTypeColor(place.contentTypeId) }">
+                  {{ place.contentTypeName }}
+                </span>
+              </div>
               <h3 class="place-title">{{ place.title }}</h3>
               <p class="place-address">{{ place.addr1 }}</p>
             </div>
@@ -82,25 +77,17 @@
       <!-- Right Section -->
       <div class="right-section">
         <div class="toggle-button" @click="toggleRightSection">
-          <i
-            class="fa-solid"
-            :class="{
-              'fa-arrow-left': !isRightCollapsed,
-              'fa-arrow-right': isRightCollapsed,
-            }"
-          ></i>
+          <i class="fa-solid" :class="{
+            'fa-arrow-left': !isRightCollapsed,
+            'fa-arrow-right': isRightCollapsed,
+          }"></i>
         </div>
         <div class="header">
 
         </div>
         <div class="selected-places">
-          <div
-            v-for="dayIndex in numberOfDays"
-            :key="dayIndex - 1"
-            class="day-section"
-            @dragover.prevent
-            @drop="onDrop($event, dayIndex - 1)"
-          >
+          <div v-for="dayIndex in numberOfDays" :key="dayIndex - 1" class="day-section" @dragover.prevent
+            @drop="onDrop($event, dayIndex - 1)">
             <div class="day-header">
               <h3 @click="selectDay(dayIndex - 1)" style="cursor: pointer">
                 {{ dayIndex }}일차 {{ formatDate(getTripDate(dayIndex - 1)) }}
@@ -116,23 +103,23 @@
               <p></p>
             </div>
             <div v-else class="selected-day-places">
-              <div
-                v-for="(place, index) in selectedPlacesByDay[dayIndex - 1]"
-                :key="place.attractionId"
-                class="selected-place"
-                draggable="true"
-                @dragstart="
+              <div v-for="(place, index) in selectedPlacesByDay[dayIndex - 1]" :key="place.attractionId"
+                class="selected-place" draggable="true" @dragstart="
                   dragStartSelected($event, place, dayIndex - 1, index)
-                "
-                @dragover.prevent
-                @drop.stop="onDrop($event, dayIndex - 1, index)"
-              >
+                  " @dragover.prevent @drop.stop="onDrop($event, dayIndex - 1, index)">
                 <div class="order-number">{{ index + 1 }}</div>
                 <div class="place-image">
                   <img :src="getImageUrl(place.image1)" :alt="place.title" />
                 </div>
                 <div class="place-info">
+                  <div class="flex gap-2 mb-2">
+                    <span v-if="place.contentTypeName" class="px-2 py-1 rounded-lg text-xs text-white tag"
+                      :style="{ backgroundColor: getContentTypeColor(place.contentTypeId) }">
+                      {{ place.contentTypeName }}
+                    </span>
+                  </div>
                   <h4>{{ place.title }}</h4>
+                  <p class="place-address">{{ place.addr1 }}</p>
                   <button @click="removePlace(dayIndex - 1, place)" class="remove-button">
                     <i class="fa-solid fa-times"></i>
                   </button>
@@ -144,14 +131,8 @@
         <button @click="saveAndNavigate" class="save-button">저장</button>
       </div>
       <div class="map-container">
-        <Tmap
-          ref="tmap"
-          :latitude="latitude"
-          :longitude="longitude"
-          :selected-places-by-day="selectedPlacesByDay"
-          :selected-day="selectedDay"
-          :show-all-days="showAllDays"
-        />
+        <Tmap ref="tmap" :latitude="latitude" :longitude="longitude" :selected-places-by-day="selectedPlacesByDay"
+          :selected-day="selectedDay" :show-all-days="showAllDays" />
         <!-- selected-places-by-day 선택한 장소에 대한 정보들 -->
       </div>
     </div>
@@ -222,7 +203,7 @@ export default {
       const query = this.searchQuery.toLowerCase();
       return this.places.filter(
         (place) =>
-          place.title.toLowerCase().includes(query) || 
+          place.title.toLowerCase().includes(query) ||
           place.addr1.toLowerCase().includes(query)
       );
     },
@@ -330,6 +311,20 @@ export default {
       ) {
         await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
       }
+    },
+
+    getContentTypeColor(contentType) {
+      const colorMap = {
+        12: '#ecb27b',
+        14: '#6E6156',
+        15: '#433629',
+        25: '#332417',
+        28: '#988D82',
+        32: '#C3A386',
+        38: '#ecb27b',
+        39: '#6E6156'
+      };
+      return colorMap[contentType] || '#ecb27b';  // 기본값으로 #ecb27b 반환
     },
 
     // Drag and Drop methods
@@ -789,7 +784,6 @@ export default {
   height: 80px;
   margin-right: 8px;
 }
-
 .place-image img {
   width: 100%;
   height: 100%;
@@ -987,6 +981,69 @@ export default {
   min-height: 0;
 }
 
+
+/* 기존 스타일 유지하고 selected-place에 대한 스타일 추가 */
+.selected-place {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 8px 12px;
+  padding-left: 48px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: move;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selected-place:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.selected-place .order-number {
+  position: absolute;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  background-color: #f57c00;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.selected-place.dragging {
+  opacity: 0.5;
+}
+
+/* 드롭 영역 스타일 */
+.day-section {
+  position: relative;
+}
+
+.day-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.day-section.drag-over::after {
+  opacity: 1;
+}
+
 /* 로딩 및 에러 상태 스타일 */
 .loading-state,
 .error-state,
@@ -1011,4 +1068,23 @@ export default {
   padding: 44px;
   border-radius: 8px;
 }
+
+
+.tag {
+  font-family: 'Pretendard-SemiBold';
+  font-size: 12px;
+}
+
+.place-info h3,
+h4 {
+  font-family: "Pretendard-Bold";
+  font-size: 1.125rem;
+}
+
+.place-info p {
+  color: #b4b4b4;
+  font-size: 14px;
+  font-family: 'Pretendard-Regular';
+}
+
 </style>

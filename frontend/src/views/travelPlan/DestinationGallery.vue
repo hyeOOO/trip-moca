@@ -79,14 +79,41 @@ export default defineComponent({
 
   computed: {
     filteredDestinations() {
+      const search = this.searchQuery.toLowerCase().trim();
+
+      if (!search) return this.destinations;
+
       return this.destinations.filter((destination) => {
-        const search = this.searchQuery.toLowerCase();
-        return (
-          destination.nameKo.toLowerCase().includes(search) ||
-          destination.nameEn.toLowerCase().includes(search)
-        );
+        // 정확한 도시 이름 매칭 (가중치 높음)
+        if (destination.nameKo === search ||
+          destination.nameEn.toLowerCase() === search) {
+          return true;
+        }
+
+        // 부분 도시 이름 매칭
+        if (destination.nameKo.toLowerCase().includes(search) ||
+          destination.nameEn.toLowerCase().includes(search)) {
+          return true;
+        }
+
+        // 정확한 시/군/구 매칭
+        if (destination.districts && destination.districts.some(district => {
+          const districtLower = district.toLowerCase();
+          // 정확한 매칭 ("강남구" === "강남구")
+          if (districtLower === search) return true;
+          // 부분 매칭 중 구/시/군 단위 확인
+          if (search.endsWith('구') || search.endsWith('시') || search.endsWith('군')) {
+            return districtLower.includes(search);
+          }
+          // 일반 부분 매칭
+          return districtLower.includes(search);
+        })) {
+          return true;
+        }
+
+        return false;
       });
-    },
+    }
   },
 
   methods: {

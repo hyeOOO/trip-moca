@@ -25,9 +25,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException e) {
         log.error("Unauthorized error occurred: {}", e.getMessage(), e);
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .code(e.getErrorCode().getCode())
+                .message(e.getMessage())
+                .build();
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.from(e));
+                .body(errorResponse);
     }
 
     @ExceptionHandler(Exception.class)

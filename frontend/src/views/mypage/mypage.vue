@@ -21,13 +21,8 @@
           <div v-if="isEditing" class="edit-form">
             <div class="form-group">
               <label>이름</label>
-              <input
-                type="text"
-                v-model="editForm.memberName"
-                placeholder="이름을 입력해주세요"
-                @input="validateName"
-                :class="{ error: validationErrors.name }"
-              />
+              <input type="text" v-model="editForm.memberName" placeholder="이름을 입력해주세요" @input="validateName"
+                :class="{ error: validationErrors.name }" />
               <span v-if="validationErrors.name" class="error-message">
                 {{ validationErrors.name }}
               </span>
@@ -35,81 +30,49 @@
             <div class="form-group current-password">
               <div>
                 <label>현재 비밀번호</label>
-                <input
-                  type="password"
-                  v-model="editForm.currentPassword"
-                  placeholder="현재 비밀번호"
-                  :disabled="isPasswordValid"
-                />
+                <input type="password" v-model="editForm.currentPassword" placeholder="현재 비밀번호"
+                  :disabled="isPasswordValid" />
                 <span v-if="validationErrors.currentPassword" class="error-message">
                   {{ validationErrors.currentPassword }}
                 </span>
               </div>
-              <button
-                v-if="!isPasswordValid"
-                class="confirm-btn"
-                @click="checkCurrentPassword"
-                :disabled="isPasswordChecking || !editForm.currentPassword"
-              >
+              <button v-if="!isPasswordValid" class="confirm-btn" @click="checkCurrentPassword"
+                :disabled="isPasswordChecking || !editForm.currentPassword">
                 확인
               </button>
-              <font-awesome-icon
-                v-else
-                :icon="['fas', 'circle-check']"
-                size="2xl"
-                :style="{ color: '#69C364', marginTop: '40px', marginLeft: '35px' }"
-              />
+              <font-awesome-icon v-else :icon="['fas', 'circle-check']" size="2xl"
+                :style="{ color: '#69C364', marginTop: '40px', marginLeft: '35px' }" />
             </div>
 
             <template v-if="isPasswordValid">
               <div class="form-group">
                 <label>새 비밀번호</label>
-                <input
-                  type="password"
-                  v-model="editForm.newPassword"
-                  placeholder="새 비밀번호"
-                  @input="validatePassword"
-                  :class="{ error: validationErrors.password }"
-                />
+                <input type="password" v-model="editForm.newPassword" placeholder="새 비밀번호" @input="validatePassword"
+                  :class="{ error: validationErrors.password }" />
                 <span v-if="validationErrors.password" class="error-message">
                   {{ validationErrors.password }}
                 </span>
               </div>
               <div class="form-group">
                 <label>새 비밀번호 확인</label>
-                <input
-                  type="password"
-                  v-model="editForm.passwordConfirm"
-                  placeholder="새 비밀번호 확인"
-                  @input="validatePasswordConfirm"
-                  :class="{ error: validationErrors.passwordConfirm }"
-                />
+                <input type="password" v-model="editForm.passwordConfirm" placeholder="새 비밀번호 확인"
+                  @input="validatePasswordConfirm" :class="{ error: validationErrors.passwordConfirm }" />
                 <span v-if="validationErrors.passwordConfirm" class="error-message">
                   {{ validationErrors.passwordConfirm }}
                 </span>
               </div>
               <div class="form-group">
                 <label>이메일</label>
-                <input
-                  type="email"
-                  v-model="editForm.email"
-                  placeholder="이메일을 입력해주세요"
-                  @input="validateEmail"
-                  :class="{ error: validationErrors.email }"
-                />
+                <input type="email" v-model="editForm.email" placeholder="이메일을 입력해주세요" @input="validateEmail"
+                  :class="{ error: validationErrors.email }" />
                 <span v-if="validationErrors.email" class="error-message">
                   {{ validationErrors.email }}
                 </span>
               </div>
               <div class="form-group">
                 <label>휴대폰</label>
-                <input
-                  type="tel"
-                  v-model="editForm.phone"
-                  placeholder="번호를 입력해주세요"
-                  @input="validatePhone"
-                  :class="{ error: validationErrors.phone }"
-                />
+                <input type="tel" v-model="editForm.phone" placeholder="번호를 입력해주세요" @input="validatePhone"
+                  :class="{ error: validationErrors.phone }" />
                 <span v-if="validationErrors.phone" class="error-message">
                   {{ validationErrors.phone }}
                 </span>
@@ -128,10 +91,8 @@
             </div>
             <div class="user-info-card">
               <span>{{ mypageStore.userCards.length }}</span>
-              <span
-                >개 카드 수집({{ mypageStore.userCards.length }} /
-                {{ mypageStore.totalCards.length }})</span
-              >
+              <span>개 카드 수집({{ mypageStore.userCards.length }} /
+                {{ mypageStore.totalCards.length }})</span>
             </div>
           </template>
         </div>
@@ -220,6 +181,13 @@ const validateEmail = () => {
 const validatePassword = () => {
   // 특수문자를 허용하도록 수정
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/;
+
+  // 현재 비밀번호와 새 비밀번호 비교
+  if (editForm.value.newPassword === editForm.value.currentPassword) {
+    validationErrors.value.password = "현재 비밀번호와 일치합니다.";
+    return;
+  }
+
   if (editForm.value.newPassword && !passwordRegex.test(editForm.value.newPassword)) {
     validationErrors.value.password = "비밀번호는 8자 이상, 영문과 숫자를 포함해야 합니다.";
   } else {
@@ -237,6 +205,8 @@ const validatePasswordConfirm = () => {
 };
 
 const validatePhone = () => {
+  editForm.value.phone = formatPhoneNumber(editForm.value.phone);
+
   const phoneRegex = /^01[016789]-?\d{3,4}-?\d{4}$/;
   if (editForm.value.phone && !phoneRegex.test(editForm.value.phone)) {
     validationErrors.value.phone = "올바른 휴대폰 번호 형식이 아닙니다.";
@@ -289,6 +259,7 @@ const cancelEdit = () => {
 const startEditing = async () => {
   try {
     await mypageStore.fetchUserData();
+    isPasswordValid.value = false;
 
     editForm.value = {
       memberName: mypageStore.userInfo?.memberName || "",
@@ -340,6 +311,7 @@ const saveProfile = async () => {
 
     await mypageStore.updateUserData(updateData);
     isEditing.value = false;
+    isPasswordValid.value = false;
     alert("프로필이 성공적으로 수정되었습니다.");
   } catch (error) {
     console.error("프로필 수정 실패:", error);
@@ -362,6 +334,22 @@ const confirmDelete = async () => {
   }
 };
 
+// 전화번호 자동 하이픈 추가 함수
+const formatPhoneNumber = (phone) => {
+  const value = phone.replace(/[^0-9]/g, ''); // 숫자만 추출
+  let result = '';
+
+  if (value.length > 3 && value.length <= 7) {
+    result = value.slice(0, 3) + '-' + value.slice(3);
+  } else if (value.length > 7) {
+    result = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+  } else {
+    result = value;
+  }
+
+  return result;
+};
+
 onMounted(async () => {
   initUserData();
   await mypageStore.fetchCardData();
@@ -372,10 +360,12 @@ onMounted(async () => {
 <style scoped>
 .mypage {
   position: relative;
-  min-height: calc(100vh - 120px); /* 푸터 높이만큼 빼기 */
+  min-height: calc(100vh - 120px);
+  /* 푸터 높이만큼 빼기 */
 
   margin-bottom: 50px;
-  padding-bottom: 0; /* 패딩 제거 */
+  padding-bottom: 0;
+  /* 패딩 제거 */
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -383,7 +373,8 @@ onMounted(async () => {
   /* 이 속성을 추가하여 배경 이미지 고정 */
   z-index: 0;
   background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
-  flex: 1; /* 이 부분 추가 */
+  flex: 1;
+  /* 이 부분 추가 */
 }
 
 .mypage::before {
@@ -507,11 +498,11 @@ onMounted(async () => {
   align-items: center;
 }
 
-.button-group > button {
+.button-group>button {
   margin: 0px 5px;
 }
 
-.info-container > button {
+.info-container>button {
   border-radius: 5px;
   background-color: #d9d9d9;
   padding: 15px 30px;
@@ -544,6 +535,7 @@ onMounted(async () => {
   transition: opacity 0.2s;
   background-color: #d9d9d9;
 }
+
 .meter {
   box-sizing: content-box;
   height: 20px;
@@ -555,7 +547,7 @@ onMounted(async () => {
   box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.3);
 }
 
-.meter > span {
+.meter>span {
   display: block;
   height: 100%;
   border-top-right-radius: 8px;
@@ -569,23 +561,21 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.meter > span:after {
+.meter>span:after {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
-  background-image: linear-gradient(
-    -45deg,
-    rgba(255, 255, 255, 0.2) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(255, 255, 255, 0.2) 50%,
-    rgba(255, 255, 255, 0.2) 75%,
-    transparent 75%,
-    transparent
-  );
+  background-image: linear-gradient(-45deg,
+      rgba(255, 255, 255, 0.2) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.2) 75%,
+      transparent 75%,
+      transparent);
   z-index: 1;
   background-size: 50px 50px;
   animation: move 2s linear infinite;
@@ -641,7 +631,8 @@ onMounted(async () => {
 }
 
 .delete-btn {
-  width: 100%; /* 추가 */
+  width: 100%;
+  /* 추가 */
   border-radius: 5px;
   border-color: #ff3c3f;
   background-color: #fff;
@@ -654,7 +645,8 @@ onMounted(async () => {
 
 .form-group input {
   width: 100%;
-  max-width: -webkit-fill-available; /* 추가 */
+  max-width: -webkit-fill-available;
+  /* 추가 */
   padding: 12px;
   border: 1px solid #ddd;
   border-radius: 5px;
