@@ -238,7 +238,22 @@ const initializeData = async () => {
       });
     }
 
-    console.log(aiRecommendStore.getPlanData.dayPlans);
+    // 데이터 로드 후 상태 확인을 위한 로그
+    console.log('Initial plan data:', aiRecommendStore.getPlanData);
+    console.log('Selected places:', getSelectedPlaces.value);
+
+    // 데이터 로드 후 약간의 지연을 주어 컴포넌트들이 제대로 마운트되도록 함
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // 전체 일정 보기로 초기화
+    selectedDay.value = 'all';
+
+    // TmapMultipath 컴포넌트가 새로운 데이터로 업데이트되도록 강제로 트리거
+    if (planData.value?.dayPlans?.length > 0) {
+      const temp = JSON.parse(JSON.stringify(planData.value));
+      aiRecommendStore.updatePlan(temp);
+    }
+
   } catch (error) {
     console.error("Data initialization error:", error);
     alert("여행 계획을 불러오는데 실패했습니다. 다시 시도해주세요.");
@@ -247,7 +262,6 @@ const initializeData = async () => {
     isLoading.value = false;
   }
 };
-
 // --- 유틸리티 함수들 ---
 const getImageUrl = (imageUrl) => {
   if (!imageUrl)
