@@ -170,7 +170,7 @@ export default {
       error: null,
       currentPage: 0,
       totalPages: 0,
-      pageSize: 15,
+      pageSize: 50,
       isLastPage: false,
       isFetching: false,
       localSelectedPlaces: {},
@@ -669,6 +669,26 @@ export default {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.right-section .header {
+  flex-shrink: 0;
+}
+
+.selected-places {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.right-section .save-button {
+  flex-shrink: 0;
+  margin-top: 20px;
 }
 
 .middle-section .header,
