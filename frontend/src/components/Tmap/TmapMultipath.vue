@@ -7,7 +7,7 @@
 
 <script>
 export default {
-  name: "TmapMultipath",
+  name: "TMapComponent",
 
   props: {
     selectedPlacesByDay: {
@@ -23,12 +23,12 @@ export default {
       required: true,
     },
     selectedDay: {
-      type: [Number, String],
-      default: "all",
+      type: [Number, String], // String 타입 추가
+      default: null,
     },
     showAllDays: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
 
@@ -39,58 +39,41 @@ export default {
       polylinesByDay: {},
       defaultZoom: 11,
       currentInfoWindow: null,
-      routePolylines: {},
+      routePolylines: [],
       tData: null,
-      activeMarkers: [], // 현재 활성화된 마커들을 추적
-      activeRoutes: [], // 현재 활성화된 경로들을 추적
     };
   },
 
   watch: {
     selectedPlacesByDay: {
       handler(newPlaces) {
-        try {
-          this.clearAllVisuals();
-          this.updateMarkers(newPlaces);
-          this.updateRoutes(newPlaces);
-          this.visualizeForDay(this.selectedDay);
-        } catch (err) {
-          console.warn("Error updating places:", err);
-        }
+        this.updateMarkers(newPlaces);
+        this.updateRoutes(newPlaces);
       },
       deep: true,
     },
-    selectedDay: {
-      handler(newDay) {
-        try {
-          this.clearAllVisuals();
-          this.visualizeForDay(newDay);
-        } catch (err) {
-          console.warn("Error handling day change:", err);
-        }
-      },
-      immediate: true,
+    selectedDay(newDay) {
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.setMap(null);
+        this.currentInfoWindow = null;
+      }
+      this.toggleMarkersByDay(newDay);
+      this.toggleRoutes(newDay);
     },
-    showAllDays: {
-      handler(show) {
-        try {
-          if (show) {
-            this.visualizeForDay('all');
-          }
-        } catch (err) {
-          console.warn("Error handling show all:", err);
-        }
+    showAllDays(show) {
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.setMap(null);
+        this.currentInfoWindow = null;
+      }
+      if (show) {
+        this.showAllMarkers();
+        this.showAllRoutes();
       }
     },
   },
 
   mounted() {
     this.initializeMap();
-    if (Object.keys(this.selectedPlacesByDay).length > 0) {
-      this.updateMarkers(this.selectedPlacesByDay);
-      this.updateRoutes(this.selectedPlacesByDay);
-      this.visualizeForDay(this.selectedDay);
-    }
   },
 
   methods: {
@@ -105,185 +88,195 @@ export default {
         height: "100%",
         zoom: this.defaultZoom,
         httpsMode: true,
-        zoomControl: true,
-        scrollwheel: true,
-        draggable: true,
-      });
-
-      this.map.addListener("bounds_changed", () => {
-        console.log("Map bounds changed");
       });
 
       this.tData = new Tmapv2.extension.TData();
     },
 
-    clearAllVisuals() {
-      if (this.currentInfoWindow) {
-        this.currentInfoWindow.setMap(null);
-        this.currentInfoWindow = null;
-      }
-
-      // 활성화된 마커들 제거
-      this.activeMarkers.forEach(marker => {
-        if (marker && marker.setMap) {
-          marker.setMap(null);
-        }
-      });
-      this.activeMarkers = [];
-
-      // 활성화된 경로들 제거
-      this.activeRoutes.forEach(route => {
-        if (route && route.setMap) {
-          route.setMap(null);
-        }
-      });
-      this.activeRoutes = [];
-    },
-
-    visualizeForDay(dayIndex) {
-      this.clearAllVisuals();
-
-      if (dayIndex === 'all') {
-        // 모든 날짜 표시
-        Object.entries(this.markersByDay).forEach(([day, markers]) => {
-          markers.forEach(marker => {
-            marker.setMap(this.map);
-            this.activeMarkers.push(marker);
-          });
-        });
-        Object.values(this.routePolylines).forEach(routes => {
-          routes.forEach(route => {
-            route.setMap(this.map);
-            this.activeRoutes.push(route);
-          });
-        });
-      } else if (dayIndex && this.markersByDay[dayIndex]) {
-        // 특정 날짜 표시
-        this.markersByDay[dayIndex].forEach(marker => {
-          marker.setMap(this.map);
-          this.activeMarkers.push(marker);
-        });
-        if (this.routePolylines[dayIndex]) {
-          this.routePolylines[dayIndex].forEach(route => {
-            route.setMap(this.map);
-            this.activeRoutes.push(route);
-          });
-        }
-      }
+    calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     },
 
     async calculateRoute(places, day) {
       if (places.length < 2) return;
 
       const routeColors = [
-        "#FF6B6B", "#6BCB77", "#B983FF", "#FF9F45", "#4CACBC",
-        "#FF8FB1", "#95CD41", "#7B2869", "#FFD93D"
+        "#FF6B6B",
+        "#6BCB77",
+        "#B983FF",
+        "#FF9F45",
+        "#4CACBC",
+        "#FF8FB1",
+        "#95CD41",
+        "#7B2869",
+        "#FFD93D",
       ];
 
-      const validPlaces = places.filter(place =>
-        place.latitude && place.longitude &&
-        !isNaN(Number(place.latitude)) && !isNaN(Number(place.longitude))
-      );
+      const start = places[0];
+      const end = places[places.length - 1];
+      const waypoints = places.slice(1, -1);
 
-      if (validPlaces.length < 2) return;
-
-      // TMap API 제한을 고려한 경로 분할 처리
-      const MAX_WAYPOINTS = 5;
-      const segments = [];
-      for (let i = 0; i < validPlaces.length - 1; i += MAX_WAYPOINTS) {
-        const segmentPlaces = validPlaces.slice(i, Math.min(i + MAX_WAYPOINTS + 1, validPlaces.length));
-        if (segmentPlaces.length >= 2) {
-          segments.push(segmentPlaces);
-        }
+      // 좌표 유효성 검사 추가
+      if (
+        !start.latitude ||
+        !start.longitude ||
+        !end.latitude ||
+        !end.longitude
+      ) {
+        console.error("Invalid coordinates for route calculation");
+        return;
       }
 
-      const dayRoutes = [];
+      // 경유지 목록 생성
+      const passList = waypoints
+        .filter((place) => place.latitude && place.longitude)
+        .map((place) => `${place.longitude},${place.latitude}`)
+        .join("_");
 
-      for (const segment of segments) {
-        const start = segment[0];
-        const end = segment[segment.length - 1];
-        const waypoints = segment.slice(1, -1);
+      const startLatLng = new Tmapv2.LatLng(start.latitude, start.longitude);
+      const endLatLng = new Tmapv2.LatLng(end.latitude, end.longitude);
 
-        const passList = waypoints
-          .map(place => `${place.longitude},${place.latitude}`)
-          .join("_");
+      const optionObj = {
+        reqCoordType: "WGS84GEO",
+        resCoordType: "WGS84GEO",
+        passList: passList,
+        trafficInfo: "Y",
+      };
+
+      return new Promise((resolve) => {
+        const params = {
+          onComplete: (response) => {
+            try {
+              const resultData = response._responseData?.features;
+              if (!resultData) {
+                console.error("No route data received");
+                resolve();
+                return;
+              }
+
+              const dayRoutes = [];
+
+              resultData.forEach((feature) => {
+                if (
+                  feature?.geometry?.type === "LineString" &&
+                  feature.geometry.coordinates
+                ) {
+                  try {
+                    const path = feature.geometry.coordinates.map(
+                      (coord) => new Tmapv2.LatLng(coord[1], coord[0])
+                    );
+
+                    const polyline = new Tmapv2.Polyline({
+                      path: path,
+                      strokeColor: routeColors[(day - 1) % routeColors.length],
+                      strokeWeight: 5,
+                      strokeStyle: "solid",
+                      map: this.map,
+                    });
+
+                    dayRoutes.push(polyline);
+                  } catch (err) {
+                    console.error("Error creating polyline:", err);
+                  }
+                }
+              });
+
+              this.routePolylines[day] = dayRoutes;
+              resolve();
+            } catch (err) {
+              console.error("Error processing route response:", err);
+              resolve();
+            }
+          },
+          onProgress: () => {},
+          onError: (error) => {
+            console.error("경로 검색 중 오류가 발생했습니다.", error);
+            resolve();
+          },
+        };
 
         try {
-          const response = await new Promise((resolve, reject) => {
-            this.tData.getRoutePlanJson(
-              new Tmapv2.LatLng(start.latitude, start.longitude),
-              new Tmapv2.LatLng(end.latitude, end.longitude),
-              {
-                reqCoordType: "WGS84GEO",
-                resCoordType: "WGS84GEO",
-                passList: passList,
-                trafficInfo: "Y",
-              },
-              {
-                onComplete: resolve,
-                onProgress: () => {},
-                onError: reject,
-              }
-            );
-          });
-
-          if (response._responseData?.features) {
-            response._responseData.features.forEach(feature => {
-              if (feature?.geometry?.type === "LineString" && feature.geometry.coordinates) {
-                const path = feature.geometry.coordinates.map(
-                  coord => new Tmapv2.LatLng(coord[1], coord[0])
-                );
-
-                const polyline = new Tmapv2.Polyline({
-                  path: path,
-                  strokeColor: routeColors[(day - 1) % routeColors.length],
-                  strokeWeight: 5,
-                  strokeStyle: "solid",
-                  map: null,
-                });
-
-                dayRoutes.push(polyline);
-              }
-            });
-          }
+          this.tData.getRoutePlanJson(
+            startLatLng,
+            endLatLng,
+            optionObj,
+            params
+          );
         } catch (err) {
-          console.warn("Route segment calculation error:", err);
+          console.error("Error calling getRoutePlanJson:", err);
+          resolve();
         }
-      }
-
-      this.routePolylines[day] = dayRoutes;
+      });
+    },
+    clearRoutes() {
+      Object.values(this.routePolylines).forEach((routes) => {
+        routes.forEach((route) => {
+          if (route) route.setMap(null);
+        });
+      });
+      this.routePolylines = {};
     },
 
     async updateRoutes(places) {
-      const currentRoutes = { ...this.routePolylines };
-      this.routePolylines = {};
+      this.clearRoutes();
 
       for (const [day, dayPlaces] of Object.entries(places)) {
         if (dayPlaces.length >= 2) {
           await this.calculateRoute(dayPlaces, day);
         }
       }
+    },
 
-      // 이전 경로들 제거
-      Object.values(currentRoutes).forEach(routes => {
-        routes.forEach(route => route?.setMap(null));
+    toggleRoutes(dayIndex) {
+      // 모든 경로 숨기기
+      Object.values(this.routePolylines).forEach((routes) => {
+        routes.forEach((route) => route.setMap(null));
+      });
+
+      // 선택된 날짜의 경로만 표시
+      if (dayIndex && this.routePolylines[dayIndex]) {
+        this.routePolylines[dayIndex].forEach((route) =>
+          route.setMap(this.map)
+        );
+      }
+    },
+
+    showAllRoutes() {
+      Object.values(this.routePolylines).forEach((routes) => {
+        routes.forEach((route) => route.setMap(this.map));
       });
     },
 
-    createMarker(place, dayIndex, placeIndex) {
-      if (!place.latitude || !place.longitude || 
-          isNaN(Number(place.latitude)) || isNaN(Number(place.longitude))) {
-        return null;
-      }
+    getMap() {
+      return this.map;
+    },
 
+    createMarker(place, dayIndex, placeIndex) {
       const position = new Tmapv2.LatLng(
         Number(place.latitude),
         Number(place.longitude)
       );
 
       const colors = [
-        "red", "green", "purple", "orange", "mint",
-        "pink", "lime", "magenta", "yello"
+        "red",
+        "green",
+        "purple",
+        "orange",
+        "mint",
+        "pink",
+        "lime",
+        "magenta",
+        "yello",
       ];
       const adjustedDayIndex = dayIndex - 1;
       const currentColor = colors[adjustedDayIndex % colors.length];
@@ -294,7 +287,7 @@ export default {
         position: position,
         icon: markerImageUrl,
         iconSize: new Tmapv2.Size(24, 24),
-        map: null,
+        map: this.map,
         title: place.title,
         zIndex: dayIndex + 1,
       });
@@ -322,41 +315,120 @@ export default {
       return marker;
     },
 
-    updateMarkers(places) {
-      const currentMarkers = { ...this.markersByDay };
-      this.markersByDay = {};
+    createPolyline(positions, color) {
+      return new Tmapv2.Polyline({
+        path: positions,
+        strokeColor: color,
+        strokeWeight: 3,
+        strokeStyle: "solid",
+        map: this.map,
+      });
+    },
 
-      let centerPosition = null;
+    clearAllMarkers() {
+      Object.values(this.markersByDay).forEach((markers) => {
+        markers.forEach((marker) => {
+          if (marker) {
+            marker.setMap(null);
+            marker = null;
+          }
+        });
+      });
+      this.markersByDay = {};
+    },
+
+    clearAllPolylines() {
+      Object.values(this.polylinesByDay).forEach((polyline) => {
+        if (polyline) {
+          polyline.setMap(null);
+          polyline = null;
+        }
+      });
+      this.polylinesByDay = {};
+    },
+
+    updateMarkers(places) {
+      this.clearAllMarkers();
+      this.clearAllPolylines();
+
+      if (this.currentInfoWindow) {
+        this.currentInfoWindow.setMap(null);
+        this.currentInfoWindow = null;
+      }
+
+      let lastPosition = null;
 
       Object.entries(places).forEach(([day, dayPlaces]) => {
-        this.markersByDay[day] = [];
+        if (!this.markersByDay[day]) {
+          this.markersByDay[day] = [];
+        }
+
+        const dayPositions = [];
 
         dayPlaces.forEach((place, placeIndex) => {
-          const marker = this.createMarker(place, parseInt(day), placeIndex);
-          if (marker) {
+          try {
+            const marker = this.createMarker(place, parseInt(day), placeIndex);
             this.markersByDay[day].push(marker);
-            if (!centerPosition) {
-              centerPosition = marker.getPosition();
-            }
+            lastPosition = marker.getPosition();
+            dayPositions.push(lastPosition);
+          } catch (error) {
+            console.error("Error creating marker:", error);
           }
         });
       });
 
-      // 이전 마커들 제거
-      Object.values(currentMarkers).forEach(markers => {
-        markers.forEach(marker => marker?.setMap(null));
+      if (lastPosition) {
+        this.map.setCenter(lastPosition);
+      }
+
+      this.map.setZoom(this.defaultZoom);
+    },
+
+    toggleMarkersByDay(dayIndex) {
+      Object.entries(this.markersByDay).forEach(([day, markers]) => {
+        markers.forEach((marker) => {
+          if (marker) {
+            marker.setMap(null);
+          }
+        });
       });
 
-      if (centerPosition) {
-        this.map.setCenter(centerPosition);
-        this.map.setZoom(this.defaultZoom);
+      if (dayIndex) {
+        const markers = this.markersByDay[dayIndex];
+        if (markers) {
+          markers.forEach((marker) => {
+            if (marker) {
+              marker.setMap(this.map);
+            }
+          });
+        }
       }
+    },
+
+    showAllMarkers() {
+      Object.values(this.markersByDay).forEach((markers) => {
+        markers.forEach((marker) => {
+          if (marker) {
+            marker.setMap(this.map);
+          }
+        });
+      });
     },
   },
 
   beforeUnmount() {
-    this.clearAllVisuals();
-    this.map = null;
+    if (this.currentInfoWindow) {
+      this.currentInfoWindow.setMap(null);
+      this.currentInfoWindow = null;
+    }
+
+    this.clearAllMarkers();
+    this.clearAllPolylines();
+    this.clearRoutes();
+
+    if (this.map) {
+      this.map = null;
+    }
   },
 };
 </script>

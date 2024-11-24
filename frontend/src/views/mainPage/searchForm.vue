@@ -18,21 +18,11 @@
         <span v-if="showEndPlaceholder" class="custom-placeholder">선택하세요</span>
       </div>
       <div>
-        <p class="text2">지역(선택)</p>
-        <select
-          v-model="result"
-          style="
-            text-align: center;
-            width: 385px;
-            height: 48px;
-            border: 1px solid #ffffff;
-          "
-        >
-          <option
-            v-for="(region, index) in 지역"
-            :key="index"
-            :value="region.value"
-          >
+        <p class="text2">지역</p>
+        <select v-model="selectedArea"
+          style="text-align: center; width: 395px; height: 42px; border: 1px solid #ffffff;">
+          <option value="">지역을 선택하세요</option>
+          <option v-for="region in regions" :key="region.code" :value="region.code">
             {{ region.name }}
           </option>
         </select>
@@ -188,12 +178,15 @@ const handleSubmit = async () => {
 };
 </script>
 
-<style scoped>
+<style>
 .search-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 50px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
+
+
 
 .h1-text {
   font-family: "EliceDigitalBaeum_Regular";
@@ -204,24 +197,24 @@ const handleSubmit = async () => {
 .text1 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .text2 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
-  margin-bottom: 10px;
 }
 
 .search-submit {
-  width: 385px;
-  height: 57px;
   position: relative;
   padding: 12px 35px;
+  background: var(--color);
   font-size: 17px;
   font-weight: 500;
+  color: #ffffff;
   border: 1px solid #ffffff;
   border-radius: 8px;
+  box-shadow: 0 0 0 #fec1958c;
   transition: all .3s ease-in-out;
   cursor: pointer;
 }
