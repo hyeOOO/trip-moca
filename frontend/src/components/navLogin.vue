@@ -100,7 +100,7 @@ export default {
 
 <style scoped>
 .menu-container {
-  margin-right: 63px;
+  margin-right: 114px;
   grid-column: 2;
   display: flex;
   gap: 10px;

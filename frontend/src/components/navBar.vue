@@ -20,14 +20,14 @@
           <div class="logo-area">
             <router-link to="/main" class="logo" v-if="!isDarkRoute">
               <img
-                src="@/assets/image/HW&SW.png"
+                src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/logo-white-5.png"
                 alt="HW&SW Logo"
                 class="hwsw-logo-image"
               />
             </router-link>
             <router-link to="/main" class="logo" v-else>
               <img
-                src="@/assets/image/HW&SW-dark.png"
+                src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/logo-black-6.png"
                 alt="HW&SW Logo"
                 class="hwsw-logo-image"
               />
@@ -78,12 +78,14 @@ export default {
     };
   },
   computed: {
+    // 흰색 테마로 하고 싶은 페이지들 밑에 경로 추가하면댐
     isDarkRoute() {
       return (
         !["/", "/main", "/popularPlace"].includes(this.$route.path) &&
         !this.$route.path.startsWith("/main/") &&
         !this.$route.path.startsWith("/season-plan/") &&
-        !this.$route.path.startsWith("/keyword-plan/")
+        !this.$route.path.startsWith("/keyword-plan/") &&
+        !this.$route.path.startsWith("/mypage")
       );
     },
   },
@@ -136,7 +138,7 @@ export default {
 }
 
 .info-top {
-  margin-left: 108px;
+  margin-left: 140px;
   grid-column: 1;
   display: flex;
   align-items: center;
@@ -148,8 +150,8 @@ export default {
   opacity: 1;
   z-index: 2;
   font-family: "Pretendard-Light";
-  font-size: 16px;
   padding-right: 38px;
+  font-size: 14px;
 }
 
 .nav-dark .info-top-text {
@@ -196,7 +198,7 @@ export default {
 
 /* Logo Styles */
 .logo-area {
-  justify-self: center;
+  margin-left: 144px;
 }
 
 .logo {
@@ -206,8 +208,8 @@ export default {
 }
 
 .hwsw-logo-image {
-  height: 40px;
-  width: 100px;
+  height: 35px;
+  width: 100%;
   object-fit: contain;
   transition: transform 0.2s ease;
 }
@@ -289,9 +291,11 @@ export default {
 /* Search Bar Styles */
 .search-area {
   justify-self: center;
+  margin-right: 120px;
 }
 
 .search-bar {
+  margin-right: 113px;
   position: relative;
   opacity: 0.5;
 }
