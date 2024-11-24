@@ -1,5 +1,7 @@
 <template>
-  <div class="season-plan-container min-h-screen bg-gradient-to-b from-[#433629] to-[#2a1f15]">
+  <div
+    class="season-plan-container min-h-screen bg-gradient-to-b from-[#433629] to-[#2a1f15]"
+  >
     <navBar />
 
     <!-- 상단 타이틀 섹션 -->
@@ -8,9 +10,23 @@
       <p class="sub-title">AI가 추천하는 최적의 여행 코스</p>
     </div>
 
+    <!-- 지도 컨테이너 -->
+    <div class="map-container" v-if="planData">
+      <tmap-multipath
+        ref="tmapComponent"
+        :selected-places-by-day="getSelectedPlaces"
+        :latitude="getCenterCoordinates.latitude"
+        :longitude="getCenterCoordinates.longitude"
+        :selected-day="selectedDay"
+        :show-all-days="isShowingAllDays"
+      />
+    </div>
+
     <!-- 로딩 표시 -->
     <div v-if="loading" class="flex justify-center items-center min-h-[60vh]">
-      <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#ecb27b]"></div>
+      <div
+        class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#ecb27b]"
+      ></div>
     </div>
 
     <!-- 에러 메시지 -->
@@ -20,79 +36,115 @@
 
     <!-- 여행 계획 표시 -->
     <div v-else-if="planData" class="plan-container">
-      <div v-for="(dayPlan, dayIndex) in planData" :key="dayIndex" class="mb-16">
-        <!-- 일자 타이틀 -->
-        <div class="days-container">
-          <div class="ml-4 days-instance">
-            <h2 class="days-title">DAY {{ dayPlan.day }}</h2>
-          </div>
-        </div>
+      <!-- 일자 선택 버튼 -->
+      <div class="day-selector">
+        <button
+          @click="handleDaySelect('all')"
+          :class="['day-button', selectedDay === 'all' ? 'active' : '']"
+        >
+          전체 보기
+        </button>
+        <button
+          v-for="dayPlan in planData"
+          :key="dayPlan.day"
+          @click="handleDaySelect(dayPlan.day)"
+          :class="['day-button', selectedDay === dayPlan.day ? 'active' : '']"
+        >
+          Day {{ dayPlan.day }}
+        </button>
+      </div>
 
-        <!-- 캐러셀 섹션 -->
-        <div class="gallery">
-          <div class="carousel-container">
-            <div
-              class="carousel-track"
-              :style="{ transform: `translateX(-${currentIndexes[dayIndex] * 100}%)` }"
-            >
+      <div class="plans-grid">
+        <div
+          v-for="(dayPlan, dayIndex) in planData"
+          :key="dayIndex"
+          class="day-plan-card"
+        >
+          <!-- 일자 타이틀 -->
+          <div class="days-container">
+            <div class="ml-4 days-instance">
+              <h2 class="days-title">DAY {{ dayPlan.day }}</h2>
+            </div>
+          </div>
+
+          <!-- 캐러셀 섹션 -->
+          <div class="gallery">
+            <div class="carousel-container">
               <div
-                v-for="(attraction, attrIndex) in dayPlan.attractionDetails"
-                :key="attrIndex"
-                class="carousel-slide"
-                :class="{ active: currentIndexes[dayIndex] === attrIndex }"
+                class="carousel-track"
+                :style="{
+                  transform: `translateX(-${currentIndexes[dayIndex] * 100}%)`,
+                }"
               >
-                <img
-                  :src="
-                    attraction.image1 ||
-                    'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png'
-                  "
-                  :alt="attraction.title"
-                />
-                <div class="slide-content">
-                  <!-- 태그 컨테이너 -->
-                  <div class="tags-container">
-                    <span v-if="attraction.sidoName" class="location-tag sido">
-                      {{ attraction.sidoName }}
-                    </span>
-                    <span v-if="attraction.gugunName" class="location-tag gugun">
-                      {{ attraction.gugunName }}
-                    </span>
-                    <span class="location-tag type">
-                      {{ attraction.contentTypeName }}
-                    </span>
+                <div
+                  v-for="(attraction, attrIndex) in dayPlan.attractionDetails"
+                  :key="attrIndex"
+                  class="carousel-slide"
+                  :class="{ active: currentIndexes[dayIndex] === attrIndex }"
+                >
+                  <img
+                    :src="
+                      attraction.image1 ||
+                      'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png'
+                    "
+                    :alt="attraction.title"
+                  />
+                  <div class="slide-content">
+                    <div class="tags-container">
+                      <span
+                        v-if="attraction.sidoName"
+                        class="location-tag sido"
+                      >
+                        {{ attraction.sidoName }}
+                      </span>
+                      <span
+                        v-if="attraction.gugunName"
+                        class="location-tag gugun"
+                      >
+                        {{ attraction.gugunName }}
+                      </span>
+                      <span class="location-tag type">
+                        {{ attraction.contentTypeName }}
+                      </span>
+                    </div>
+                    <h3>{{ attraction.title }}</h3>
+                    <p class="address">{{ attraction.addr1 }}</p>
+                    <p v-if="attraction.tel" class="tel">
+                      {{ attraction.tel }}
+                    </p>
                   </div>
-                  <h3>{{ attraction.title }}</h3>
-                  <p class="address">{{ attraction.addr1 }}</p>
-                  <p v-if="attraction.tel" class="tel">{{ attraction.tel }}</p>
                 </div>
               </div>
-            </div>
 
-            <!-- 캐러셀 버튼 -->
-            <button
-              class="carousel-button prev"
-              @click="prev(dayIndex)"
-              :disabled="currentIndexes[dayIndex] === 0"
-            >
-              <span class="arrow">&lt;</span>
-            </button>
-            <button
-              class="carousel-button next"
-              @click="next(dayIndex)"
-              :disabled="currentIndexes[dayIndex] === dayPlan.attractionDetails.length - 1"
-            >
-              <span class="arrow">&gt;</span>
-            </button>
-
-            <!-- 인디케이터 -->
-            <div class="carousel-indicators">
+              <!-- 캐러셀 버튼 -->
               <button
-                v-for="(_, index) in dayPlan.attractionDetails"
-                :key="index"
-                class="indicator"
-                :class="{ active: currentIndexes[dayIndex] === index }"
-                @click="goToSlide(dayIndex, index)"
-              ></button>
+                class="carousel-button prev"
+                @click="prev(dayIndex)"
+                :disabled="currentIndexes[dayIndex] === 0"
+              >
+                <span class="arrow">&lt;</span>
+              </button>
+              <button
+                class="carousel-button next"
+                @click="next(dayIndex)"
+                :disabled="
+                  currentIndexes[dayIndex] ===
+                  dayPlan.attractionDetails.length - 1
+                "
+              >
+                <span class="arrow">&gt;</span>
+              </button>
+
+              <!-- 인디케이터 -->
+              <div class="carousel-indicators">
+                <button
+                  v-for="(_, index) in dayPlan.attractionDetails"
+                  :key="index"
+                  class="indicator"
+                  :class="{ active: currentIndexes[dayIndex] === index }"
+                  @click="goToSlide(dayIndex, index)"
+                ></button>
+              </div>
             </div>
           </div>
         </div>
@@ -100,18 +152,21 @@
     </div>
 
     <!-- 데이터가 없을 때 -->
-    <div v-else class="text-center text-white p-8">여행 계획을 불러오는 중입니다...</div>
+    <div v-else class="text-center text-white p-8">
+      여행 계획을 불러오는 중입니다...
+    </div>
   </div>
 </template>
-
 <script>
 import api from "@/plugins/axios";
 import navBar from "@/components/navBar.vue";
+import TmapMultipath from "@/components/Tmap/TmapMultipath.vue";
 
 export default {
   name: "keywordPlan",
   components: {
     navBar,
+    TmapMultipath,
   },
   data() {
     return {
@@ -121,17 +176,70 @@ export default {
       keyword: "",
       currentIndexes: {},
       isAnimating: false,
+      selectedDay: 1,
     };
   },
+  computed: {
+    getSelectedPlaces() {
+      if (!this.planData) return {};
+
+      const selectedPlaces = {};
+      this.planData.forEach((dayPlan) => {
+        if (dayPlan.attractionDetails && dayPlan.attractionDetails.length > 0) {
+          selectedPlaces[dayPlan.day] = dayPlan.attractionDetails;
+        }
+      });
+      return selectedPlaces;
+    },
+    getCenterCoordinates() {
+      if (!this.planData || this.planData.length === 0) {
+        return { latitude: 33.3846, longitude: 126.5534 };
+      }
+
+      let totalLat = 0;
+      let totalLong = 0;
+      let count = 0;
+
+      this.planData.forEach((dayPlan) => {
+        if (dayPlan.attractionDetails) {
+          dayPlan.attractionDetails.forEach((place) => {
+            if (place.latitude && place.longitude) {
+              totalLat += parseFloat(place.latitude);
+              totalLong += parseFloat(place.longitude);
+              count++;
+            }
+          });
+        }
+      });
+
+      if (count === 0) {
+        return { latitude: 33.3846, longitude: 126.5534 };
+      }
+
+      return {
+        latitude: totalLat / count,
+        longitude: totalLong / count,
+      };
+    },
+    // 전체보기 상태를 확인하는 computed 속성 추가
+    isShowingAllDays() {
+      return this.selectedDay === "all";
+    },
+  },
+
   created() {
     this.keyword = this.$route.params.keyword;
+    this.selectedDay = "all";
     this.fetchKeywordPlan(this.keyword);
   },
+
   methods: {
     async fetchKeywordPlan(keyword) {
       try {
         this.loading = true;
-        const response = await api.get(`/api/attraction/ai/plan/keyword/${keyword}`);
+        const response = await api.get(
+          `/api/attraction/ai/plan/keyword/${keyword}`
+        );
         this.planData = response.data;
         // 각 일차별 현재 인덱스 초기화
         this.planData.forEach((_, index) => {
@@ -144,18 +252,62 @@ export default {
         this.loading = false;
       }
     },
+
+    // 위도/경도 관련 새로운 메서드들
+    getCoordinates(attraction) {
+      if (!attraction || !attraction.latitude || !attraction.longitude) {
+        return null;
+      }
+      return {
+        latitude: parseFloat(attraction.latitude),
+        longitude: parseFloat(attraction.longitude),
+      };
+    },
+
+    getDayCoordinates(day) {
+      if (!this.planData) return [];
+
+      const dayPlan = this.planData.find((plan) => plan.day === day);
+      if (!dayPlan || !dayPlan.attractionDetails) return [];
+
+      return dayPlan.attractionDetails
+        .map((attraction) => this.getCoordinates(attraction))
+        .filter((coord) => coord !== null);
+    },
+
+    getAllCoordinates() {
+      if (!this.planData) return [];
+
+      return this.planData.reduce((coords, dayPlan) => {
+        if (dayPlan.attractionDetails) {
+          const dayCoords = dayPlan.attractionDetails
+            .map((attraction) => this.getCoordinates(attraction))
+            .filter((coord) => coord !== null);
+          return [...coords, ...dayCoords];
+        }
+        return coords;
+      }, []);
+    },
+
+    // 캐러셀 관련 메서드들
     async next(dayIndex) {
       if (this.isAnimating) return;
       this.isAnimating = true;
       const maxIndex = this.planData[dayIndex].attractionDetails.length - 1;
-      this.currentIndexes[dayIndex] = Math.min(this.currentIndexes[dayIndex] + 1, maxIndex);
+      this.currentIndexes[dayIndex] = Math.min(
+        this.currentIndexes[dayIndex] + 1,
+        maxIndex
+      );
       await this.waitForTransition();
       this.isAnimating = false;
     },
     async prev(dayIndex) {
       if (this.isAnimating) return;
       this.isAnimating = true;
-      this.currentIndexes[dayIndex] = Math.max(this.currentIndexes[dayIndex] - 1, 0);
+      this.currentIndexes[dayIndex] = Math.max(
+        this.currentIndexes[dayIndex] - 1,
+        0
+      );
       await this.waitForTransition();
       this.isAnimating = false;
     },
@@ -182,13 +334,16 @@ export default {
       };
       return classes[type] || "bg-gray-500 text-white";
     },
+    handleDaySelect(day) {
+      this.selectedDay = day;
+    },
   },
 };
 </script>
 
 <style scoped>
 .text-center {
-  margin-top: 100px;
+  margin-top: 44px;
   justify-content: center;
 }
 
@@ -206,9 +361,7 @@ export default {
 }
 
 .days-container {
-  padding: 10px 0px;
-  border-radius: 10px 10px 0px 0px;
-  width: 10%;
+  width: 100%;
   background-color: #ecb27b;
 }
 
@@ -223,7 +376,7 @@ export default {
 }
 
 .plan-container {
-  margin-top: 100px;
+  padding: 0 20px;
 }
 
 .gallery {
@@ -234,10 +387,45 @@ export default {
   justify-content: center;
 }
 
+.day-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.day-button {
+  padding: 8px 16px;
+  background-color: #6e6156;
+  color: white;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.day-button.active {
+  background-color: #ecb27b;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  width: 100%;
+  height: 400px;
+}
+
+.day-plan-card {
+  display: flex;
+  flex-direction: column;
+  background: #ecb27b;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .carousel-container {
   position: relative;
   width: 100%;
-  height: 50vh;
+  height: 340px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
@@ -396,6 +584,24 @@ export default {
     width: 40px;
     height: 40px;
     font-size: 1.2rem;
+  }
+}
+.map-container {
+  width: 100%;
+  height: 500px;
+  margin: 20px 0;
+  padding: 0 20px;
+}
+
+@media (max-width: 1200px) {
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .plans-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

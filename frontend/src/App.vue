@@ -154,15 +154,4 @@ body.modal-open {
   height: 100%;
 }
 
-.search-submit {
-  width: 401px;
-  height: 56px;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: #ecb27b;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-}
 </style>

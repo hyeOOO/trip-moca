@@ -1,276 +1,153 @@
 <template>
-  <div class="TitleContainer">
-    <h1 class="Title">시간은 아끼고 추억은 더하고 ⚡️</h1>
-  </div>
-  <div class="Container">
-    <!-- 기존 갤러리 코드 -->
-    <div
-      v-for="(picture, index) in pictures"
-      :key="index"
-      class="Picture"
-      :style="picture.style"
-      @mousedown="startDrag($event, index)"
-      @touchstart="startDrag($event, index)"
-    >
-      <img class="Picture-img" :src="picture.src" :alt="picture.alt" />
-      <div class="Picture-note">
-        <span>
-          {{ picture.note }}
-          <template v-if="picture.social">
-            <a
-              v-for="(link, platform) in picture.social"
-              :key="platform"
-              class="Network"
-              :href="link.url"
-              target="_top"
-            >
-              <img :src="link.icon" :alt="platform" />
-            </a>
-          </template>
-        </span>
+  <div class="third-section">
+    <div class="TitleContainer">
+      <h1 class="Title">
+        인생샷 명소부터 숨은 맛집까지,<br />우리만의 트래블 큐레이션
+      </h1>
+    </div>
+    <div class="content-container">
+      <div class="photo-grid">
+        <div class="first-box1">
+          <p>
+            나는 무엇인지 그리워 이 많은 별빛이 내린 언덕 위에 내 이름자를 써보고
+            흙으로 덮어 버리었읍니다. 딴은 밤을 세워 우는 벌레는 부끄러운 이름을
+            슬퍼하는 까닭입니다. 어머님, 그리고 당신은 멀리 북간도에 계십니다.
+            계절이 지나가는 하늘에는 가을로 가득 차 있습니다.
+          </p>
+          <button class="explore-button">살펴보러가기</button>
+        </div>
+        <div class="first-box2">
+          <img src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gyeongbok-palace-5771324_1280.jpg" alt="Photo 1"/>
+        </div>
+        <div class="first-box3">
+          <img src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/aPalaceOnTheWater.jpg" alt="Photo 2"/>
+        </div>
+        <div class="first-box4">
+          <img src="https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/sunrise-6090933_1280.jpg" alt="Photo 3"/>
+        </div>
       </div>
     </div>
   </div>
-  <a class="GitLink" href="https://github.com/bamtol2/enjoy-trip" target="_top"
-    >Hyewon & Seungwoo</a
-  >
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-
-// 이전 pictures 데이터 동일...
-const pictures = ref([
-  {
-    src: "https://media.licdn.com/dms/image/C4D03AQHjPuY9oi3Www/profile-displayphoto-shrink_800_800/0/1579768452204?e=2147483647&v=beta&t=4ZgTgOkSEu2eKRoLWEVtgL8s2zYu80YMxI_0018U9Dk",
-    note: "@DeyJordan - ",
-    social: {
-      codepen: {
-        url: "https://codepen.io/DeyJordan",
-        icon: "https://cdn-icons-png.flaticon.com/512/2111/2111501.png",
-      },
-      twitter: {
-        url: "https://twitter.com/DeyJordan",
-        icon: "https://www.freepnglogos.com/uploads/twitter-logo-png/twitter-logo-vector-png-clipart-1.png",
-      },
-    },
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/aPalaceOnTheWater.jpg",
-    note: "Over the clouds",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/bundo-kim-hipcPLJE4uk-unsplash.jpg",
-    note: "Golden Gate Bridge - San Francisco",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/clark-gu-5fa8Z9NXLqI-unsplash.jpg",
-    note: "Cat nose",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/damyang-3381419_1280.jpg",
-    note: "Cat nose",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/damyang-3396598_1280.jpg",
-    note: "Cat nose",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/eveningPalace.jpg",
-    note: "Cat nose",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gangneung-7111058_1280.jpg",
-    note: "Cat nose",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gangneung.png",
-    note: "Cat nose",
-    style: {},
-  },
-  {
-    src: "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gwanganBridge.jpg",
-    note: "Cat nose",
-    style: {},
-  },
-]);
-
-let previousTouch = null;
-
-const updateElementPosition = (element, event, index) => {
-  let movementX, movementY;
-
-  if (event.type === "touchmove") {
-    const touch = event.touches[0];
-    movementX = previousTouch ? touch.clientX - previousTouch.clientX : 0;
-    movementY = previousTouch ? touch.clientY - previousTouch.clientY : 0;
-    previousTouch = touch;
-  } else {
-    movementX = event.movementX;
-    movementY = event.movementY;
-  }
-
-  const currentTop = parseInt(pictures.value[index].style.top || 0);
-  const currentLeft = parseInt(pictures.value[index].style.left || 0);
-
-  pictures.value[index].style = {
-    ...pictures.value[index].style,
-    top: `${currentTop + movementY}px`,
-    left: `${currentLeft + movementX}px`,
-  };
+<script>
+export default {
+  name: "thirdContent",
 };
-
-const startDrag = (event, index) => {
-  const updateFunc = (e) => updateElementPosition(event.target, e, index);
-  const stopFunc = () => stopDrag({ update: updateFunc, stop: stopFunc });
-
-  document.addEventListener("mousemove", updateFunc);
-  document.addEventListener("touchmove", updateFunc);
-  document.addEventListener("mouseup", stopFunc);
-  document.addEventListener("touchend", stopFunc);
-};
-
-const stopDrag = (functions) => {
-  previousTouch = null;
-  document.removeEventListener("mousemove", functions.update);
-  document.removeEventListener("touchmove", functions.update);
-  document.removeEventListener("mouseup", functions.stop);
-  document.removeEventListener("touchend", functions.stop);
-};
-
-onMounted(() => {
-  const screenWidth = window.innerWidth;
-  const screenHeight = window.innerHeight;
-  const titleHeight = 120;
-  const minDistance = 400; // 사진 간 최소 거리
-
-  const usedPositions = [];
-
-  pictures.value.forEach((picture, index) => {
-    let validPosition = false;
-    let attempts = 0;
-    let randomX, randomY;
-
-    while (!validPosition && attempts < 50) {
-      const maxX = screenWidth * 0.3;
-      const maxY = (screenHeight - titleHeight) * 0.4;
-
-      randomX = (Math.random() * 2 - 1) * maxX;
-      randomY = (Math.random() * 2 - 1) * maxY + titleHeight / 2;
-
-      // 다른 사진들과의 거리 체크
-      validPosition = usedPositions.every((pos) => {
-        const distance = Math.sqrt(
-          Math.pow(pos.x - randomX, 2) + Math.pow(pos.y - randomY, 2)
-        );
-        return distance >= minDistance;
-      });
-
-      attempts++;
-    }
-
-    usedPositions.push({ x: randomX, y: randomY });
-
-    const randomRotate = Math.random() * 30 - 15;
-
-    picture.style = {
-      top: `${randomY}px`,
-      left: `${randomX}px`,
-      transform: `translate(-50%, -50%) rotate(${randomRotate}deg)`,
-      zIndex: Math.floor(Math.random() * 10),
-    };
-  });
-});
 </script>
 
 <style scoped>
+.third-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  background-color: white;
+}
+
 .TitleContainer {
-  position: fixed;
-  top: 40px;
-  left: 0;
-  right: 0;
   text-align: center;
-  z-index: 20;
+  height: 20vh; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 20px;
 }
 
 .Title {
   font-family: "EliceDigitalBaeum_Regular";
   font-size: 48px;
-  color: #000000;
+  color: #000;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   margin: 0;
   padding: 20px;
 }
 
-.Container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-}
-
-.Picture {
-  display: inline-block;
-  position: absolute;
-  top: 0;
-  left: 0;
-  border: 5px solid #fff;
-  border-radius: 3px;
-  background: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-  transform: translate(-50%, -50%);
-  user-select: none;
-  cursor: pointer;
-}
-
-.Picture-img {
-  display: block;
-  width: 300px;
-  height: 300px;
-  pointer-events: none;
-}
-
-.Picture-note {
+.content-container {
+  height: 77vh; /* 전체의 70% 차지 */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 300px;
-  height: 70px;
-  padding: 12px 24px;
-  font-size: 1.5rem;
-  text-align: center;
 }
 
-.Network {
-  display: inline-block;
-  padding: 0 5px;
+.photo-grid {
+  display: grid;
+  grid-template-rows: 2fr 1fr 2fr;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 20px;
+  width: 85%;
+  max-width: 1400px;
+  height: 70vh; /* content-container 내부에서의 높이 조정 */
+  margin: 0 auto;
 }
 
-.Network img {
-  width: 1.5rem;
-  aspect-ratio: 1 / 1;
-  vertical-align: middle;
+.first-box1 {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  padding: 40px;
+  background-color: white;
+  border-radius: 10px;
 }
 
-.GitLink {
- position: fixed;
- z-index: 15;
- bottom: 20px;
- right: 20px; /* left: 50%와 transform: translateX(-50%) 대신 right: 20px 사용 */
- color: #111;
- font-weight: 700;
- text-align: right;
- opacity: 0.7;
+.first-box1 p {
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: left;
 }
 
-* {
-  box-sizing: border-box;
+.explore-button {
+  width: 150px;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.explore-button:hover {
+  transform: scale(1.05);
+  background-color: #ffdd57;
+}
+
+.first-box2 {
+  grid-row: 1/3;
+  grid-column: 2/4;
+}
+
+.first-box3 {
+  grid-row: 2/4;
+  grid-column: 1/2;
+}
+
+.first-box4 {
+  grid-row: 3/4;
+  grid-column: 2/3;
+}
+
+.first-box2,
+.first-box3,
+.first-box4 {
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.first-box2 img,
+.first-box3 img,
+.first-box4 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.first-box2 img:hover,
+.first-box3 img:hover,
+.first-box4 img:hover {
+  transform: scale(1.05);
 }
 </style>

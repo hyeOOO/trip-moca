@@ -31,18 +31,14 @@
           >선택하세요</span
         >
       </div>
-      <!-- <div>
-        <p class="text2">인원 수</p>
-        <input type="number" class="form-input" min="0" />
-      </div> -->
       <div>
         <p class="text2">지역(선택)</p>
         <select
           v-model="result"
           style="
             text-align: center;
-            width: 395px;
-            height: 42px;
+            width: 385px;
+            height: 48px;
             border: 1px solid #ffffff;
           "
         >
@@ -88,11 +84,8 @@ export default {};
 .search-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 50px;
 }
-
-
 
 .h1-text {
   font-family: "EliceDigitalBaeum_Regular";
@@ -103,37 +96,24 @@ export default {};
 .text1 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .text2 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
+  margin-bottom: 10px;
 }
 
 .search-submit {
+  width: 385px;
+  height: 57px;
   position: relative;
   padding: 12px 35px;
-  background: var(--color);
   font-size: 17px;
   font-weight: 500;
-  color: #ffffff;
   border: 1px solid #ffffff;
   border-radius: 8px;
-  box-shadow: 0 0 0 #fec1958c;
-  transition: all .3s ease-in-out;
-  cursor: pointer;
-}
-button {
-  position: relative;
-  padding: 12px 35px;
-  background: var(--color);
-  font-size: 17px;
-  font-weight: 500;
-  color: #181818;
-  border: 3px solid var(--color);
-  border-radius: 8px;
-  box-shadow: 0 0 0 #ff6a008c;
   transition: all .3s ease-in-out;
   cursor: pointer;
 }
@@ -273,6 +253,5 @@ button:hover .star-6 {
 .fil0 {
   fill: #ECB27B
 }
-/* 기존 버튼 및 별 효과 관련 규칙은 동일 */
 
 </style>

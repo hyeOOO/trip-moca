@@ -212,11 +212,25 @@ export default {
 </script>
 
 <style scoped>
+.first-section {
+  background-color: rgba(0, 0, 0, 0.3);
+  animation: carousel 30s infinite;
+}
+
+.fade-in-section {
+  opacity: 1 !important;
+  background-color: white !important;
+  z-index: 2;
+}
+
+.fade-in-section.visible {
+  opacity: 1;
+}
 .scroll-container {
   height: 100vh;
   overflow: hidden;
   position: relative;
-  /* background-color: #C3A386; */
+  background-color: white;  /* 배경색 추가 */
 }
 
 section {
@@ -225,19 +239,19 @@ section {
   height: 100vh;
   transition: all 1s cubic-bezier(0.645, 0.045, 0.355, 1);
   overflow: visible;
-  /* background-color: #C3A386;  */
+  background-color: white;  /* 배경색 추가 */
 }
 
 section.active {
   transform: translateY(0);
   opacity: 1;
-  z-index: 2;
+  z-index: 3;  /* fade-in-section보다 높게 설정 */
+  background-color: white;
 }
 
-section:not(.active) {
+section:not(.active):not(.fade-in-section) {
   opacity: 0;
   pointer-events: none;
-  /* background-color: #C3A386; */
 }
 
 section.next {
@@ -276,28 +290,26 @@ section.prev {
 
 .main-section {
   position: relative;
-  height: 88vh;
   padding: 100px;
   align-items: center;
-  text-align: center;
   color: white;
   z-index: 1;
 }
 
 .box1 {
   font-family: "EliceDigitalBaeum_Regular";
-  font-size: 30px;
+  font-size: 64px;
   text-align: left;
-  margin-top: 0;
+  padding-left: 45px;
 }
 
 .box2 {
-  margin-left: 140px;
+  margin-left: 115px;
   align-self: center;
-  background: rgba(0, 0, 0, 0.5);
-  height: auto;
-  width: 450px;
-  padding: 30px;
+  background: rgba(0, 0, 0, 0.4);
+  height: 600px;
+  width: 475px;
+  padding: 45px;
   border-radius: 20px;
 }
 
