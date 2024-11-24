@@ -212,15 +212,7 @@ export default {
     },
     closeModal() {
       this.$emit("update:modelValue", false);
-      showLoginModalFlag.value = false; // flag 값도 false로 설정
-
-      // 로그인하지 않고 모달을 닫을 때 router의 현재 경로를 메인으로 강제 이동
-      if (!this.authStore.isAuthenticated) {
-        this.$router.push("/");
-      }
-    },
-    toggleForm() {
-      this.isSignUp = !this.isSignUp;
+      showLoginModalFlag.value = false;
     },
     resetForms() {
       this.isSignUp = false;
@@ -286,7 +278,9 @@ export default {
               alert('위치 정보 접근을 허용해주세요.');
             }
           }
-          this.$router.push("/"); // 또는 다른 페이지로 리다이렉트
+
+          // 메인 페이지로의 리다이렉션 제거
+          // 대신 저장된 pendingAction이 있다면 실행됨 (AuthStore에서 처리)
 
         } else {
           alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
