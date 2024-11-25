@@ -7,54 +7,59 @@
       <br />
       <div>
         <p class="text2">출발일자</p>
-        <input
-          type="date"
+        <Datepicker
           v-model="startDate"
-          @focus="showStartPlaceholder = false"
-          @blur="showStartPlaceholder = !startDate"
-          placeholder=" "
-          :min="today"
-        />
+          :min-date="new Date()"
+          :enable-time-picker="false"
+          :format="formatDate"
+          :placeholder="'날짜를 선택해주세요'"
+          :auto-apply="true"
+          locale="ko"
+          :clearable="false"
+          @update:model-value="updateStartDate"
+          menuClassName="custom-datepicker-menu"
+          :dark="true"
+        >
+          <template #trigger>
+            <div class="date-trigger" :class="{ 'has-value': startDate }">
+              {{ startDate ? formatDate(startDate) : "날짜를 선택해주세요" }}
+            </div>
+          </template>
+        </Datepicker>
       </div>
       <div>
         <p class="text2">도착일자</p>
-        <input
-          type="date"
+        <Datepicker
           v-model="endDate"
-          @focus="showEndPlaceholder = false"
-          @blur="showEndPlaceholder = !endDate"
-          placeholder=" "
-          :min="startDate || today"
-        />
+          :min-date="startDate || new Date()"
+          :enable-time-picker="false"
+          :format="formatDate"
+          :placeholder="'날짜를 선택해주세요'"
+          :auto-apply="true"
+          locale="ko"
+          :clearable="false"
+          menuClassName="custom-datepicker-menu"
+          :dark="true"
+        >
+          <template #trigger>
+            <div class="date-trigger" :class="{ 'has-value': endDate }">
+              {{ endDate ? formatDate(endDate) : "날짜를 선택해주세요" }}
+            </div>
+          </template>
+        </Datepicker>
       </div>
       <div>
         <p class="text2">지역</p>
-        <select
-          v-model="selectedArea"
-          style="
-            text-align: center;
-            width: 385px;
-            height: 48px;
-            border: 1px solid #ffffff;
-          "
-        >
+        <select class="select-location" v-model="selectedArea">
           <option value="">지역을 선택하세요</option>
-          <option
-            v-for="region in regions"
-            :key="region.code"
-            :value="region.code"
-          >
+          <option v-for="region in regions" :key="region.code" :value="region.code">
             {{ region.name }}
           </option>
         </select>
       </div>
 
       <!-- 버튼을 search-group 안으로 이동 -->
-      <button
-        class="search-submit"
-        @click="handleSubmit"
-        :disabled="!isFormValid"
-      >
+      <button class="search-submit" @click="handleSubmit" :disabled="!isFormValid">
         출 발 하 기
         <div class="star-1">
           <svg
@@ -221,18 +226,16 @@
   </div>
 
   <!-- welcomeAnimation 추가 -->
-  <welcomeAnimation
-    v-if="showAnimation"
-    @animation-complete="handleAnimationComplete"
-  />
+  <welcomeAnimation v-if="showAnimation" @animation-complete="handleAnimationComplete" />
 </template>
-
 
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAiRecommendPlanStore } from "@/store/aiRecommendPlanStore";
 import welcomeAnimation from "@/views/animationView/welcomeAnimation.vue";
+import Datepicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
 const router = useRouter();
 const aiRecommendStore = useAiRecommendPlanStore();
@@ -240,14 +243,31 @@ const aiRecommendStore = useAiRecommendPlanStore();
 const startDate = ref("");
 const endDate = ref("");
 const selectedArea = ref("");
-const showStartPlaceholder = ref(true);
-const showEndPlaceholder = ref(true);
+// const showStartPlaceholder = ref(true);
+// const showEndPlaceholder = ref(true);
 const isLoading = ref(false);
 const showAnimation = ref(false);
 const elapsedSeconds = ref(0);
 let timer = null;
 
 const today = new Date().toISOString().split("T")[0];
+
+// 날짜 포맷 함수
+const formatDate = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// startDate가 변경될 때 endDate 검증
+const updateStartDate = (newDate) => {
+  if (endDate.value && new Date(endDate.value) < new Date(newDate)) {
+    endDate.value = null;
+  }
+};
 
 const regions = [
   { code: "1", name: "서울" },
@@ -359,7 +379,19 @@ const handleAnimationComplete = async () => {
 </script>
 
 <style scoped>
-.search-group {
+.select-location {
+  text-align: center;
+  width: 385px;
+  height: 48px;
+  border: 1px solid #ffffff;
+}
+
+.select-location:hover {
+  cursor: pointer;
+  border: 1px solid #ecb27b;
+}
+
+.select-location .search-group {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -381,6 +413,7 @@ const handleAnimationComplete = async () => {
 .text2 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
+  margin-bottom: 5px;
 }
 
 .search-submit {
@@ -391,11 +424,12 @@ const handleAnimationComplete = async () => {
   font-weight: 500;
   color: #ffffff;
   border: 1px solid #ffffff;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 0 0 #fec1958c;
   transition: all 0.3s ease-in-out;
   cursor: pointer;
   margin-top: 55px;
+  width: 100%;
 }
 
 button {
@@ -406,7 +440,7 @@ button {
   font-weight: 500;
   color: #181818;
   border: 3px solid var(--color);
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 0 0 #ff6a008c;
   transition: all 0.3s ease-in-out;
   cursor: pointer;
@@ -637,5 +671,96 @@ select option {
   100% {
     transform: rotate(360deg);
   }
+}
+
+:deep(.custom-datepicker-menu) {
+  background-color: #2a2a2a !important;
+  border: 1px solid #3a3a3a !important;
+  border-radius: 6px !important;
+  font-family: "EliceDigitalBaeum_Regular" !important;
+}
+
+:deep(.dp__main) {
+  font-family: var(--dp-font-family);
+  user-select: none;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+:deep(.dp__active_date) {
+  background-color: #ecb27b !important;
+  color: #ffffff !important;
+}
+
+:deep(.dp__date_hover) {
+  background-color: rgba(236, 178, 123, 0.2) !important;
+}
+
+:deep(.dp__today) {
+  border: 1px solid #ecb27b !important;
+}
+
+:deep(.dp__arrow_bottom) {
+  border-top: 2px solid #ffffff !important;
+  border-right: 2px solid #ffffff !important;
+}
+
+:deep(.dp__month_year_select) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__menu_index) {
+  font-family: "Pretendard-Light";
+}
+
+:deep(.dp__calendar_header) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__cell_inner) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__disabled) {
+  color: #666666 !important;
+}
+
+.date-trigger {
+  width: 385px;
+  height: 48px;
+  background-color: transparent;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  color: #ffffff80;
+  font-family: "EliceDigitalBaeum_Regular";
+  padding: 0 12px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  justify-content: center;
+}
+
+.date-trigger.has-value {
+  color: #ffffff;
+}
+
+.date-trigger:hover {
+  border-color: #ecb27b;
+}
+
+:deep(.dp__input) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__input_icon) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__overlay) {
+  background-color: rgba(0, 0, 0, 0.7) !important;
 }
 </style>
