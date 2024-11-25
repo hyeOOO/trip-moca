@@ -11,7 +11,6 @@
       <!-- 비로그인 상태일 때 메뉴 -->
       <template v-if="!isAuthenticated">
         <button @click="handleOpenLoginModal">로그인</button>
-        <button @click="signup">회원가입</button>
       </template>
       <!-- 로그인 상태일 때 메뉴 -->
       <template v-else>
@@ -67,10 +66,6 @@ export default {
     },
     handleOpenLoginModal() {
       this.openLoginModal(); // inject된 함수 사용
-      this.showMenu = false;
-    },
-    signup() {
-      console.log("회원가입 클릭됨");
       this.showMenu = false;
     },
     async handleLogout() {
