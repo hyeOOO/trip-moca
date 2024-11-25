@@ -8,8 +8,8 @@
     <div class="container">
       <div class="TitleContainer">
         <h1 class="Title">
-          인생샷 명소부터 숨은 맛집까지,<br />트립모카와 함께 써내려가는
-          우리만의 여행 이야기
+          <span class="brand">TRIPMOCA ☕</span><br />
+          당신의 여행을 한 잔의 향긋한 이야기로 담아내다
         </h1>
       </div>
       <!-- 책 컴포넌트 -->
@@ -128,7 +128,7 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
 // 제목 스타일
 .TitleContainer {
   position: fixed;
-  top: 120px;
+  top: 60px;
   left: 0;
   right: 0;
   text-align: center;
@@ -138,8 +138,17 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
 .Title {
   font-family: "EliceDigitalBaeum_Regular";
   font-size: 50px;
-  color: #000;
   padding: 20px;
+}
+
+.Title .brand {
+  color: #988D82;
+  font-size: 70px;
+}
+
+
+.Title :last-child {
+  color: #000;
 }
 
 // 책 컴포넌트

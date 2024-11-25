@@ -243,15 +243,15 @@ section {
   width: 100%;
   height: 100vh;
   transition: all 1s cubic-bezier(0.645, 0.045, 0.355, 1);
-  overflow: visible;
-  background-color: white; /* 배경색 추가 */
+  transform: translateY(100%);
 }
 
 section.active {
   transform: translateY(0);
-  opacity: 1;
-  z-index: 3; /* fade-in-section보다 높게 설정 */
-  background-color: white;
+}
+
+section:first-child {
+  transform: translateY(0); /* 첫 번째 섹션은 처음부터 보이게 */
 }
 
 section:not(.active):not(.fade-in-section) {
@@ -323,7 +323,6 @@ section.prev {
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
   cursor: pointer;
 }
 

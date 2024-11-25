@@ -141,7 +141,7 @@ const DestinationGalleryData = [
     nameKo: '울산',
     nameEn: 'Ulsan',
     image:
-      'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gwanganBridge.jpg',
+      'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/ulsan1.jpg',
     image1:
       "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/ulsan1.jpg",
     districts: ['중구', '남구', '동구', '북구', '울주군'],

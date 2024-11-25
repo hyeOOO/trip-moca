@@ -74,10 +74,11 @@ body {
   top: 0;
   left: 0;
   z-index: 9999;
-  background: #fff; /* 배경색 추가 */
+  background-color: white !important;
   display: flex; /* Flexbox 추가 */
   justify-content: center; /* 가로 중앙 정렬 */
   align-items: center; /* 세로 중앙 정렬 */
+  color: black !important;
 }
 
 .criterion {
@@ -156,6 +157,7 @@ body {
   line-height: 40px;
   opacity: 0;
   overflow: hidden;
+  color: black !important;
 }
 .text::after {
   z-index: -1;
@@ -5523,5 +5525,8 @@ body {
     opacity: 0;
     width: 25%;
   }
+}
+.welcome-animation .text {
+  color: #000000;
 }
 </style>

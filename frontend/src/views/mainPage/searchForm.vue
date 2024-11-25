@@ -12,7 +12,7 @@
           :min-date="new Date()"
           :enable-time-picker="false"
           :format="formatDate"
-          :placeholder="'날짜를 선택해주세요'"
+
           :auto-apply="true"
           locale="ko"
           :clearable="false"
@@ -22,7 +22,7 @@
         >
           <template #trigger>
             <div class="date-trigger" :class="{ 'has-value': startDate }">
-              {{ startDate ? formatDate(startDate) : "날짜를 선택해주세요" }}
+              {{ startDate ? formatDate(startDate) : "" }}
             </div>
           </template>
         </Datepicker>
@@ -34,7 +34,7 @@
           :min-date="startDate || new Date()"
           :enable-time-picker="false"
           :format="formatDate"
-          :placeholder="'날짜를 선택해주세요'"
+
           :auto-apply="true"
           locale="ko"
           :clearable="false"
@@ -43,7 +43,7 @@
         >
           <template #trigger>
             <div class="date-trigger" :class="{ 'has-value': endDate }">
-              {{ endDate ? formatDate(endDate) : "날짜를 선택해주세요" }}
+              {{ endDate ? formatDate(endDate) : "" }}
             </div>
           </template>
         </Datepicker>
@@ -51,7 +51,7 @@
       <div>
         <p class="text2">지역</p>
         <select class="select-location" v-model="selectedArea">
-          <option value="">지역을 선택하세요</option>
+          <!-- <option value="">지역을 선택하세요</option> -->
           <option v-for="region in regions" :key="region.code" :value="region.code">
             {{ region.name }}
           </option>
