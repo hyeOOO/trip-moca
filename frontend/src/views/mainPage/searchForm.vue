@@ -81,7 +81,131 @@
             </g>
           </svg>
         </div>
-        <!-- 나머지 star divs 유지... -->
+        <div class="star-2">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-3">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-4">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-5">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-6">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
       </button>
     </div>
   </div>
@@ -105,21 +229,21 @@
 
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useAiRecommendPlanStore } from "@/store/aiRecommendPlanStore";
 import welcomeAnimation from "@/views/animationView/welcomeAnimation.vue";
 
 const router = useRouter();
 const aiRecommendStore = useAiRecommendPlanStore();
 
-const startDate = ref('');
-const endDate = ref('');
-const selectedArea = ref('');
+const startDate = ref("");
+const endDate = ref("");
+const selectedArea = ref("");
 const showStartPlaceholder = ref(true);
 const showEndPlaceholder = ref(true);
 const isLoading = ref(false);
-const showAnimation = ref(false); 
+const showAnimation = ref(false);
 const elapsedSeconds = ref(0);
 let timer = null;
 
@@ -192,7 +316,7 @@ const handleSubmit = async () => {
     aiRecommendStore.resetStore();
 
     // 선택된 목적지 정보 저장
-    const selectedRegion = regions.find(r => r.code === selectedArea.value);
+    const selectedRegion = regions.find((r) => r.code === selectedArea.value);
     aiRecommendStore.$patch({
       selectedDestination: {
         id: null,
@@ -200,7 +324,7 @@ const handleSubmit = async () => {
         areaName: selectedRegion.name,
         title: selectedRegion.name,
         numberOfDays: daysDiff,
-        info: '',
+        info: "",
       },
     });
 
@@ -208,14 +332,13 @@ const handleSubmit = async () => {
     await aiRecommendStore.generateAiPlan();
 
     // 최소 로딩 시간 보장
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2000));
+    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 2000));
     await minLoadingTime;
 
     // 로딩 중단 및 welcomeAnimation 표시
     stopTimer();
     isLoading.value = false;
     showAnimation.value = true;
-
   } catch (error) {
     console.error("Error creating plan:", error);
     alert("여행 계획 생성 중 오류가 발생했습니다.");
@@ -230,7 +353,7 @@ const handleAnimationComplete = async () => {
   // 애니메이션 완료 후 페이지 이동
   await router.push({
     name: "modifyRecommendTour",
-    params: { id: selectedArea.value }
+    params: { id: selectedArea.value },
   });
 };
 </script>
@@ -515,5 +638,4 @@ select option {
     transform: rotate(360deg);
   }
 }
-
 </style>
