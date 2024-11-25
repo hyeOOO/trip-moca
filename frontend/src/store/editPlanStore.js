@@ -155,6 +155,14 @@ export const usePlanStore = defineStore('editPlanStore', {
       this.cartItems = [];
       localStorage.removeItem('cartItems');
     },
+    removeFromCart(attractionId) {
+      try {
+        this.cartItems = this.cartItems.filter(item => item.attractionId !== attractionId);
+        localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+      } catch (error) {
+        console.error('Remove from cart error:', error);
+      }
+    },
   },
 
   getters: {

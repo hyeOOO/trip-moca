@@ -234,6 +234,8 @@ import { useRouter } from "vue-router";
 import { useAiRecommendPlanStore } from "@/store/aiRecommendPlanStore";
 import welcomeAnimation from "@/views/animationView/welcomeAnimation.vue";
 
+const emit = defineEmits(["ai-loading-complete"]);
+
 const router = useRouter();
 const aiRecommendStore = useAiRecommendPlanStore();
 
@@ -306,6 +308,7 @@ const handleSubmit = async () => {
     }
 
     isLoading.value = true;
+    emit('ai-loading', true);
     startTimer();
 
     const start = new Date(startDate.value);
@@ -351,6 +354,7 @@ const handleSubmit = async () => {
 const handleAnimationComplete = async () => {
   showAnimation.value = false;
   // 애니메이션 완료 후 페이지 이동
+  emit('ai-loading', false);
   await router.push({
     name: "modifyRecommendTour",
     params: { id: selectedArea.value },
@@ -549,13 +553,11 @@ button:hover .star-6 {
 }
 
 .search-submit:disabled {
-  background: #cccccc;
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 .search-submit:disabled:hover {
-  background: #cccccc;
   color: #ffffff;
   box-shadow: none;
 }
@@ -586,6 +588,15 @@ select option {
   color: #ffffff;
 }
 /* 로딩오버레이 */
+.fullscreen-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background-color: white;
+}
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -596,6 +607,11 @@ select option {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
+}
+.welcome-animation {
+  z-index: 9999;
+  position: fixed;
 }
 
 .loading-content {

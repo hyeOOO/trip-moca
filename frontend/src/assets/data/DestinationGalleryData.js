@@ -361,7 +361,7 @@ const DestinationGalleryData = [
     nameKo: '전북특별자치도',
     nameEn: 'Jeonbuk',
     image:
-      'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/gangneung-7111058_1280.jpg',
+      'https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/jeonbuk1.jpg',
     image1:
       "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/jeonbuk1.jpg",
     districts: [

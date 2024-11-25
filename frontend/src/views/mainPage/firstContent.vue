@@ -70,7 +70,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 $bookAngle: 60deg;
-$speed: 5s;
+$speed: 2s;
 $borderColor: #555;
 
 // 책 이미지 수정
@@ -139,7 +139,6 @@ $images: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/su
   font-family: "EliceDigitalBaeum_Regular";
   font-size: 50px;
   color: #000;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   padding: 20px;
 }
 

@@ -59,7 +59,6 @@ export default {
   font-family: "EliceDigitalBaeum_Regular";
   font-size: 48px;
   color: #000;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   margin: 0;
   padding: 20px;
 }

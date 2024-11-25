@@ -3,32 +3,31 @@
     <navBar />
     <div class="container">
       <h1 class="title">
-        여행계획을 짜기가 어려우시다고요?! 여행지만 선택해주세요!!
+        여행계획을 짜기가 어려우시다고요?! 모카가 도와드릴게요!!
       </h1>
-      <div class="search-section">
-        <form autocomplete="off" @submit="handleSubmit">
-          <div
-            class="finder"
-            :class="{ active: isActive, processing: isProcessing }"
+      <div class="search-container">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="지역명을 입력해주세요"
+          v-model="searchQuery"
+        />
+        <button class="search-button">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="search-icon"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <div class="finder__outer">
-              <div class="finder__inner">
-                <div class="finder__icon" ref="icon"></div>
-                <input
-                  class="finder__input"
-                  type="text"
-                  name="q"
-                  ref="searchInput"
-                  v-model="searchQuery"
-                  @focus="handleFocus"
-                  @blur="handleBlur"
-                  :disabled="isProcessing"
-                  placeholder="혹시 찾는 곳이 있으면 검색해주세요!"
-                />
-              </div>
-            </div>
-          </div>
-        </form>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </button>
       </div>
 
       <!-- 도시 그리드 -->
@@ -44,7 +43,8 @@
               class="front"
               :style="{ backgroundImage: `url(${destination.image1})` }"
             >
-              <h1 class="text-shadow">{{ destination.nameEn }}</h1>
+              <h1 class="text-shadow">{{ destination.nameKo }}</h1>
+              <p>{{ destination.nameEn }}</p>
             </div>
             <div class="back">
               <h2>{{ destination.nameKo }}</h2>
@@ -109,9 +109,6 @@ export default defineComponent({
     return {
       destinations: DestinationGalleryData,
       searchQuery: "",
-      isActive: false,
-      isProcessing: false,
-      isModalOpen: false,
       selectedDestination: null,
       showAnimation: false,
       isLoading: false,
@@ -119,6 +116,7 @@ export default defineComponent({
       loadingTimer: null,
       elapsedSeconds: 0,
       planGenerationComplete: false,
+      isModalOpen: false,
     };
   },
 
@@ -308,10 +306,46 @@ export default defineComponent({
 }
 
 /* 검색 섹션 스타일 */
-.search-section {
-  width: 1130px;
-  margin: 15px auto 15px;
+.search-container {
+  font-family: "Pretendard-Light";
+  position: relative;
+  max-width: 768px;
+  margin: 1rem auto;
 }
+
+.search-input {
+  font-family: "Pretendard-Light";
+  width: 100%;
+  padding: 0.75rem 17px;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #6b7280;
+}
+
+.search-button {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.search-icon {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: #9ca3af;
+}
+
+.search-icon:hover {
+  color: #6b7280;
+}
+
 
 /* 검색 폼 스타일 */
 form {
@@ -509,9 +543,13 @@ form {
 
 /* 카드 내부 텍스트 스타일 */
 .flip > .front h1 {
-  font-size: 2em;
+  font-size: 23px;
   margin: 0;
-  font-family: "Roboto Mono";
+  font-family: "Pretendard-SemiBold";
+}
+
+.flip > .front p{
+  font-family: 'Pretendard-Regular';
 }
 
 .flip > .back h2 {
@@ -523,20 +561,6 @@ form {
   font-size: 0.9125rem;
   line-height: 160%;
   color: #ffffff;
-}
-
-/* 텍스트 그림자 효과 */
-.text-shadow {
-  text-shadow: 1px 1px rgba(0, 0, 0, 0.04), 2px 2px rgba(0, 0, 0, 0.04),
-    3px 3px rgba(0, 0, 0, 0.04), 4px 4px rgba(0, 0, 0, 0.04),
-    0.125rem 0.125rem rgba(0, 0, 0, 0.04), 6px 6px rgba(0, 0, 0, 0.04),
-    7px 7px rgba(0, 0, 0, 0.04), 8px 8px rgba(0, 0, 0, 0.04),
-    9px 9px rgba(0, 0, 0, 0.04), 0.3125rem 0.3125rem rgba(0, 0, 0, 0.04),
-    11px 11px rgba(0, 0, 0, 0.04), 12px 12px rgba(0, 0, 0, 0.04),
-    13px 13px rgba(0, 0, 0, 0.04), 14px 14px rgba(0, 0, 0, 0.04),
-    0.625rem 0.625rem rgba(0, 0, 0, 0.04), 16px 16px rgba(0, 0, 0, 0.04),
-    17px 17px rgba(0, 0, 0, 0.04), 18px 18px rgba(0, 0, 0, 0.04),
-    19px 19px rgba(0, 0, 0, 0.04), 1.25rem 1.25rem rgba(0, 0, 0, 0.04);
 }
 
 .fullscreen-animation {

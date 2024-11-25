@@ -140,12 +140,6 @@ export default {
   src: url("assets/fonts/Pretendard-Thin.ttf");
 }
 
-// .form-input {
-//   padding: 10px;
-//   border: none;
-//   border-radius: 5px;
-//   background: white;
-// }
 body.modal-open {
   overflow: hidden;
   padding-right: 17px;
