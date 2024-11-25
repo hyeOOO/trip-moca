@@ -7,12 +7,24 @@
       </h1>
       <div class="search-section">
         <form autocomplete="off" @submit="handleSubmit">
-          <div class="finder" :class="{ active: isActive, processing: isProcessing }">
+          <div
+            class="finder"
+            :class="{ active: isActive, processing: isProcessing }"
+          >
             <div class="finder__outer">
               <div class="finder__inner">
                 <div class="finder__icon" ref="icon"></div>
-                <input class="finder__input" type="text" name="q" ref="searchInput" v-model="searchQuery"
-                  @focus="handleFocus" @blur="handleBlur" :disabled="isProcessing" placeholder="혹시 찾는 곳이 있으면 검색해주세요!" />
+                <input
+                  class="finder__input"
+                  type="text"
+                  name="q"
+                  ref="searchInput"
+                  v-model="searchQuery"
+                  @focus="handleFocus"
+                  @blur="handleBlur"
+                  :disabled="isProcessing"
+                  placeholder="혹시 찾는 곳이 있으면 검색해주세요!"
+                />
               </div>
             </div>
           </div>
@@ -21,10 +33,17 @@
 
       <!-- 도시 그리드 -->
       <div class="destination-grid">
-        <div v-for="(destination, index) in filteredDestinations" :key="destination.id" class="destination-item"
-          @click="selectDestination(destination)">
+        <div
+          v-for="(destination, index) in filteredDestinations"
+          :key="destination.id"
+          class="destination-item"
+          @click="selectDestination(destination)"
+        >
           <div :class="['flip', { 'flip-vertical': index % 2 === 1 }]">
-            <div class="front" :style="{ backgroundImage: `url(${destination.image1})` }">
+            <div
+              class="front"
+              :style="{ backgroundImage: `url(${destination.image1})` }"
+            >
               <h1 class="text-shadow">{{ destination.nameEn }}</h1>
             </div>
             <div class="back">
@@ -47,11 +66,19 @@
       </div>
 
       <!-- 모달 컴포넌트 -->
-      <travelModal v-if="isModalOpen" v-model:isOpen="isModalOpen" :destinationImage="selectedDestination?.image1"
-        :destinationName="selectedDestination?.nameKo" :destinationInfo="selectedDestination?.info"
-        @confirm="handleModalConfirm" />
+      <travelModal
+        v-if="isModalOpen"
+        v-model:isOpen="isModalOpen"
+        :destinationImage="selectedDestination?.image1"
+        :destinationName="selectedDestination?.nameKo"
+        :destinationInfo="selectedDestination?.info"
+        @confirm="handleModalConfirm"
+      />
     </div>
-    <welcomeAnimation v-if="showAnimation" @animation-complete="handleAnimationComplete" />
+    <welcomeAnimation
+      v-if="showAnimation"
+      @animation-complete="handleAnimationComplete"
+    />
   </div>
 </template>
 
@@ -91,6 +118,7 @@ export default defineComponent({
       loadingStartTime: null,
       loadingTimer: null,
       elapsedSeconds: 0,
+      planGenerationComplete: false,
     };
   },
 
@@ -102,29 +130,40 @@ export default defineComponent({
 
       return this.destinations.filter((destination) => {
         // 정확한 도시 이름 매칭 (가중치 높음)
-        if (destination.nameKo === search ||
-          destination.nameEn.toLowerCase() === search) {
+        if (
+          destination.nameKo === search ||
+          destination.nameEn.toLowerCase() === search
+        ) {
           return true;
         }
 
         // 부분 도시 이름 매칭
-        if (destination.nameKo.toLowerCase().includes(search) ||
-          destination.nameEn.toLowerCase().includes(search)) {
+        if (
+          destination.nameKo.toLowerCase().includes(search) ||
+          destination.nameEn.toLowerCase().includes(search)
+        ) {
           return true;
         }
 
         // 정확한 시/군/구 매칭
-        if (destination.districts && destination.districts.some(district => {
-          const districtLower = district.toLowerCase();
-          // 정확한 매칭 ("강남구" === "강남구")
-          if (districtLower === search) return true;
-          // 부분 매칭 중 구/시/군 단위 확인
-          if (search.endsWith('구') || search.endsWith('시') || search.endsWith('군')) {
+        if (
+          destination.districts &&
+          destination.districts.some((district) => {
+            const districtLower = district.toLowerCase();
+            // 정확한 매칭 ("강남구" === "강남구")
+            if (districtLower === search) return true;
+            // 부분 매칭 중 구/시/군 단위 확인
+            if (
+              search.endsWith("구") ||
+              search.endsWith("시") ||
+              search.endsWith("군")
+            ) {
+              return districtLower.includes(search);
+            }
+            // 일반 부분 매칭
             return districtLower.includes(search);
-          }
-          // 일반 부분 매칭
-          return districtLower.includes(search);
-        })) {
+          })
+        ) {
           return true;
         }
 
@@ -134,8 +173,8 @@ export default defineComponent({
     formattedLoadingTime() {
       const minutes = Math.floor(this.elapsedSeconds / 60);
       const seconds = this.elapsedSeconds % 60;
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
+      return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    },
   },
 
   methods: {
@@ -182,12 +221,12 @@ export default defineComponent({
     },
 
     // 모달에서 선택 완료시 처리
-    // 모달에서 선택 완료시 처리
     async handleModalConfirm({ days }) {
       if (this.selectedDestination) {
         try {
           this.isLoading = true;
           this.startLoadingTimer();
+          this.planGenerationComplete = false; // 초기화
 
           // Store 초기화
           this.aiRecommendStore.resetStore();
@@ -212,24 +251,34 @@ export default defineComponent({
           const endTime = new Date();
           const loadingDuration = endTime - this.loadingStartTime;
           if (loadingDuration < 2000) {
-            await new Promise(resolve => setTimeout(resolve, 2000 - loadingDuration));
+            await new Promise((resolve) =>
+              setTimeout(resolve, 2000 - loadingDuration)
+            );
           }
 
-          // 페이지 이동은 API 호출이 완료된 후에 실행
-          await this.router.push({
-            name: "modifyRecommendTour",
-            params: { id: this.selectedDestination.id.toString() },
-          });
+          this.planGenerationComplete = true; // AI 계획 생성 완료
+          this.stopLoadingTimer();
+          this.isLoading = false;
 
+          // welcomeAnimation 표시
+          this.showAnimation = true;
         } catch (error) {
           console.error("Error during plan creation:", error);
           alert("여행 계획을 생성하는 중 오류가 발생했습니다.");
-        } finally {
           this.stopLoadingTimer();
           this.isLoading = false;
         }
       }
-    }
+    },
+    // welcomeAnimation이 완료되면 호출될 메서드
+    async handleAnimationComplete() {
+      this.showAnimation = false;
+      // 애니메이션이 완료된 후 페이지 이동
+      await this.router.push({
+        name: "modifyRecommendTour",
+        params: { id: this.selectedDestination.id.toString() },
+      });
+    },
   },
 });
 </script>
@@ -404,8 +453,8 @@ form {
 }
 
 /* 카드 앞면과 뒷면 공통 스타일 */
-.flip>.front,
-.flip>.back {
+.flip > .front,
+.flip > .back {
   display: block;
   transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transition-duration: 0.5s;
@@ -421,12 +470,12 @@ form {
 }
 
 /* 카드 플립 애니메이션 */
-.flip>.front {
+.flip > .front {
   transform: rotateY(0deg);
   background-color: #313131;
 }
 
-.flip>.back {
+.flip > .back {
   position: absolute;
   opacity: 0;
   top: 0px;
@@ -436,41 +485,41 @@ form {
   transform: rotateY(-180deg);
 }
 
-.flip:hover>.front {
+.flip:hover > .front {
   transform: rotateY(180deg);
 }
 
-.flip:hover>.back {
+.flip:hover > .back {
   opacity: 1;
   transform: rotateY(0deg);
 }
 
 /* 수직 플립 효과 */
-.flip.flip-vertical>.back {
+.flip.flip-vertical > .back {
   transform: rotateX(-180deg);
 }
 
-.flip.flip-vertical:hover>.front {
+.flip.flip-vertical:hover > .front {
   transform: rotateX(180deg);
 }
 
-.flip.flip-vertical:hover>.back {
+.flip.flip-vertical:hover > .back {
   transform: rotateX(0deg);
 }
 
 /* 카드 내부 텍스트 스타일 */
-.flip>.front h1 {
+.flip > .front h1 {
   font-size: 2em;
   margin: 0;
   font-family: "Roboto Mono";
 }
 
-.flip>.back h2 {
+.flip > .back h2 {
   font-size: 1.3em;
   margin-bottom: 1em;
 }
 
-.flip>.back p {
+.flip > .back p {
   font-size: 0.9125rem;
   line-height: 160%;
   color: #ffffff;

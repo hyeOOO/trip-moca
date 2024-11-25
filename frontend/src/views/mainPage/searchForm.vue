@@ -7,20 +7,30 @@
       <br />
       <div>
         <p class="text2">출발일자</p>
-        <input type="date" v-model="startDate" @focus="showStartPlaceholder = false"
-          @blur="showStartPlaceholder = !startDate" placeholder=" " :min="today" />
-        <span v-if="showStartPlaceholder" class="custom-placeholder">선택하세요</span>
+        <input
+          type="date"
+          v-model="startDate"
+          @focus="showStartPlaceholder = false"
+          @blur="showStartPlaceholder = !startDate"
+          placeholder=" "
+          :min="today"
+        />
       </div>
       <div>
         <p class="text2">도착일자</p>
-        <input type="date" v-model="endDate" @focus="showEndPlaceholder = false" @blur="showEndPlaceholder = !endDate"
-          placeholder=" " :min="startDate || today" />
-        <span v-if="showEndPlaceholder" class="custom-placeholder">선택하세요</span>
+        <input
+          type="date"
+          v-model="endDate"
+          @focus="showEndPlaceholder = false"
+          @blur="showEndPlaceholder = !endDate"
+          placeholder=" "
+          :min="startDate || today"
+        />
       </div>
       <div>
-        <p class="text2">지역(선택)</p>
+        <p class="text2">지역</p>
         <select
-          v-model="result"
+          v-model="selectedArea"
           style="
             text-align: center;
             width: 385px;
@@ -28,10 +38,11 @@
             border: 1px solid #ffffff;
           "
         >
+          <option value="">지역을 선택하세요</option>
           <option
-            v-for="(region, index) in 지역"
-            :key="index"
-            :value="region.value"
+            v-for="region in regions"
+            :key="region.code"
+            :value="region.code"
           >
             {{ region.name }}
           </option>
@@ -39,54 +50,204 @@
       </div>
 
       <!-- 버튼을 search-group 안으로 이동 -->
-      <button class="search-submit" @click="handleSubmit" :disabled="!isFormValid">출 발 하 기
+      <button
+        class="search-submit"
+        @click="handleSubmit"
+        :disabled="!isFormValid"
+      >
+        출 발 하 기
         <div class="star-1">
-          <svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 784.11 815.53"
-            style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
-            version="1.1" xml:space="preserve" xmlns="http://www.w3.org/2000/svg">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs></defs>
             <g id="Layer_x0020_1">
               <metadata id="CorelCorpID_0Corel-Layer"></metadata>
               <path
                 d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
-                class="fil0"></path>
+                class="fil0"
+              ></path>
             </g>
           </svg>
         </div>
-        <!-- 나머지 star divs... -->
+        <div class="star-2">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-3">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-4">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-5">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
+        <div class="star-6">
+          <svg
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            viewBox="0 0 784.11 815.53"
+            style="
+              shape-rendering: geometricPrecision;
+              text-rendering: geometricPrecision;
+              image-rendering: optimizeQuality;
+              fill-rule: evenodd;
+              clip-rule: evenodd;
+            "
+            version="1.1"
+            xml:space="preserve"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs></defs>
+            <g id="Layer_x0020_1">
+              <metadata id="CorelCorpID_0Corel-Layer"></metadata>
+              <path
+                d="M392.05 0c-20.9,210.08 -184.06,378.41 -392.05,407.78 207.96,29.37 371.12,197.68 392.05,407.74 20.93,-210.06 184.09,-378.37 392.05,-407.74 -207.98,-29.38 -371.16,-197.69 -392.06,-407.78z"
+                class="fil0"
+              ></path>
+            </g>
+          </svg>
+        </div>
       </button>
     </div>
+  </div>
 
-    <!-- 로딩 오버레이 -->
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="spinner"></div>
-        <h2 class="loading-text">AI가 최적의 여행 계획을 만들고 있습니다</h2>
-        <p class="loading-description">잠시만 기다려주세요...</p>
-        <p class="loading-timer">{{ formattedTime }}</p>
-      </div>
+  <!-- 로딩 오버레이 - fixed positioning으로 변경 -->
+  <div v-if="isLoading" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <h2 class="loading-text">AI가 최적의 여행 계획을 만들고 있습니다</h2>
+      <p class="loading-description">잠시만 기다려주세요...</p>
+      <p class="loading-timer">{{ formattedTime }}</p>
     </div>
   </div>
+
+  <!-- welcomeAnimation 추가 -->
+  <welcomeAnimation
+    v-if="showAnimation"
+    @animation-complete="handleAnimationComplete"
+  />
 </template>
 
+
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import { useAiRecommendPlanStore } from "@/store/aiRecommendPlanStore";
+import welcomeAnimation from "@/views/animationView/welcomeAnimation.vue";
 
 const router = useRouter();
 const aiRecommendStore = useAiRecommendPlanStore();
 
-const startDate = ref('');
-const endDate = ref('');
-const selectedArea = ref('');
+const startDate = ref("");
+const endDate = ref("");
+const selectedArea = ref("");
 const showStartPlaceholder = ref(true);
 const showEndPlaceholder = ref(true);
 const isLoading = ref(false);
+const showAnimation = ref(false);
 const elapsedSeconds = ref(0);
 let timer = null;
 
-const today = new Date().toISOString().split('T')[0];
+const today = new Date().toISOString().split("T")[0];
 
 const regions = [
   { code: "1", name: "서울" },
@@ -105,20 +266,22 @@ const regions = [
   { code: "36", name: "경상남도" },
   { code: "37", name: "전라북도" },
   { code: "38", name: "전라남도" },
-  { code: "39", name: "제주도" }
+  { code: "39", name: "제주도" },
 ];
 
 const isFormValid = computed(() => {
-  return startDate.value &&
+  return (
+    startDate.value &&
     endDate.value &&
     selectedArea.value &&
-    new Date(endDate.value) >= new Date(startDate.value);
+    new Date(endDate.value) >= new Date(startDate.value)
+  );
 });
 
 const formattedTime = computed(() => {
   const minutes = Math.floor(elapsedSeconds.value / 60);
   const seconds = elapsedSeconds.value % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 });
 
 const startTimer = () => {
@@ -153,7 +316,7 @@ const handleSubmit = async () => {
     aiRecommendStore.resetStore();
 
     // 선택된 목적지 정보 저장
-    const selectedRegion = regions.find(r => r.code === selectedArea.value);
+    const selectedRegion = regions.find((r) => r.code === selectedArea.value);
     aiRecommendStore.$patch({
       selectedDestination: {
         id: null,
@@ -161,7 +324,7 @@ const handleSubmit = async () => {
         areaName: selectedRegion.name,
         title: selectedRegion.name,
         numberOfDays: daysDiff,
-        info: '',
+        info: "",
       },
     });
 
@@ -169,22 +332,29 @@ const handleSubmit = async () => {
     await aiRecommendStore.generateAiPlan();
 
     // 최소 로딩 시간 보장
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2000));
+    const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 2000));
     await minLoadingTime;
 
-    // 계획 수정 페이지로 이동
-    await router.push({
-      name: "modifyRecommendTour",
-      params: { id: selectedArea.value }
-    });
-
+    // 로딩 중단 및 welcomeAnimation 표시
+    stopTimer();
+    isLoading.value = false;
+    showAnimation.value = true;
   } catch (error) {
     console.error("Error creating plan:", error);
     alert("여행 계획 생성 중 오류가 발생했습니다.");
-  } finally {
     stopTimer();
     isLoading.value = false;
   }
+};
+
+// welcomeAnimation 완료 핸들러 추가
+const handleAnimationComplete = async () => {
+  showAnimation.value = false;
+  // 애니메이션 완료 후 페이지 이동
+  await router.push({
+    name: "modifyRecommendTour",
+    params: { id: selectedArea.value },
+  });
 };
 </script>
 
@@ -192,7 +362,8 @@ const handleSubmit = async () => {
 .search-group {
   display: flex;
   flex-direction: column;
-  margin-bottom: 50px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .h1-text {
@@ -204,26 +375,27 @@ const handleSubmit = async () => {
 .text1 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
-  font-size: 26px;
+  font-size: 24px;
 }
 
 .text2 {
   font-family: "EliceDigitalBaeum_Regular";
   text-align: left;
-  margin-bottom: 10px;
 }
 
 .search-submit {
-  width: 385px;
-  height: 57px;
   position: relative;
   padding: 12px 35px;
+  background: var(--color);
   font-size: 17px;
   font-weight: 500;
+  color: #ffffff;
   border: 1px solid #ffffff;
   border-radius: 8px;
-  transition: all .3s ease-in-out;
+  box-shadow: 0 0 0 #fec1958c;
+  transition: all 0.3s ease-in-out;
   cursor: pointer;
+  margin-top: 55px;
 }
 
 button {
@@ -236,7 +408,7 @@ button {
   border: 3px solid var(--color);
   border-radius: 8px;
   box-shadow: 0 0 0 #ff6a008c;
-  transition: all .3s ease-in-out;
+  transition: all 0.3s ease-in-out;
   cursor: pointer;
 }
 
@@ -246,7 +418,7 @@ button {
   left: 20%;
   width: 25px;
   height: auto;
-  filter: drop-shadow(0 0 0 #ECB27B);
+  filter: drop-shadow(0 0 0 #ecb27b);
   z-index: -5;
   transition: all 1s cubic-bezier(0.05, 0.83, 0.43, 0.96);
 }
@@ -257,7 +429,7 @@ button {
   left: 45%;
   width: 15px;
   height: auto;
-  filter: drop-shadow(0 0 0 #ECB27B);
+  filter: drop-shadow(0 0 0 #ecb27b);
   z-index: -5;
   transition: all 1s cubic-bezier(0, 0.4, 0, 1.01);
 }
@@ -268,7 +440,7 @@ button {
   left: 40%;
   width: 5px;
   height: auto;
-  filter: drop-shadow(0 0 0 #ECB27B);
+  filter: drop-shadow(0 0 0 #ecb27b);
   z-index: -5;
   transition: all 1s cubic-bezier(0, 0.4, 0, 1.01);
 }
@@ -279,9 +451,9 @@ button {
   left: 40%;
   width: 8px;
   height: auto;
-  filter: drop-shadow(0 0 0 #ECB27B);
+  filter: drop-shadow(0 0 0 #ecb27b);
   z-index: -5;
-  transition: all .8s cubic-bezier(0, 0.4, 0, 1.01);
+  transition: all 0.8s cubic-bezier(0, 0.4, 0, 1.01);
 }
 
 .star-5 {
@@ -290,9 +462,9 @@ button {
   left: 45%;
   width: 15px;
   height: auto;
-  filter: drop-shadow(0 0 0 #ECB27B);
+  filter: drop-shadow(0 0 0 #ecb27b);
   z-index: -5;
-  transition: all .6s cubic-bezier(0, 0.4, 0, 1.01);
+  transition: all 0.6s cubic-bezier(0, 0.4, 0, 1.01);
 }
 
 .star-6 {
@@ -301,9 +473,9 @@ button {
   left: 50%;
   width: 5px;
   height: auto;
-  filter: drop-shadow(0 0 0 #ECB27B);
+  filter: drop-shadow(0 0 0 #ecb27b);
   z-index: -5;
-  transition: all .8s ease;
+  transition: all 0.8s ease;
 }
 
 button:hover {
@@ -318,7 +490,7 @@ button:hover .star-1 {
   left: -30%;
   width: 25px;
   height: auto;
-  filter: drop-shadow(0 0 10px #ECB27B);
+  filter: drop-shadow(0 0 10px #ecb27b);
   z-index: 2;
 }
 
@@ -328,7 +500,7 @@ button:hover .star-2 {
   left: 10%;
   width: 15px;
   height: auto;
-  filter: drop-shadow(0 0 10px #ECB27B);
+  filter: drop-shadow(0 0 10px #ecb27b);
   z-index: 2;
 }
 
@@ -338,7 +510,7 @@ button:hover .star-3 {
   left: 25%;
   width: 5px;
   height: auto;
-  filter: drop-shadow(0 0 10px #ECB27B);
+  filter: drop-shadow(0 0 10px #ecb27b);
   z-index: 2;
 }
 
@@ -348,7 +520,7 @@ button:hover .star-4 {
   left: 80%;
   width: 8px;
   height: auto;
-  filter: drop-shadow(0 0 10px #ECB27B);
+  filter: drop-shadow(0 0 10px #ecb27b);
   z-index: 2;
 }
 
@@ -358,7 +530,7 @@ button:hover .star-5 {
   left: 115%;
   width: 15px;
   height: auto;
-  filter: drop-shadow(0 0 10px #ECB27B);
+  filter: drop-shadow(0 0 10px #ecb27b);
   z-index: 2;
 }
 
@@ -368,12 +540,12 @@ button:hover .star-6 {
   left: 60%;
   width: 5px;
   height: auto;
-  filter: drop-shadow(0 0 10px #ECB27B);
+  filter: drop-shadow(0 0 10px #ecb27b);
   z-index: 2;
 }
 
 .fil0 {
-  fill: #ECB27B
+  fill: #ecb27b;
 }
 
 .search-submit:disabled {
@@ -413,13 +585,57 @@ select option {
   background-color: #333;
   color: #ffffff;
 }
+/* 로딩오버레이 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-.custom-placeholder {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #999;
-  pointer-events: none;
+.loading-content {
+  text-align: center;
+  color: white;
+  padding: 2rem;
+}
+
+.loading-text {
+  font-family: "EliceDigitalBaeum_Bold";
+  font-size: 1.5rem;
+  margin: 1rem 0;
+}
+
+.loading-description {
+  font-family: "EliceDigitalBaeum_Regular";
+  margin-bottom: 0.5rem;
+}
+
+.loading-timer {
+  font-family: "Roboto Mono";
+  font-size: 1.2rem;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #ecb27b;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>
