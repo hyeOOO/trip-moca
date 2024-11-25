@@ -21,8 +21,13 @@
           <div v-if="isEditing" class="edit-form">
             <div class="form-group">
               <label>이름</label>
-              <input type="text" v-model="editForm.memberName" placeholder="이름을 입력해주세요" @input="validateName"
-                :class="{ error: validationErrors.name }" />
+              <input
+                type="text"
+                v-model="editForm.memberName"
+                placeholder="이름을 입력해주세요"
+                @input="validateName"
+                :class="{ error: validationErrors.name }"
+              />
               <span v-if="validationErrors.name" class="error-message">
                 {{ validationErrors.name }}
               </span>
@@ -30,49 +35,81 @@
             <div class="form-group current-password">
               <div>
                 <label>현재 비밀번호</label>
-                <input type="password" v-model="editForm.currentPassword" placeholder="현재 비밀번호"
-                  :disabled="isPasswordValid" />
+                <input
+                  type="password"
+                  v-model="editForm.currentPassword"
+                  placeholder="현재 비밀번호"
+                  :disabled="isPasswordValid"
+                />
                 <span v-if="validationErrors.currentPassword" class="error-message">
                   {{ validationErrors.currentPassword }}
                 </span>
               </div>
-              <button v-if="!isPasswordValid" class="confirm-btn" @click="checkCurrentPassword"
-                :disabled="isPasswordChecking || !editForm.currentPassword">
+              <button
+                v-if="!isPasswordValid"
+                class="confirm-btn"
+                @click="checkCurrentPassword"
+                :disabled="isPasswordChecking || !editForm.currentPassword"
+              >
                 확인
               </button>
-              <font-awesome-icon v-else :icon="['fas', 'circle-check']" size="2xl"
-                :style="{ color: '#69C364', marginTop: '40px', marginLeft: '35px' }" />
+              <font-awesome-icon
+                v-else
+                :icon="['fas', 'circle-check']"
+                size="2xl"
+                :style="{ color: '#69C364', marginTop: '40px', marginLeft: '35px' }"
+              />
             </div>
 
             <template v-if="isPasswordValid">
               <div class="form-group">
                 <label>새 비밀번호</label>
-                <input type="password" v-model="editForm.newPassword" placeholder="새 비밀번호" @input="validatePassword"
-                  :class="{ error: validationErrors.password }" />
+                <input
+                  type="password"
+                  v-model="editForm.newPassword"
+                  placeholder="새 비밀번호"
+                  @input="validatePassword"
+                  :class="{ error: validationErrors.password }"
+                />
                 <span v-if="validationErrors.password" class="error-message">
                   {{ validationErrors.password }}
                 </span>
               </div>
               <div class="form-group">
                 <label>새 비밀번호 확인</label>
-                <input type="password" v-model="editForm.passwordConfirm" placeholder="새 비밀번호 확인"
-                  @input="validatePasswordConfirm" :class="{ error: validationErrors.passwordConfirm }" />
+                <input
+                  type="password"
+                  v-model="editForm.passwordConfirm"
+                  placeholder="새 비밀번호 확인"
+                  @input="validatePasswordConfirm"
+                  :class="{ error: validationErrors.passwordConfirm }"
+                />
                 <span v-if="validationErrors.passwordConfirm" class="error-message">
                   {{ validationErrors.passwordConfirm }}
                 </span>
               </div>
               <div class="form-group">
                 <label>이메일</label>
-                <input type="email" v-model="editForm.email" placeholder="이메일을 입력해주세요" @input="validateEmail"
-                  :class="{ error: validationErrors.email }" />
+                <input
+                  type="email"
+                  v-model="editForm.email"
+                  placeholder="이메일을 입력해주세요"
+                  @input="validateEmail"
+                  :class="{ error: validationErrors.email }"
+                />
                 <span v-if="validationErrors.email" class="error-message">
                   {{ validationErrors.email }}
                 </span>
               </div>
               <div class="form-group">
                 <label>휴대폰</label>
-                <input type="tel" v-model="editForm.phone" placeholder="번호를 입력해주세요" @input="validatePhone"
-                  :class="{ error: validationErrors.phone }" />
+                <input
+                  type="tel"
+                  v-model="editForm.phone"
+                  placeholder="번호를 입력해주세요"
+                  @input="validatePhone"
+                  :class="{ error: validationErrors.phone }"
+                />
                 <span v-if="validationErrors.phone" class="error-message">
                   {{ validationErrors.phone }}
                 </span>
@@ -91,8 +128,10 @@
             </div>
             <div class="user-info-card">
               <span>{{ mypageStore.userCards.length }}</span>
-              <span>개 카드 수집({{ mypageStore.userCards.length }} /
-                {{ mypageStore.totalCards.length }})</span>
+              <span
+                >개 카드 수집({{ mypageStore.userCards.length }} /
+                {{ mypageStore.totalCards.length }})</span
+              >
             </div>
           </template>
         </div>
@@ -336,13 +375,13 @@ const confirmDelete = async () => {
 
 // 전화번호 자동 하이픈 추가 함수
 const formatPhoneNumber = (phone) => {
-  const value = phone.replace(/[^0-9]/g, ''); // 숫자만 추출
-  let result = '';
+  const value = phone.replace(/[^0-9]/g, ""); // 숫자만 추출
+  let result = "";
 
   if (value.length > 3 && value.length <= 7) {
-    result = value.slice(0, 3) + '-' + value.slice(3);
+    result = value.slice(0, 3) + "-" + value.slice(3);
   } else if (value.length > 7) {
-    result = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+    result = value.slice(0, 3) + "-" + value.slice(3, 7) + "-" + value.slice(7, 11);
   } else {
     result = value;
   }
@@ -358,6 +397,10 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+html {
+  scroll-behavior: smooth;
+}
+
 .mypage {
   position: relative;
   min-height: calc(100vh - 120px);
@@ -370,11 +413,15 @@ onMounted(async () => {
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
+  -webkit-overflow-scrolling: touch;
   /* 이 속성을 추가하여 배경 이미지 고정 */
   z-index: 0;
   background-image: url("https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/enjoy-trip-main-photo.jpg");
   flex: 1;
   /* 이 부분 추가 */
+  will-change: transform; /* 브라우저에게 변환이 일어날 것임을 알림 */
+  -webkit-backface-visibility: hidden; /* Safari에서의 성능 개선 */
+  -webkit-perspective: 1000; /* Safari에서의 성능 개선 */
 }
 
 .mypage::before {
@@ -395,6 +442,12 @@ onMounted(async () => {
   top: 110px;
   padding-left: 200px;
   padding-right: 200px;
+  min-height: calc(100vh - 110px); /* 동적 높이 계산 최소화 */
+  height: auto;
+  transform: translateZ(0); /* 하드웨어 가속 활성화 */
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .mypage-header {
@@ -458,10 +511,10 @@ onMounted(async () => {
 }
 
 .mypage-body {
-  height: calc(100vh - 500px);
-  /* 상단 여백과 footer를 고려한 높이 */
-  overflow-y: auto;
-  /* 스크롤 추가 */
+  min-height: 300px; /* 최소 높이 설정 */
+  height: auto;
+  position: relative;
+  z-index: 1;
   margin-top: 20px;
 }
 
@@ -498,11 +551,11 @@ onMounted(async () => {
   align-items: center;
 }
 
-.button-group>button {
+.button-group > button {
   margin: 0px 5px;
 }
 
-.info-container>button {
+.info-container > button {
   border-radius: 5px;
   background-color: #d9d9d9;
   padding: 15px 30px;
@@ -547,7 +600,7 @@ onMounted(async () => {
   box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.3);
 }
 
-.meter>span {
+.meter > span {
   display: block;
   height: 100%;
   border-top-right-radius: 8px;
@@ -561,21 +614,23 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.meter>span:after {
+.meter > span:after {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
-  background-image: linear-gradient(-45deg,
-      rgba(255, 255, 255, 0.2) 25%,
-      transparent 25%,
-      transparent 50%,
-      rgba(255, 255, 255, 0.2) 50%,
-      rgba(255, 255, 255, 0.2) 75%,
-      transparent 75%,
-      transparent);
+  background-image: linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.2) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    transparent 75%,
+    transparent
+  );
   z-index: 1;
   background-size: 50px 50px;
   animation: move 2s linear infinite;
