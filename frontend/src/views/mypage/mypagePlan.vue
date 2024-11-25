@@ -4,7 +4,8 @@
       현재 여행 계획이 없습니다.
     </div>
     <div v-else class="grid-container">
-      <div class="grid-item" v-for="(item, index) in items" :key="index" @click="viewPlanDetails(item.planId, item.areaCode)">
+      <div class="grid-item" v-for="(item, index) in items" :key="index"
+        @click="viewPlanDetails(item.planId, item.areaCode)">
         <div class="card shadow-sm">
           <span class="img" :style="{ backgroundImage: `url(${item.planProfileImg})` }"></span>
           <div class="card-body">
@@ -14,7 +15,7 @@
               <span class="title">{{ item.planTitle }}</span>
             </p>
             <p class="dates">{{ item.startDate }} ~ {{ item.endDate }}</p>
-            <button class="delete-btn" @click="deletePlan(item.planId)">
+            <button class="delete-btn" @click.stop="deletePlan(item.planId)">
               <font-awesome-icon :icon="['fas', 'trash']" :style="{ color: '#B4B4B4' }" />
             </button>
           </div>
@@ -38,7 +39,7 @@ export default {
     const viewPlanDetails = (planId, areaCode) => {
       router.push({
         name: 'DetailedTravelPlan',
-        params: { id: planId , areaCode: areaCode }
+        params: { id: planId, areaCode: areaCode }
       });
     };
 

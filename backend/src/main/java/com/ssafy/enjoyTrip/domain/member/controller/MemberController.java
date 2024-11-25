@@ -3,12 +3,16 @@ package com.ssafy.enjoyTrip.domain.member.controller;
 import com.ssafy.enjoyTrip.domain.member.dto.MemberResponseDto;
 import com.ssafy.enjoyTrip.domain.member.dto.MemberUpdateRequest;
 import com.ssafy.enjoyTrip.domain.member.dto.PasswordCheckRequest;
+import com.ssafy.enjoyTrip.domain.member.dto.PasswordResetRequestDto;
+import com.ssafy.enjoyTrip.domain.member.exception.UnauthorizedException;
 import com.ssafy.enjoyTrip.domain.member.service.MemberService;
 import com.ssafy.enjoyTrip.global.annotation.CurrentMemberId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,5 +55,21 @@ public class MemberController {
             @RequestBody PasswordCheckRequest request) {
         boolean isValid = memberService.checkPassword(memberId, request.getPassword());
         return ResponseEntity.ok(isValid);
+    }
+
+    @Operation(summary = "비밀번호 찾기(이메일로 임시 비밀번호 발급)")
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetRequestDto request) {
+        try {
+            memberService.resetPassword(request);
+            return ResponseEntity.ok("임시 비밀번호가 이메일로 전송되었습니다.");
+        } catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            log.error("비밀번호 재설정 중 오류 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("비밀번호 재설정 중 오류가 발생했습니다.");
+        }
     }
 }

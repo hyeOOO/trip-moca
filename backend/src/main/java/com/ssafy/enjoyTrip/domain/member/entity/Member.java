@@ -87,4 +87,8 @@ public class Member {
             this.birthDate = request.getBirthDate();
         }
     }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
+    }
 }

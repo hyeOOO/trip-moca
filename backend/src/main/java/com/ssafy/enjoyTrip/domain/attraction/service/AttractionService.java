@@ -6,6 +6,7 @@ import com.ssafy.enjoyTrip.domain.attraction.entity.GugunList;
 import com.ssafy.enjoyTrip.domain.attraction.entity.SearchKeyword;
 import com.ssafy.enjoyTrip.domain.attraction.entity.SidoList;
 import com.ssafy.enjoyTrip.domain.attraction.repository.*;
+import com.ssafy.enjoyTrip.domain.attraction.util.SearchKeywordFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -124,12 +125,20 @@ public class AttractionService {
     }
 
     public void updateSearchKeyword(String keyword, SearchKeyword.SearchType searchType) {
+        // 키워드 정제
+        String sanitizedKeyword = SearchKeywordFilter.sanitizeKeyword(keyword);
+
+        // 유효성 검사
+        if (!SearchKeywordFilter.isValidKeyword(sanitizedKeyword)) {
+            return; // 유효하지 않은 키워드는 저장하지 않음
+        }
+
         SearchKeyword searchKeyword = searchKeywordRepository
-                .findByKeywordAndSearchType(keyword, searchType);
+                .findByKeywordAndSearchType(sanitizedKeyword, searchType);
 
         if (searchKeyword == null) {
             searchKeyword = SearchKeyword.builder()
-                    .keyword(keyword)
+                    .keyword(sanitizedKeyword)
                     .searchType(searchType)
                     .count(1L)
                     .lastSearched(LocalDateTime.now())
