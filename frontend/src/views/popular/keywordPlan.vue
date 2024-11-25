@@ -1,15 +1,21 @@
 <template>
-  <div
-    class="season-plan-container min-h-screen bg-gradient-to-b from-[#433629] to-[#2a1f15]"
-  >
+  <div class="season-plan-container min-h-screen bg-gradient-to-b from-[#433629] to-[#2a1f15]">
     <navBar />
 
     <!-- 상단 타이틀 섹션 -->
     <div class="text-center">
       <h1 class="season-title">{{ keyword }}</h1>
-      <p class="sub-title">AI가 추천하는 최적의 여행 코스</p>
+      <p class="sub-title">
+        <span
+          v-for="(char, index) in text"
+          :key="index"
+          class="wave-char"
+          :style="{ '--char-index': index }"
+        >
+          {{ char }}
+        </span>
+      </p>
     </div>
-
     <!-- 지도 컨테이너 -->
     <div class="map-container" v-if="planData">
       <tmap-multipath
@@ -24,9 +30,7 @@
 
     <!-- 로딩 표시 -->
     <div v-if="loading" class="flex justify-center items-center min-h-[60vh]">
-      <div
-        class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#ecb27b]"
-      ></div>
+      <div class="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#ecb27b]"></div>
     </div>
 
     <!-- 에러 메시지 -->
@@ -55,11 +59,7 @@
       </div>
 
       <div class="plans-grid">
-        <div
-          v-for="(dayPlan, dayIndex) in planData"
-          :key="dayIndex"
-          class="day-plan-card"
-        >
+        <div v-for="(dayPlan, dayIndex) in planData" :key="dayIndex" class="day-plan-card">
           <!-- 일자 타이틀 -->
           <div class="days-container">
             <div class="ml-4 days-instance">
@@ -91,16 +91,10 @@
                   />
                   <div class="slide-content">
                     <div class="tags-container">
-                      <span
-                        v-if="attraction.sidoName"
-                        class="location-tag sido"
-                      >
+                      <span v-if="attraction.sidoName" class="location-tag sido">
                         {{ attraction.sidoName }}
                       </span>
-                      <span
-                        v-if="attraction.gugunName"
-                        class="location-tag gugun"
-                      >
+                      <span v-if="attraction.gugunName" class="location-tag gugun">
                         {{ attraction.gugunName }}
                       </span>
                       <span class="location-tag type">
@@ -127,10 +121,7 @@
               <button
                 class="carousel-button next"
                 @click="next(dayIndex)"
-                :disabled="
-                  currentIndexes[dayIndex] ===
-                  dayPlan.attractionDetails.length - 1
-                "
+                :disabled="currentIndexes[dayIndex] === dayPlan.attractionDetails.length - 1"
               >
                 <span class="arrow">&gt;</span>
               </button>
@@ -152,9 +143,7 @@
     </div>
 
     <!-- 데이터가 없을 때 -->
-    <div v-else class="text-center text-white p-8">
-      여행 계획을 불러오는 중입니다...
-    </div>
+    <div v-else class="text-center text-white p-8">여행 계획을 불러오는 중입니다...</div>
   </div>
 </template>
 <script>
@@ -177,6 +166,7 @@ export default {
       currentIndexes: {},
       isAnimating: false,
       selectedDay: 1,
+      text: "AI가 추천하는 최적의 여행 코스",
     };
   },
   computed: {
@@ -237,9 +227,7 @@ export default {
     async fetchKeywordPlan(keyword) {
       try {
         this.loading = true;
-        const response = await api.get(
-          `/api/attraction/ai/plan/keyword/${keyword}`
-        );
+        const response = await api.get(`/api/attraction/ai/plan/keyword/${keyword}`);
         this.planData = response.data;
         // 각 일차별 현재 인덱스 초기화
         this.planData.forEach((_, index) => {
@@ -294,20 +282,14 @@ export default {
       if (this.isAnimating) return;
       this.isAnimating = true;
       const maxIndex = this.planData[dayIndex].attractionDetails.length - 1;
-      this.currentIndexes[dayIndex] = Math.min(
-        this.currentIndexes[dayIndex] + 1,
-        maxIndex
-      );
+      this.currentIndexes[dayIndex] = Math.min(this.currentIndexes[dayIndex] + 1, maxIndex);
       await this.waitForTransition();
       this.isAnimating = false;
     },
     async prev(dayIndex) {
       if (this.isAnimating) return;
       this.isAnimating = true;
-      this.currentIndexes[dayIndex] = Math.max(
-        this.currentIndexes[dayIndex] - 1,
-        0
-      );
+      this.currentIndexes[dayIndex] = Math.max(this.currentIndexes[dayIndex] - 1, 0);
       await this.waitForTransition();
       this.isAnimating = false;
     },
@@ -345,19 +327,77 @@ export default {
 .text-center {
   margin-top: 44px;
   justify-content: center;
+  overflow: hidden;
 }
 
 .season-title {
   font-family: "Black Han Sans";
   font-size: 96px;
   font-style: normal;
-  color: #ecb27b;
+  color: #c3a386;
+  margin-bottom: 20px;
 }
 
 .sub-title {
   color: white;
-  font-family: "Pretendard-Regular";
-  font-size: 18px;
+  font-family: "EliceDigitalBaeum_Bold";
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 10px;
+  margin-bottom: 15px;
+}
+
+.wave-char {
+  display: inline-block;
+  animation: wave 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation-delay: calc(var(--char-index) * 0.1s);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-8px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(3px);
+  }
+}
+
+/* 호버 효과 수정 - scale 제거하고 밝기만 조절 */
+.sub-title:hover .wave-char {
+  filter: brightness(1.2);
+  text-shadow: 0 0 10px rgba(236, 178, 123, 0.5);
+  transition: all 0.3s ease;
+}
+
+/* 글자에 약간의 그림자 효과 추가 */
+.wave-char {
+  display: inline-block;
+  animation: wave 2s infinite ease-in-out;
+  animation-delay: calc(var(--char-index) * 0.1s);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 포인트 컬러 글자 스타일링 */
+.wave-char:nth-child(1),  /* A */
+.wave-char:nth-child(2) /* I */ {
+  color: #ecb27b;
+}
+
+/* 호버 효과 추가 */
+.sub-title:hover {
+  transform: scale(1.02);
+  transition: transform 0.3s ease;
+  text-shadow: 0 0 10px rgba(236, 178, 123, 0.3);
 }
 
 .days-container {
@@ -371,8 +411,9 @@ export default {
 
 .days-title {
   color: white;
-  font-family: "Pretendard-Bold";
-  font-size: 22px;
+  font-family: "Pretendard-Regular";
+  font-size: 20px;
+  padding: 5px 0px;
 }
 
 .plan-container {
@@ -418,8 +459,9 @@ export default {
   display: flex;
   flex-direction: column;
   background: #ecb27b;
-  border-radius: 12px;
+  border-radius: 6px;
   overflow: hidden;
+  margin-bottom: 20px;
 }
 
 .carousel-container {
