@@ -4,23 +4,49 @@
       현재 보유중인 카드가 없습니다.
     </div>
     <div v-else class="grid-container">
-      <div class="grid-item" v-for="card in mypageStore.totalCards" :key="card.cardId">
-        <div class="card-image" :class="{ 'grayscale': !isUserCard(card.cardId) }"
-          :style="{ backgroundImage: `url(${card.image1})` }">
-        </div>
+      <div
+        class="grid-item"
+        v-for="card in mypageStore.totalCards"
+        :key="card.cardId"
+        @click="isUserCard(card.cardId) && showCardModal(card)"
+      >
+        <div
+          class="card-image"
+          :class="{ grayscale: !isUserCard(card.cardId) }"
+          :style="{ backgroundImage: `url(${card.image1})` }"
+        ></div>
       </div>
     </div>
+
+    <!-- CardModal 컴포넌트 추가 -->
+    <cardModal
+      v-if="selectedCard"
+      :card="selectedCard"
+      :isFromMyPage="true"
+      @close="closeCardModal"
+    />
   </div>
 </template>
 
 <script setup>
-import { useMypageStore } from '@/store/mypageStore'
+import { ref } from "vue";
+import { useMypageStore } from "@/store/mypageStore";
+import cardModal from "@/components/cardModal.vue";
 
-const mypageStore = useMypageStore()
+const mypageStore = useMypageStore();
+const selectedCard = ref(null);
 
 const isUserCard = (cardId) => {
-  return mypageStore.userCards.some(userCard => userCard.cardId === cardId)
-}
+  return mypageStore.userCards.some((userCard) => userCard.cardId === cardId);
+};
+
+const showCardModal = (card) => {
+  selectedCard.value = card;
+};
+
+const closeCardModal = () => {
+  selectedCard.value = null;
+};
 </script>
 
 <style scoped>
