@@ -1,7 +1,7 @@
 <template>
   <div class="fourth-section">
     <h1 class="fourth-title">
-      우리가 찾은 국내 여행 띵곳 모음.zip <br />지금 바로 확인하기 ✨
+      모카가 찾은 국내 여행 띵곳 모음.zip <br />지금 바로 확인하기 ✨
     </h1>
     <div class="grid-container">
       <div class="grid-row">
