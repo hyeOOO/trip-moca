@@ -13,6 +13,7 @@ public class AttractionList {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long attractionId;
+    @Column(unique = true)
     private Long contentId;
     private String title;
     private Long contentTypeId;

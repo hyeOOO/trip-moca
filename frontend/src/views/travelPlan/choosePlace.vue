@@ -12,11 +12,7 @@
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
           </div>
-          <div
-            class="step"
-            :class="{ active: isStep2Active }"
-            @click="toggleStep2"
-          >
+          <div class="step" :class="{ active: isStep2Active }" @click="toggleStep2">
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
@@ -107,9 +103,7 @@
           ></i>
         </div>
         <div class="header">
-          <button @click="showAllMarkers" class="view-all-button">
-            전체보기
-          </button>
+          <button @click="showAllMarkers" class="view-all-button">전체보기</button>
         </div>
         <div class="selected-places">
           <div
@@ -122,9 +116,7 @@
             <div class="day-header">
               <h3 @click="selectDay(dayIndex - 1)" style="cursor: pointer">
                 <span class="day">{{ dayIndex }}일차</span>
-                <span class="date">{{
-                  formatFullDate(getTripDate(dayIndex - 1))
-                }}</span>
+                <span class="date">{{ formatFullDate(getTripDate(dayIndex - 1)) }}</span>
               </h3>
               <div class="day-header-buttons">
                 <button @click="clearDay(dayIndex - 1)" class="clear-button">
@@ -132,10 +124,7 @@
                 </button>
               </div>
             </div>
-            <div
-              v-if="!selectedPlacesByDay[dayIndex - 1]?.length"
-              class="empty-day"
-            >
+            <div v-if="!selectedPlacesByDay[dayIndex - 1]?.length" class="empty-day">
               <p></p>
             </div>
             <div v-else class="selected-day-places">
@@ -145,9 +134,7 @@
                 :key="place.attractionId"
                 class="selected-place"
                 draggable="true"
-                @dragstart="
-                  dragStartSelected($event, place, dayIndex - 1, index)
-                "
+                @dragstart="dragStartSelected($event, place, dayIndex - 1, index)"
                 @dragover.prevent
                 @drop.stop="onDropReorder($event, dayIndex - 1, index)"
               >
@@ -161,9 +148,7 @@
                       v-if="place.contentTypeName"
                       class="px-2 py-1 rounded-lg text-xs text-white tag"
                       :style="{
-                        backgroundColor: getContentTypeColor(
-                          place.contentTypeId
-                        ),
+                        backgroundColor: getContentTypeColor(place.contentTypeId),
                       }"
                     >
                       {{ place.contentTypeName }}
@@ -172,10 +157,7 @@
                   <h3>{{ place.title }}</h3>
                   <p class="place-address">{{ place.addr1 }}</p>
                 </div>
-                <button
-                  @click="removePlace(dayIndex - 1, place)"
-                  class="delete-button"
-                >
+                <button @click="removePlace(dayIndex - 1, place)" class="delete-button">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
@@ -245,6 +227,7 @@ export default {
       isSelectedPlaceDrag: false,
       scrollTimeout: null,
       middleSectionRef: null,
+      placeListRef: null,
     };
   },
   computed: {
@@ -265,8 +248,7 @@ export default {
       const query = this.searchQuery.toLowerCase();
       return this.places.filter(
         (place) =>
-          place.title.toLowerCase().includes(query) ||
-          place.addr1.toLowerCase().includes(query)
+          place.title.toLowerCase().includes(query) || place.addr1.toLowerCase().includes(query)
       );
     },
     numberOfDays() {
@@ -281,16 +263,14 @@ export default {
       },
       set(newValue) {
         this.localSelectedPlaces = newValue;
-        const formattedPlaces = Object.entries(newValue).map(
-          ([day, places]) => ({
-            day: parseInt(day),
-            details: places.map((place, index) => ({
-              attractionId: place.attractionId,
-              sequence: index,
-              memo: place.memo || "",
-            })),
-          })
-        );
+        const formattedPlaces = Object.entries(newValue).map(([day, places]) => ({
+          day: parseInt(day),
+          details: places.map((place, index) => ({
+            attractionId: place.attractionId,
+            sequence: index,
+            memo: place.memo || "",
+          })),
+        }));
         this.planStore.setSelectedPlaces(formattedPlaces);
       },
     },
@@ -307,7 +287,14 @@ export default {
     },
 
     async fetchAttractions(page = 0, searchQuery = "") {
+      console.log("Fetching attractions:", { page, searchQuery });
+
       if (!this.areaCode || this.isFetching || (page > 0 && this.isLastPage)) {
+        console.log("Fetch prevented:", {
+          noAreaCode: !this.areaCode,
+          isFetching: this.isFetching,
+          isLastPage: page > 0 && this.isLastPage,
+        });
         return;
       }
 
@@ -334,12 +321,18 @@ export default {
           const newPlaces = response.data.content.filter(
             (newPlace) =>
               !this.places.some(
-                (existingPlace) =>
-                  existingPlace.attractionId === newPlace.attractionId
+                (existingPlace) => existingPlace.attractionId === newPlace.attractionId
               )
           );
           this.places = [...this.places, ...newPlaces];
         }
+
+        console.log("Fetch success:", {
+          page: response.data.number,
+          totalPages: response.data.totalPages,
+          isLast: response.data.last,
+          newItemsCount: response.data.content.length,
+        });
 
         this.currentPage = response.data.number;
         this.totalPages = response.data.totalPages;
@@ -360,9 +353,7 @@ export default {
       storePlaces.forEach((dayPlan) => {
         const fullPlaces = dayPlan.details
           .map((detail) => {
-            const fullPlace = this.places.find(
-              (p) => p.attractionId === detail.attractionId
-            );
+            const fullPlace = this.places.find((p) => p.attractionId === detail.attractionId);
             if (fullPlace) {
               return {
                 ...fullPlace,
@@ -387,19 +378,27 @@ export default {
         clearTimeout(this.scrollTimeout);
       }
 
-      this.scrollTimeout = setTimeout(async () => {
-        const target = event.target;
+      this.scrollTimeout = setTimeout(() => {
+        const target = this.placeListRef;
+        if (!target) return;
+
         const { scrollTop, clientHeight, scrollHeight } = target;
+        const threshold = 50; // 스크롤 바닥에서 50px 전에 로딩 시작
+
+        console.log("Scroll metrics:", {
+          scrollTop,
+          clientHeight,
+          scrollHeight,
+          remaining: scrollHeight - (scrollTop + clientHeight),
+        });
 
         if (
           !this.isLastPage &&
           !this.isFetching &&
-          scrollTop + clientHeight >= scrollHeight - 100
+          scrollHeight - (scrollTop + clientHeight) <= threshold
         ) {
-          await this.fetchAttractions(
-            this.currentPage + 1,
-            this.searchQuery.trim()
-          );
+          console.log("Fetching next page...");
+          this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
         }
       }, 200);
     },
@@ -550,9 +549,9 @@ export default {
     },
 
     removePlace(dayIndex, place) {
-      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
-        dayIndex
-      ].filter((p) => p.attractionId !== place.attractionId);
+      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[dayIndex].filter(
+        (p) => p.attractionId !== place.attractionId
+      );
     },
 
     clearDay(dayIndex) {
@@ -561,8 +560,7 @@ export default {
 
     getImageUrl(imageUrl) {
       return (
-        imageUrl ||
-        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+        imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
       );
     },
 
@@ -674,15 +672,14 @@ export default {
 
   mounted() {
     this.fetchAttractions();
-    this.middleSectionRef = this.$el.querySelector(".middle-section");
-    if (this.middleSectionRef) {
-      this.middleSectionRef.addEventListener("scroll", this.handleScroll);
+    this.placeListRef = this.$el.querySelector(".places-list");
+    if (this.placeListRef) {
+      this.placeListRef.addEventListener("scroll", this.handleScroll);
     }
   },
   beforeUnmount() {
-    // 컴포넌트 언마운트 시 이벤트 리스너 및 타이머 정리
-    if (this.middleSectionRef) {
-      this.middleSectionRef.removeEventListener("scroll", this.handleScroll);
+    if (this.placeListRef) {
+      this.placeListRef.removeEventListener("scroll", this.handleScroll);
     }
     if (this.scrollTimeout) {
       clearTimeout(this.scrollTimeout);
@@ -881,6 +878,7 @@ export default {
   border: 1px solid #ddd;
   border-radius: 25px;
   font-size: 14px;
+  font-family: "Pretendard-Regular";
 }
 
 .search-box i {
@@ -1084,6 +1082,7 @@ export default {
   padding: 6px 12px;
   background-color: #ecb27b;
   color: white;
+  font-family: "Pretendard-Regular";
 }
 
 .clear-button {
@@ -1105,6 +1104,7 @@ export default {
   color: white;
   border: none;
   border-radius: 4px;
+  font-family: "Pretendard-Medium";
 }
 
 /* 지도 컨테이너 스타일 */

@@ -36,15 +36,48 @@
         <div class="date-form">
           <div class="input-group">
             <label>출발 일자</label>
-            <input type="date" v-model="startDate" class="date-input" />
+            <Datepicker
+              v-model="startDate"
+              :min-date="new Date()"
+              :enable-time-picker="false"
+              :format="formatDate"
+              :auto-apply="true"
+              locale="ko"
+              :clearable="false"
+              @update:model-value="updateStartDate"
+              menuClassName="custom-datepicker-menu"
+              :dark="true"
+            >
+              <template #trigger>
+                <div class="date-trigger" :class="{ 'has-value': startDate }">
+                  {{ startDate ? formatDate(startDate) : "" }}
+                </div>
+              </template>
+            </Datepicker>
           </div>
 
           <div class="input-group">
             <label>도착 일자</label>
-            <input type="date" v-model="endDate" class="date-input" />
+            <Datepicker
+              v-model="endDate"
+              :min-date="startDate || new Date()"
+              :enable-time-picker="false"
+              :format="formatDate"
+              :auto-apply="true"
+              locale="ko"
+              :clearable="false"
+              menuClassName="custom-datepicker-menu"
+              :dark="true"
+            >
+              <template #trigger>
+                <div class="date-trigger" :class="{ 'has-value': endDate }">
+                  {{ endDate ? formatDate(endDate) : "" }}
+                </div>
+              </template>
+            </Datepicker>
           </div>
 
-          <button @click="savePlan" class="save-button">저장</button>
+          <button @click="savePlan" class="save-button" :disabled="!isFormValid">저장</button>
         </div>
       </div>
 
@@ -57,14 +90,17 @@
 
 <script>
 import navBar from "@/components/navBar.vue";
-import Tmap from "@/components/Tmap/Tmap.vue"; // Tmap 컴포넌트 import
+import Tmap from "@/components/Tmap/Tmap.vue";
 import { usePlanStore } from "@/store/planStore";
+import Datepicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
 export default {
   name: "ChooseDate",
   components: {
     navBar,
     Tmap,
+    Datepicker,
   },
   props: {
     name: {
@@ -105,24 +141,34 @@ export default {
     // 시작 날짜의 getter와 setter
     startDate: {
       get() {
-        return this.planStore.dates.startDate;
+        return this.planStore.dates.startDate ? new Date(this.planStore.dates.startDate) : null;
       },
       set(value) {
-        this.planStore.setDates(value, this.planStore.dates.endDate);
+        this.planStore.setDates(
+          value ? this.formatDate(value) : null,
+          this.planStore.dates.endDate
+        );
       },
     },
     // 종료 날짜의 getter와 setter
     endDate: {
       get() {
-        return this.planStore.dates.endDate;
+        return this.planStore.dates.endDate ? new Date(this.planStore.dates.endDate) : null;
       },
       set(value) {
-        this.planStore.setDates(this.planStore.dates.startDate, value);
+        this.planStore.setDates(
+          this.planStore.dates.startDate,
+          value ? this.formatDate(value) : null
+        );
       },
     },
     // 형식화된 날짜 범위를 반환하는 computed 속성
     formattedDateRange() {
       return this.planStore.dates.formattedDateRange;
+    },
+
+    isFormValid() {
+      return this.startDate && this.endDate && new Date(this.endDate) >= new Date(this.startDate);
     },
   },
 
@@ -213,15 +259,19 @@ export default {
       }, 300);
     },
 
-    formatDate(dateString) {
-      const date = new Date(dateString);
-      const days = ["일", "월", "화", "수", "목", "금", "토"];
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const dayOfWeek = days[date.getDay()];
+    formatDate(date) {
+      if (!date) return "";
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    },
 
-      return `${year}.${month}.${day}(${dayOfWeek})`;
+    updateStartDate(newDate) {
+      if (this.endDate && new Date(this.endDate) < new Date(newDate)) {
+        this.endDate = null;
+      }
     },
 
     savePlan() {
@@ -341,7 +391,7 @@ export default {
 .step-title {
   font-family: "EliceDigitalBaeum_Regular";
   font-size: 14px;
-  color: #B4B4B4;
+  color: #b4b4b4;
 }
 
 .step-number {
@@ -353,7 +403,7 @@ export default {
 .step:hover .step-title,
 .step.active .step-number,
 .step.active .step-title {
-  color: #ECB27B;
+  color: #ecb27b;
 }
 
 /* 접기/펼치기 토글 버튼 스타일 */
@@ -379,7 +429,7 @@ export default {
 }
 
 .toggle-button:hover i {
-  color: #ECB27B;
+  color: #ecb27b;
 }
 
 /* 헤더 영역 스타일 */
@@ -395,7 +445,7 @@ export default {
 
 .date-range {
   font-family: "EliceDigitalBaeum_bold";
-  color: #ECB27B;
+  color: #ecb27b;
   font-size: 14px;
 }
 
@@ -421,7 +471,7 @@ export default {
   border-radius: 15px;
   font-family: "EliceDigitalBaeum_regular";
   font-size: 14px;
-  color: #B4B4B4;
+  color: #b4b4b4;
   background-color: #fff;
   transition: all 0.3s ease;
   text-align: center;
@@ -430,19 +480,19 @@ export default {
 /* 날짜 입력 필드 포커스/호버 상태 */
 .date-input:focus {
   outline: none;
-  border-color: #ECB27B;
+  border-color: #ecb27b;
   box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
 }
 
 .date-input:hover {
-  border-color: #ECB27B;
+  border-color: #ecb27b;
 }
 
 /* 저장 버튼 스타일 */
 .save-button {
   width: 100%;
   padding: 12px;
-  background-color: #ECB27B;
+  background-color: #ecb27b;
   color: white;
   border: none;
   border-radius: 15px;
@@ -450,6 +500,7 @@ export default {
   font-size: 16px;
   transition: background-color 0.3s ease;
   margin-top: 40px;
+  font-family: "Pretendard-Medium";
 }
 
 .save-button:hover {
@@ -476,5 +527,96 @@ export default {
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+:deep(.custom-datepicker-menu) {
+  background-color: #2a2a2a !important;
+  border: 1px solid #3a3a3a !important;
+  border-radius: 6px !important;
+  font-family: "EliceDigitalBaeum_Regular" !important;
+}
+
+:deep(.dp__main) {
+  font-family: var(--dp-font-family);
+  user-select: none;
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+:deep(.dp__active_date) {
+  background-color: #ecb27b !important;
+  color: #ffffff !important;
+}
+
+:deep(.dp__date_hover) {
+  background-color: rgba(236, 178, 123, 0.2) !important;
+}
+
+:deep(.dp__today) {
+  border: 1px solid #ecb27b !important;
+}
+
+:deep(.dp__arrow_bottom) {
+  border-top: 2px solid #ffffff !important;
+  border-right: 2px solid #ffffff !important;
+}
+
+:deep(.dp__month_year_select) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__menu_index) {
+  font-family: "Pretendard-Light";
+}
+
+:deep(.dp__calendar_header) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__cell_inner) {
+  color: #ffffff !important;
+}
+
+:deep(.dp__disabled) {
+  color: #666666 !important;
+}
+
+.date-trigger {
+  width: 100%;
+  height: 48px;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 15px;
+  color: #b4b4b4;
+  font-family: "EliceDigitalBaeum_Regular";
+  padding: 0 12px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  justify-content: center;
+}
+
+.date-trigger.has-value {
+  color: #000000;
+}
+
+.date-trigger:hover {
+  border-color: #ecb27b;
+}
+
+:deep(.dp__input) {
+  color: #000000 !important;
+}
+
+:deep(.dp__input_icon) {
+  color: #000000 !important;
+}
+
+:deep(.dp__overlay) {
+  background-color: rgba(0, 0, 0, 0.7) !important;
 }
 </style>
