@@ -2,17 +2,14 @@
   <div class="third-section">
     <div class="TitleContainer">
       <h1 class="Title">
-        인생샷 명소부터 숨은 맛집까지,<br />우리만의 트래블 큐레이션
+        인생샷 명소부터 숨은 맛집까지🥹,<br />우리만의 트래블 큐레이션
       </h1>
     </div>
     <div class="content-container">
       <div class="photo-grid">
         <div class="first-box1">
           <p>
-            나는 무엇인지 그리워 이 많은 별빛이 내린 언덕 위에 내 이름자를 써보고
-            흙으로 덮어 버리었읍니다. 딴은 밤을 세워 우는 벌레는 부끄러운 이름을
-            슬퍼하는 까닭입니다. 어머님, 그리고 당신은 멀리 북간도에 계십니다.
-            계절이 지나가는 하늘에는 가을로 가득 차 있습니다.
+            여행이 항상 예쁘지만은 않아요. 편하지만도 않고요. 때로 여행은 아프고, 심지어 당신의 마음을 부숴놓기도 합니다. <br/>괜찮아요. 여행은 당신을 변화시키거든요. <br/>여행은 당신의 기억과 의식, 마음, 그리고 신체에 흔적을 남겨요. 그리고 당신은 뭔가를 가지고 돌아오죠. 바라건대, 무언가 가치 있는 것을 남겼을 겁니다.
           </p>
           <button class="explore-button">살펴보러가기</button>
         </div>
@@ -57,14 +54,14 @@ export default {
 
 .Title {
   font-family: "EliceDigitalBaeum_Regular";
-  font-size: 48px;
+  font-size: 46px;
   color: #000;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   margin: 0;
   padding: 20px;
 }
 
 .content-container {
+  font-family: "Pretendard-Medium";
   height: 77vh; /* 전체의 70% 차지 */
   display: flex;
   align-items: center;
@@ -110,7 +107,7 @@ export default {
 
 .explore-button:hover {
   transform: scale(1.05);
-  background-color: #ffdd57;
+  background-color: #ECB27B;
 }
 
 .first-box2 {

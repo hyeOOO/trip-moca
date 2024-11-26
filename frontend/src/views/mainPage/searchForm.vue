@@ -12,7 +12,7 @@
           :min-date="new Date()"
           :enable-time-picker="false"
           :format="formatDate"
-          :placeholder="'날짜를 선택해주세요'"
+
           :auto-apply="true"
           locale="ko"
           :clearable="false"
@@ -22,7 +22,7 @@
         >
           <template #trigger>
             <div class="date-trigger" :class="{ 'has-value': startDate }">
-              {{ startDate ? formatDate(startDate) : "날짜를 선택해주세요" }}
+              {{ startDate ? formatDate(startDate) : "" }}
             </div>
           </template>
         </Datepicker>
@@ -34,7 +34,7 @@
           :min-date="startDate || new Date()"
           :enable-time-picker="false"
           :format="formatDate"
-          :placeholder="'날짜를 선택해주세요'"
+
           :auto-apply="true"
           locale="ko"
           :clearable="false"
@@ -43,7 +43,7 @@
         >
           <template #trigger>
             <div class="date-trigger" :class="{ 'has-value': endDate }">
-              {{ endDate ? formatDate(endDate) : "날짜를 선택해주세요" }}
+              {{ endDate ? formatDate(endDate) : "" }}
             </div>
           </template>
         </Datepicker>
@@ -51,7 +51,7 @@
       <div>
         <p class="text2">지역</p>
         <select class="select-location" v-model="selectedArea">
-          <option value="">지역을 선택하세요</option>
+          <!-- <option value="">지역을 선택하세요</option> -->
           <option v-for="region in regions" :key="region.code" :value="region.code">
             {{ region.name }}
           </option>
@@ -237,6 +237,8 @@ import welcomeAnimation from "@/views/animationView/welcomeAnimation.vue";
 import Datepicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 
+const emit = defineEmits(["ai-loading-complete"]);
+
 const router = useRouter();
 const aiRecommendStore = useAiRecommendPlanStore();
 
@@ -326,6 +328,7 @@ const handleSubmit = async () => {
     }
 
     isLoading.value = true;
+    emit('ai-loading', true);
     startTimer();
 
     const start = new Date(startDate.value);
@@ -371,6 +374,7 @@ const handleSubmit = async () => {
 const handleAnimationComplete = async () => {
   showAnimation.value = false;
   // 애니메이션 완료 후 페이지 이동
+  emit('ai-loading', false);
   await router.push({
     name: "modifyRecommendTour",
     params: { id: selectedArea.value },
@@ -583,13 +587,11 @@ button:hover .star-6 {
 }
 
 .search-submit:disabled {
-  background: #cccccc;
   cursor: not-allowed;
   opacity: 0.7;
 }
 
 .search-submit:disabled:hover {
-  background: #cccccc;
   color: #ffffff;
   box-shadow: none;
 }
@@ -620,6 +622,15 @@ select option {
   color: #ffffff;
 }
 /* 로딩오버레이 */
+.fullscreen-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background-color: white;
+}
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -630,6 +641,11 @@ select option {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 9999;
+}
+.welcome-animation {
+  z-index: 9999;
+  position: fixed;
 }
 
 .loading-content {

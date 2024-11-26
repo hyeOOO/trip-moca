@@ -15,7 +15,11 @@
             <div class="step-title">장소 선택</div>
           </div>
 
-          <div class="step" :class="{ active: isStep3Active }" @click="toggleStep3">
+          <div
+            class="step"
+            :class="{ active: isStep3Active }"
+            @click="toggleStep3"
+          >
             <div class="step-number">STEP 3</div>
             <div class="step-title">계획 생성</div>
           </div>
@@ -38,32 +42,65 @@
           <div class="plan-form">
             <div class="form-group">
               <label for="planTitle">여행 제목</label>
-              <input type="text" id="planTitle" v-model="planTitle" :placeholder="defaultTitle"
-                class="plan-title-input" />
+              <input
+                type="text"
+                id="planTitle"
+                v-model="planTitle"
+                :placeholder="defaultTitle"
+                class="plan-title-input"
+              />
             </div>
 
             <!-- 대표 이미지 업로드 섹션 -->
             <div class="form-group">
               <label for="planProfileImg">나만의 여행지 사진</label>
               <div class="image-upload-container">
-                <div class="image-preview" :class="{ 'has-image': previewUrl }" @click="triggerFileInput">
-                  <img v-if="previewUrl" :src="previewUrl" alt="여행 대표 이미지" class="preview-image" />
+                <div
+                  class="image-preview"
+                  :class="{ 'has-image': previewUrl }"
+                  @click="triggerFileInput"
+                >
+                  <img
+                    v-if="previewUrl"
+                    :src="previewUrl"
+                    alt="여행 대표 이미지"
+                    class="preview-image"
+                  />
                   <div v-else class="upload-placeholder">
                     <i class="fa-solid fa-camera"></i>
                     <p>클릭하여 이미지 업로드</p>
                   </div>
                 </div>
-                <input type="file" ref="fileInput" @change="handleImageUpload" accept="image/*" class="hidden-input" />
+                <input
+                  type="file"
+                  ref="fileInput"
+                  @change="handleImageUpload"
+                  accept="image/*"
+                  class="hidden-input"
+                />
               </div>
             </div>
 
             <div class="daily-plans">
-              <div v-for="(places, dayIndex) in selectedPlaces" :key="dayIndex" class="day-section">
-                <h3>{{ dayIndex + 1 }}일차 {{ formatDate(getTripDate(dayIndex)) }}</h3>
+              <div
+                v-for="(places, dayIndex) in selectedPlaces"
+                :key="dayIndex"
+                class="day-section"
+              >
+                <h3>
+                  {{ dayIndex + 1 }}일차 {{ formatDate(getTripDate(dayIndex)) }}
+                </h3>
                 <div class="place-list">
-                  <div v-for="(place, placeIndex) in places" :key="placeIndex" class="place-item">
+                  <div
+                    v-for="(place, placeIndex) in places"
+                    :key="placeIndex"
+                    class="place-item"
+                  >
                     <div class="place-image">
-                      <img :src="getImageUrl(place.image1)" :alt="place.title" />
+                      <img
+                        :src="getImageUrl(place.image1)"
+                        :alt="place.title"
+                      />
                     </div>
                     <div class="place-info">
                       <h4>{{ place.title }}</h4>
@@ -83,8 +120,14 @@
 
       <!-- Map Section -->
       <div class="map-container">
-        <Tmap ref="tmap" :latitude="latitude" :longitude="longitude" :selected-places-by-day="selectedPlaces"
-          :selected-day="selectedDay" :show-all-days="true" />
+        <Tmap
+          ref="tmap"
+          :latitude="latitude"
+          :longitude="longitude"
+          :selected-places-by-day="selectedPlaces"
+          :selected-day="selectedDay"
+          :show-all-days="true"
+        />
       </div>
     </div>
   </div>
@@ -267,7 +310,10 @@ export default {
     },
 
     getImageUrl(imageUrl) {
-      return imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
+      return (
+        imageUrl ||
+        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+      );
     },
 
     async savePlan() {
@@ -299,7 +345,9 @@ export default {
         await this.executeSavePlan();
       } catch (error) {
         console.error("Error saving plan:", error);
-        alert(error.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+        alert(
+          error.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요."
+        );
       }
     },
 
@@ -322,7 +370,10 @@ export default {
           })),
         };
 
-        formData.append("plan", new Blob([JSON.stringify(planData)], { type: "application/json" }));
+        formData.append(
+          "plan",
+          new Blob([JSON.stringify(planData)], { type: "application/json" })
+        );
 
         if (this.selectedFile) {
           formData.append("image", this.selectedFile);
@@ -341,7 +392,10 @@ export default {
         }
       } catch (error) {
         console.error("Error executing save plan:", error);
-        alert(error.response?.data?.message || "저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+        alert(
+          error.response?.data?.message ||
+            "저장 중 오류가 발생했습니다. 다시 시도해주세요."
+        );
       }
     },
   },
@@ -358,7 +412,7 @@ export default {
 
 .content-wrapper {
   display: grid;
-  grid-template-columns: 200px 380px 1fr;
+  grid-template-columns: 107px 370px minmax(0, 1fr);
   grid-template-rows: 1fr;
   height: calc(100vh - 64px);
   overflow: hidden;
@@ -373,15 +427,17 @@ export default {
 /* Steps Sidebar Styles */
 .steps-sidebar {
   background: white;
-  padding: 20px;
-  border-right: 1px solid #eee;
   height: 100%;
+  position: relative;
+  padding: 10px;
 }
 
 .steps-nav {
+  text-align: center;
+  font-family: "EliceDigitalBaeum_regular";
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .step {
@@ -392,7 +448,7 @@ export default {
   text-decoration: none;
   color: inherit;
   border-radius: 8px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .step:hover,
@@ -401,23 +457,32 @@ export default {
 }
 
 .step-number {
-  font-size: 14px;
-  font-weight: bold;
-  color: #f57c00;
   margin-bottom: 4px;
 }
-
 .step-title {
   font-size: 16px;
   color: #333;
+}
+
+.step-number,
+.step-title {
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 14px;
+  color: #b4b4b4;
+}
+
+.step:hover .step-number,
+.step:hover .step-title,
+.step.active .step-number,
+.step.active .step-title {
+  color: #ecb27b;
 }
 
 /* Middle Section Styles */
 .middle-section {
   position: relative;
   background: white;
-  padding: 24px;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
   border-right: 1px solid #eee;
   height: 100%;
   overflow-y: auto;
@@ -432,6 +497,7 @@ export default {
 }
 
 .content-section {
+  font-family: "Pretendard-Medium";
   flex: 1;
   padding: 20px;
   overflow-y: auto;
@@ -648,17 +714,18 @@ export default {
 
 /* Header Styles */
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .header h2 {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
+  font-family: "EliceDigitalBaeum_bold";
+  font-size: 32px;
+  margin-bottom: 8px;
 }
 
 .date-range {
-  color: #f57c00;
+  font-family: "EliceDigitalBaeum_bold";
+  color: #ecb27b;
   font-size: 14px;
 }
 
@@ -704,6 +771,6 @@ h4 {
 .place-info p {
   color: #b4b4b4;
   font-size: 14px;
-  font-family: 'Pretendard-Regular';
+  font-family: "Pretendard-Regular";
 }
 </style>

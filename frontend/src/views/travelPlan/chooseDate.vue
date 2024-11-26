@@ -394,7 +394,7 @@ export default {
 }
 
 .date-range {
-  font-family: "EliceDigitalBaeum_regular";
+  font-family: "EliceDigitalBaeum_bold";
   color: #ECB27B;
   font-size: 14px;
 }
@@ -407,7 +407,7 @@ export default {
 
 /* 입력 필드 레이블 스타일 */
 .input-group label {
-  font-family: "EliceDigitalBaeum_regular";
+  font-family: "Pretendard-Medium";
   display: block;
   margin-bottom: 8px;
   font-size: 14px;

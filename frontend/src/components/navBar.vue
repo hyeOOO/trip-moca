@@ -1,5 +1,5 @@
 <template>
-  <div :class="{ 'nav-theme': true, 'nav-dark': isDarkRoute }">
+  <div :class="{ 'nav-theme': true, 'nav-dark': isDarkRoute, 'ai-loading': indexConfig }">
     <!-- nav-top -->
     <div class="nav-top" style="display: grid; grid-template-columns: 1fr 1fr">
       <div class="info-top">
@@ -60,12 +60,18 @@ import SearchBar from "@/components/SearchBar.vue";
 
 export default {
   name: "Menu",
+  props: {
+    indexConfig: {
+      type: Boolean,
+      default: false,
+    },
+  },
   data() {
     return {
       menuItems: [
         { name: "여행계획", path: "/travelPlan", subPaths: ["/chooseDate", "/choosePlace"], active: false },
         { name: "경로검색", path: "/routeSearch", active: false },
-        { name: "추천관광", path: "/recommendTour", active: false },
+        { name: "AI모카", path: "/recommendTour", active: false },
         { name: "인기여행", path: "/popularPlace", active: false },
         {
           name: "마이페이지",
@@ -78,6 +84,10 @@ export default {
     };
   },
   computed: {
+    currentRoute() {
+      console.log(this.$route.path);
+      return this.$route.path;
+    },
     // 흰색 테마로 하고 싶은 페이지들 밑에 경로 추가하면댐
     isDarkRoute() {
       return (
@@ -243,7 +253,14 @@ export default {
 }
 
 .nav-theme {
+  /* position: relative;
+  z-index: -1; */
   --nav-text-color: #ffffff;
+}
+
+.ai-loading{
+  position: relative;
+  z-index: -1;
 }
 
 .nav-dark {

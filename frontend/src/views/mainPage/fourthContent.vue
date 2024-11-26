@@ -63,26 +63,21 @@ export default {
   align-items: center;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100vh;
 }
 
 .fourth-title {
   font-family: "EliceDigitalBaeum_Regular";
   display: flex;
-  text-align: left;
   font-size: 40px;
-  margin-bottom: 50px;
-  width: 100%;
-  max-width: 1400px; /* grid-container와 같은 max-width 적용 */
+  padding: 20px 0px;
+  margin-right: 41%;
 }
 
 .grid-container {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 100%;
-  max-width: 1400px;
+  width: 72%;
 }
 
 .grid-row {
@@ -92,12 +87,12 @@ export default {
 
 .grid-row:first-child {
   grid-template-columns: repeat(3, 1fr);
-  height: 400px; /* 첫 번째 행 높이 증가 */
+  height: 350px;
 }
 
 .grid-row:last-child {
   grid-template-columns: 2fr 1fr;
-  height: 400px; /* 두 번째 행 높이 증가 */
+  height: 350px;
 }
 
 .grid-item,
