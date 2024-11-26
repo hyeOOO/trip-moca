@@ -165,21 +165,69 @@ export default {
       keyword: "",
       currentIndexes: {},
       isAnimating: false,
-      selectedDay: 1,
+      selectedDay: "all", // 초기값을 1에서 'all'로 변경
       text: "AI가 추천하는 최적의 여행 코스",
     };
+  },
+
+  mounted() {
+    // 컴포넌트가 마운트된 후 지도 초기화를 보장
+    if (this.planData) {
+      this.$nextTick(() => {
+        if (this.$refs.tmapComponent) {
+          this.$refs.tmapComponent.$forceUpdate();
+        }
+      });
+    }
+  },
+
+  watch: {
+    // planData가 변경될 때마다 지도 업데이트
+    planData: {
+      handler(newValue) {
+        if (newValue) {
+          this.$nextTick(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            if (this.$refs.tmapComponent) {
+              this.$refs.tmapComponent.$forceUpdate();
+            }
+          });
+        }
+      },
+      deep: true,
+    },
   },
   computed: {
     getSelectedPlaces() {
       if (!this.planData) return {};
 
-      const selectedPlaces = {};
-      this.planData.forEach((dayPlan) => {
-        if (dayPlan.attractionDetails && dayPlan.attractionDetails.length > 0) {
-          selectedPlaces[dayPlan.day] = dayPlan.attractionDetails;
-        }
-      });
-      return selectedPlaces;
+      // 특정 일자가 선택된 경우
+      if (this.selectedDay !== "all") {
+        const dayPlan = this.planData.find((day) => day.day === this.selectedDay);
+        if (!dayPlan) return {};
+
+        return {
+          [this.selectedDay]: dayPlan.attractionDetails.map((spot) => ({
+            id: spot.attractionId,
+            title: spot.title,
+            latitude: Number(spot.latitude),
+            longitude: Number(spot.longitude),
+          })),
+        };
+      }
+
+      // 전체 일정 보기인 경우
+      return this.planData.reduce((acc, dayPlan) => {
+        if (!dayPlan.attractionDetails) return acc;
+
+        acc[dayPlan.day] = dayPlan.attractionDetails.map((spot) => ({
+          id: spot.attractionId,
+          title: spot.title,
+          latitude: Number(spot.latitude),
+          longitude: Number(spot.longitude),
+        }));
+        return acc;
+      }, {});
     },
     getCenterCoordinates() {
       if (!this.planData || this.planData.length === 0) {
@@ -217,18 +265,26 @@ export default {
     },
   },
 
-  created() {
+  // created() 훅 수정
+  async created() {
     this.keyword = this.$route.params.keyword;
-    this.selectedDay = "all";
-    this.fetchKeywordPlan(this.keyword);
+    await this.fetchKeywordPlan(this.keyword);
   },
 
   methods: {
+    // fetchKeywordPlan 메서드 수정
     async fetchKeywordPlan(keyword) {
       try {
         this.loading = true;
         const response = await api.get(`/api/attraction/ai/plan/keyword/${keyword}`);
+
+        // 데이터 설정 전에 selectedDay를 'all'로 설정
+        this.selectedDay = "all";
+
+        // 약간의 지연 후 데이터 설정
+        await new Promise((resolve) => setTimeout(resolve, 100));
         this.planData = response.data;
+
         // 각 일차별 현재 인덱스 초기화
         this.planData.forEach((_, index) => {
           this.currentIndexes[index] = 0;
@@ -318,6 +374,12 @@ export default {
     },
     handleDaySelect(day) {
       this.selectedDay = day;
+      // 일자 선택 시 지도 업데이트 강제 실행
+      this.$nextTick(() => {
+        if (this.$refs.tmapComponent) {
+          this.$refs.tmapComponent.$forceUpdate();
+        }
+      });
     },
   },
 };
@@ -402,7 +464,7 @@ export default {
 
 .days-container {
   width: 100%;
-  background-color: #ecb27b;
+  background-color: #6e6156;
 }
 
 .days-instance {
@@ -441,6 +503,7 @@ export default {
   color: white;
   border-radius: 8px;
   transition: all 0.3s ease;
+  font-family: "Pretendard-Regular";
 }
 
 .day-button.active {
