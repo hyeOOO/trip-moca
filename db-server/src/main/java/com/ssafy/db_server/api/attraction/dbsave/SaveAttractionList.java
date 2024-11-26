@@ -207,9 +207,48 @@ public class SaveAttractionList {
     @Transactional
     private void saveBatch(List<AttractionList> attractions) {
         try {
-            log.info("Saving batch of {} attractions...", attractions.size());
-            List<AttractionList> savedAttractions = attractionListRepository.saveAll(attractions);
-            log.info("Successfully saved {} attractions", savedAttractions.size());
+            log.info("Processing batch of {} attractions...", attractions.size());
+            List<AttractionList> toUpdate = new ArrayList<>();
+            List<AttractionList> toInsert = new ArrayList<>();
+
+            for (AttractionList attraction : attractions) {
+                // contentId로 기존 데이터 확인
+                AttractionList existingAttraction = attractionListRepository
+                        .findByContentId(attraction.getContentId())
+                        .orElse(null);
+
+                if (existingAttraction != null) {
+                    // 기존 데이터가 있으면 업데이트
+                    existingAttraction.setTitle(attraction.getTitle());
+                    existingAttraction.setContentTypeId(attraction.getContentTypeId());
+                    existingAttraction.setAreaCode(attraction.getAreaCode());
+                    existingAttraction.setSiGunGuCode(attraction.getSiGunGuCode());
+                    existingAttraction.setImage1(attraction.getImage1());
+                    existingAttraction.setImage2(attraction.getImage2());
+                    existingAttraction.setMapLevel(attraction.getMapLevel());
+                    existingAttraction.setLatitude(attraction.getLatitude());
+                    existingAttraction.setLongitude(attraction.getLongitude());
+                    existingAttraction.setTel(attraction.getTel());
+                    existingAttraction.setAddr1(attraction.getAddr1());
+                    existingAttraction.setAddr2(attraction.getAddr2());
+                    toUpdate.add(existingAttraction);
+                } else {
+                    // 새로운 데이터는 삽입
+                    toInsert.add(attraction);
+                }
+            }
+
+            // 업데이트와 삽입 수행
+            if (!toUpdate.isEmpty()) {
+                attractionListRepository.saveAll(toUpdate);
+                log.info("Updated {} existing attractions", toUpdate.size());
+            }
+
+            if (!toInsert.isEmpty()) {
+                attractionListRepository.saveAll(toInsert);
+                log.info("Inserted {} new attractions", toInsert.size());
+            }
+
             attractions.clear();
         } catch (Exception e) {
             log.error("Error saving batch: {}", e.getMessage());
@@ -219,7 +258,7 @@ public class SaveAttractionList {
                         firstItem.getContentId(), firstItem.getContentTypeId(),
                         firstItem.getAreaCode(), firstItem.getSiGunGuCode());
             }
-            attractions.clear();  // Clear the failed batch to continue with next one
+            attractions.clear();
         }
     }
 
