@@ -2,9 +2,9 @@
   <div class="section-section">
     <div class="TitleContainer">
       <h1 class="Title">
-        발도장 찍고 캐릭터 GET! 내 손안의 귀여운 여행 컬렉션 📝
+        <span class="a">내 취향저격 </span><span class="b">#여행컬렉터 </span><span class="c">되기!</span>
+        <br /><span class="d">발길 닿는 곳마다 GET하는 귀욤뽀짝 </span><span class="e">#캐릭터카드</span>
       </h1>
-      <button>카드 도감 가기</button>
     </div>
     <div class="cards-container">
       <div class="cards">
@@ -78,20 +78,42 @@ const cards = [
 }
 
 .TitleContainer {
+  font-family: "EliceDigitalBaeum_Regular";
   position: fixed;
-  top: 40px;
+  top: 70px;
   left: 0;
   right: 0;
   z-index: 20;
 }
 
 .Title {
-  font-family: "EliceDigitalBaeum_Regular";
-  font-size: 48px;
-  color: #000000;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
   margin: 0;
   padding: 20px;
+}
+
+.Title .a{
+  font-size: 40px;
+  color: #B4B4B4;
+}
+
+.Title .b{
+  font-size: 40px;
+  color: #777777;
+}
+
+.Title .c{
+  font-size: 40px;
+  color: #B4B4B4;
+}
+
+.Title .d{
+  font-size: 48px;
+  color: #000000;
+}
+
+.Title .e{
+  font-size: 48px;
+  color: #988D82;
 }
 
 .cards-container {
@@ -100,7 +122,7 @@ const cards = [
   align-items: center;
   justify-content: center;
   position: relative;
-  padding-top: 57vh;
+  padding-top: 51vh;
 }
 
 body {
@@ -235,10 +257,10 @@ body {
   cursor: pointer;
 }
 
-.button:hover {
+/* .button:hover {
   transform: scale(1.05);
   background-color: #ffdd57;
-}
+} */
 
 @keyframes fade {
   0% {

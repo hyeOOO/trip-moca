@@ -97,7 +97,7 @@
               </div>
               <div>
                 <button @click="removePlace(place)" class="remove-btn">
-                  <i class="fa-solid fa-times"></i>
+                  <i class="fas fa-trash"></i>
                 </button>
               </div>
             </div>
@@ -166,17 +166,15 @@ const paginatedPlaces = computed(() => {
 });
 
 const getSelectedPlaces = computed(() => {
-  if (selectedDay.value === "cart") {
-    return {
-      0: cartItems.value.map((place) => ({
-        id: place.attractionId,
-        title: place.title,
-        latitude: place.latitude,
-        longitude: place.longitude,
-      })),
-    };
-  }
-  return {};
+  // 항상 장바구니 아이템만 표시하도록 수정
+  return {
+    0: cartItems.value.map((place) => ({
+      id: place.attractionId,
+      title: place.title,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    })),
+  };
 });
 
 const fetchAttractions = async () => {
@@ -309,7 +307,8 @@ const onDrop = async (event, targetIndex) => {
 };
 
 const selectDay = (day) => {
-  selectedDay.value = day;
+  // 아무 동작도 하지 않음
+  return;
 };
 
 const removePlace = (place) => {
@@ -384,7 +383,7 @@ watch(searchQuery, () => {
 watch(
   cartItems,
   () => {
-    selectedDay.value = "cart";
+    // selectedDay 변경 로직 제거
     localStorage.setItem('cartItems', JSON.stringify(cartItems.value));
   },
   { deep: true }
@@ -617,7 +616,7 @@ onMounted(async () => {
 /* 초기화버튼 */
 .clear-cart {
   font-family: "EliceDigitalBaeum_regular";
-  color: #ff6365;
+  color: #000;
   cursor: pointer;
   padding: 15px 10px 5px 0px;
 }
@@ -729,5 +728,15 @@ onMounted(async () => {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #c3a386;
+}
+
+.delete-button,
+.remove-button {
+  color: #b4b4b4;
+  padding: 0.5rem;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 </style>

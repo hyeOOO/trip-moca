@@ -1,7 +1,10 @@
 <template>
   <div class="layout-container">
     <navBar />
-    <div class="content-wrapper" :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }">
+    <div
+      class="content-wrapper"
+      :class="{ collapsed: isCollapsed, 'right-collapsed': isRightCollapsed }"
+    >
       <!-- Left Sidebar -->
       <div class="steps-sidebar">
         <div class="steps-nav">
@@ -9,7 +12,11 @@
             <div class="step-number">STEP 1</div>
             <div class="step-title">날짜 선택</div>
           </div>
-          <div class="step" :class="{ active: isStep2Active }" @click="toggleStep2">
+          <div
+            class="step"
+            :class="{ active: isStep2Active }"
+            @click="toggleStep2"
+          >
             <div class="step-number">STEP 2</div>
             <div class="step-title">장소 선택</div>
           </div>
@@ -20,13 +27,16 @@
         </div>
       </div>
 
-      <!-- Middle Section -->
+      <!-- Middle Section - 검색 및 장소 목록 -->
       <div class="middle-section">
         <div class="toggle-button" @click="toggleCollapse">
-          <i class="fa-solid" :class="{
-            'fa-arrow-left': !isCollapsed,
-            'fa-arrow-right': isCollapsed,
-          }"></i>
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isCollapsed,
+              'fa-arrow-right': isCollapsed,
+            }"
+          ></i>
         </div>
         <div class="middleHeader">
           <h2>{{ name }}</h2>
@@ -52,19 +62,30 @@
           <div v-else-if="error" class="error-state">
             {{ error }}
           </div>
-          <div v-for="place in filteredPlaces" :key="place.attractionId" class="place-item" draggable="true"
-            @dragstart="dragStart($event, place)">
-            <div class="place-image">
+          <!-- 검색 결과 장소 목록 - 단순 레이아웃 -->
+          <div
+            v-for="place in filteredPlaces"
+            :key="place.attractionId"
+            class="place-item"
+            draggable="true"
+            @dragstart="dragStart($event, place)"
+          >
+            <div class="image-container">
               <img :src="getImageUrl(place.image1)" :alt="place.title" />
             </div>
             <div class="place-info">
               <div class="flex gap-2 mb-2">
-                <span v-if="place.contentTypeName" class="px-2 py-1 rounded-lg text-xs text-white tag"
-                  :style="{ backgroundColor: getContentTypeColor(place.contentTypeId) }">
+                <span
+                  v-if="place.contentTypeName"
+                  class="px-2 py-1 rounded-lg text-xs text-white tag"
+                  :style="{
+                    backgroundColor: getContentTypeColor(place.contentTypeId),
+                  }"
+                >
                   {{ place.contentTypeName }}
                 </span>
               </div>
-              <h3 class="place-title">{{ place.title }}</h3>
+              <h3>{{ place.title }}</h3>
               <p class="place-address">{{ place.addr1 }}</p>
             </div>
           </div>
@@ -74,66 +95,105 @@
         </div>
       </div>
 
-      <!-- Right Section -->
+      <!-- Right Section - 선택된 장소 목록 -->
       <div class="right-section">
         <div class="toggle-button" @click="toggleRightSection">
-          <i class="fa-solid" :class="{
-            'fa-arrow-left': !isRightCollapsed,
-            'fa-arrow-right': isRightCollapsed,
-          }"></i>
+          <i
+            class="fa-solid"
+            :class="{
+              'fa-arrow-left': !isRightCollapsed,
+              'fa-arrow-right': isRightCollapsed,
+            }"
+          ></i>
         </div>
         <div class="header">
-
+          <button @click="showAllMarkers" class="view-all-button">
+            전체보기
+          </button>
         </div>
         <div class="selected-places">
-          <div v-for="dayIndex in numberOfDays" :key="dayIndex - 1" class="day-section" @dragover.prevent
-            @drop="onDrop($event, dayIndex - 1)">
+          <div
+            v-for="dayIndex in numberOfDays"
+            :key="dayIndex - 1"
+            class="day-section"
+            @dragover.prevent
+            @drop="onDrop($event, dayIndex - 1)"
+          >
             <div class="day-header">
               <h3 @click="selectDay(dayIndex - 1)" style="cursor: pointer">
-                {{ dayIndex }}일차 {{ formatDate(getTripDate(dayIndex - 1)) }}
+                <span class="day">{{ dayIndex }}일차</span>
+                <span class="date">{{
+                  formatFullDate(getTripDate(dayIndex - 1))
+                }}</span>
               </h3>
               <div class="day-header-buttons">
-                <button @click="showAllMarkers" class="view-all-button">전체보기</button>
                 <button @click="clearDay(dayIndex - 1)" class="clear-button">
-                  <i class="fa-solid fa-rotate-left"></i> 초기화
+                  <i class="fa-solid fa-rotate-left"></i>
                 </button>
               </div>
             </div>
-            <div v-if="!selectedPlacesByDay[dayIndex - 1]?.length" class="empty-day">
+            <div
+              v-if="!selectedPlacesByDay[dayIndex - 1]?.length"
+              class="empty-day"
+            >
               <p></p>
             </div>
             <div v-else class="selected-day-places">
-              <div v-for="(place, index) in selectedPlacesByDay[dayIndex - 1]" :key="place.attractionId"
-                class="selected-place" draggable="true" @dragstart="
+              <!-- 선택된 장소 목록 - 순서 번호와 삭제 버튼이 있는 레이아웃 -->
+              <div
+                v-for="(place, index) in selectedPlacesByDay[dayIndex - 1]"
+                :key="place.attractionId"
+                class="selected-place"
+                draggable="true"
+                @dragstart="
                   dragStartSelected($event, place, dayIndex - 1, index)
-                  " @dragover.prevent @drop.stop="onDrop($event, dayIndex - 1, index)">
+                "
+                @dragover.prevent
+                @drop.stop="onDrop($event, dayIndex - 1, index)"
+              >
                 <div class="order-number">{{ index + 1 }}</div>
-                <div class="place-image">
+                <div class="image-container">
                   <img :src="getImageUrl(place.image1)" :alt="place.title" />
                 </div>
                 <div class="place-info">
                   <div class="flex gap-2 mb-2">
-                    <span v-if="place.contentTypeName" class="px-2 py-1 rounded-lg text-xs text-white tag"
-                      :style="{ backgroundColor: getContentTypeColor(place.contentTypeId) }">
+                    <span
+                      v-if="place.contentTypeName"
+                      class="px-2 py-1 rounded-lg text-xs text-white tag"
+                      :style="{
+                        backgroundColor: getContentTypeColor(
+                          place.contentTypeId
+                        ),
+                      }"
+                    >
                       {{ place.contentTypeName }}
                     </span>
                   </div>
-                  <h4>{{ place.title }}</h4>
+                  <h3>{{ place.title }}</h3>
                   <p class="place-address">{{ place.addr1 }}</p>
-                  <button @click="removePlace(dayIndex - 1, place)" class="remove-button">
-                    <i class="fa-solid fa-times"></i>
-                  </button>
                 </div>
+                <button
+                  @click="removePlace(dayIndex - 1, place)"
+                  class="delete-button"
+                >
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </div>
           </div>
         </div>
         <button @click="saveAndNavigate" class="save-button">저장</button>
       </div>
+
       <div class="map-container">
-        <Tmap ref="tmap" :latitude="latitude" :longitude="longitude" :selected-places-by-day="selectedPlacesByDay"
-          :selected-day="selectedDay" :show-all-days="showAllDays" />
-        <!-- selected-places-by-day 선택한 장소에 대한 정보들 -->
+        <Tmap
+          ref="tmap"
+          :latitude="latitude"
+          :longitude="longitude"
+          :selected-places-by-day="selectedPlacesByDay"
+          :selected-day="selectedDay"
+          :show-all-days="showAllDays"
+        />
       </div>
     </div>
   </div>
@@ -221,19 +281,31 @@ export default {
       },
       set(newValue) {
         this.localSelectedPlaces = newValue;
-        const formattedPlaces = Object.entries(newValue).map(([day, places]) => ({
-          day: parseInt(day),
-          details: places.map((place, index) => ({
-            attractionId: place.attractionId,
-            sequence: index,
-            memo: place.memo || "",
-          })),
-        }));
+        const formattedPlaces = Object.entries(newValue).map(
+          ([day, places]) => ({
+            day: parseInt(day),
+            details: places.map((place, index) => ({
+              attractionId: place.attractionId,
+              sequence: index,
+              memo: place.memo || "",
+            })),
+          })
+        );
         this.planStore.setSelectedPlaces(formattedPlaces);
       },
     },
   },
   methods: {
+    formatFullDate(date) {
+      if (!date) return "";
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const dayOfWeek = days[date.getDay()];
+      return `${year}.${month}.${day}(${dayOfWeek})`;
+    },
+
     async fetchAttractions(page = 0, searchQuery = "") {
       // 이미 데이터를 가져오는 중이거나 마지막 페이지인 경우 중단
       if (!this.areaCode || this.isFetching || (page > 0 && this.isLastPage)) {
@@ -263,9 +335,11 @@ export default {
         } else {
           // 중복 데이터 방지를 위한 체크
           const newPlaces = response.data.content.filter(
-            newPlace => !this.places.some(
-              existingPlace => existingPlace.attractionId === newPlace.attractionId
-            )
+            (newPlace) =>
+              !this.places.some(
+                (existingPlace) =>
+                  existingPlace.attractionId === newPlace.attractionId
+              )
           );
           this.places = [...this.places, ...newPlaces];
         }
@@ -327,23 +401,26 @@ export default {
           !this.isFetching &&
           scrollTop + clientHeight >= scrollHeight - 100
         ) {
-          await this.fetchAttractions(this.currentPage + 1, this.searchQuery.trim());
+          await this.fetchAttractions(
+            this.currentPage + 1,
+            this.searchQuery.trim()
+          );
         }
       }, 200); // 200ms 디바운스
     },
 
     getContentTypeColor(contentType) {
       const colorMap = {
-        12: '#ecb27b',
-        14: '#6E6156',
-        15: '#433629',
-        25: '#332417',
-        28: '#988D82',
-        32: '#C3A386',
-        38: '#ecb27b',
-        39: '#6E6156'
+        12: "#ecb27b",
+        14: "#6E6156",
+        15: "#433629",
+        25: "#332417",
+        28: "#988D82",
+        32: "#C3A386",
+        38: "#ecb27b",
+        39: "#6E6156",
       };
-      return colorMap[contentType] || '#ecb27b';
+      return colorMap[contentType] || "#ecb27b";
     },
 
     // Drag and Drop methods
@@ -415,7 +492,7 @@ export default {
         this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
         this.resetDragState();
       } catch (error) {
-        console.error('Error in onDragPlace:', error);
+        console.error("Error in onDragPlace:", error);
       }
     },
 
@@ -516,9 +593,9 @@ export default {
     },
 
     removePlace(dayIndex, place) {
-      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[dayIndex].filter(
-        (p) => p.attractionId !== place.attractionId
-      );
+      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
+        dayIndex
+      ].filter((p) => p.attractionId !== place.attractionId);
     },
 
     clearDay(dayIndex) {
@@ -526,7 +603,10 @@ export default {
     },
 
     getImageUrl(imageUrl) {
-      return imageUrl || "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png";
+      return (
+        imageUrl ||
+        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+      );
     },
 
     getTripDate(dayIndex) {
@@ -635,7 +715,7 @@ export default {
 
 .content-wrapper {
   display: grid;
-  grid-template-columns: 107px 370px 370px minmax(0, 1fr); /* 좌측 사이드바, 중앙섹션, 우측섹션, 지도영역 */
+  grid-template-columns: 107px 440px 440px minmax(0, 1fr);
   grid-template-rows: 1fr;
   height: calc(100vh - 64px);
   overflow: hidden;
@@ -663,32 +743,20 @@ export default {
   background: white;
   height: 100%;
   position: relative;
-}
-
-.steps-sidebar,
-.middle-section {
   padding: 10px;
 }
 
 .middle-section,
 .right-section {
-  padding: 10px;
   overflow-y: auto;
   transition: all 0.3s ease;
 }
 
-
-/* 중간 섹션 레이아웃 */
-.middle-section {
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
+/* 섹션 레이아웃 */
+.middle-section,
 .right-section {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
 }
 
 .right-section .header {
@@ -712,33 +780,32 @@ export default {
 
 .places-list {
   flex-grow: 1;
-}
-.content-wrapper.collapsed .middle-section,
-.content-wrapper.right-collapsed .right-section {
-  width: 0;
-  padding: 0;
-  overflow: hidden;
-  opacity: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* 가로/세로 스크롤바 공통 스타일 */
+/* 가로/세로 스크롤바 스타일 */
 ::-webkit-scrollbar {
- width: 6px;
- height: 6px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
- background: #ffffff;
- border-radius: 3px;
+  background: #ffffff;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
- background: #ECB27B;
- border-radius: 3px;
+  background: #ecb27b;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
- background: #C3A386;
+  background: #c3a386;
 }
 
 /* 헤더 영역 스타일 */
@@ -751,20 +818,21 @@ export default {
   font-size: 32px;
   margin-bottom: 8px;
 }
+
 .header {
   margin-bottom: 50px;
 }
 
 .date-range {
-  font-family: "EliceDigitalBaeum_regular";
-  color: #ECB27B;
+  font-family: "EliceDigitalBaeum_bold";
+  color: #ecb27b;
   font-size: 14px;
 }
 
-/* 단계 네비게이션 스타일 */
+/* 네비게이션 스타일 */
 .steps-nav {
   text-align: center;
-  font-family: "EliceDigitalBaeum_Regular";
+  font-family: "EliceDigitalBaeum_regular";
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -785,7 +853,7 @@ export default {
 .step-title {
   font-family: "EliceDigitalBaeum_Regular";
   font-size: 14px;
-  color: #B4B4B4;
+  color: #b4b4b4;
 }
 
 .step-number {
@@ -796,7 +864,7 @@ export default {
 .step:hover .step-title,
 .step.active .step-number,
 .step.active .step-title {
-  color: #ECB27B;
+  color: #ecb27b;
 }
 
 /* 검색 영역 스타일 */
@@ -822,90 +890,119 @@ export default {
   cursor: pointer;
 }
 
-/* 장소 목록 스타일 */
-.places-list {
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  padding: 0 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* 장소 아이템 공통 스타일 */
+/* 장소 아이템 및 선택된 장소 공통 스타일 */
 .place-item,
 .selected-place {
   display: flex;
   align-items: center;
+  gap: 10px;
+  padding: 10px 7px;
   background: white;
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-
-.place-image {
-  width: 80px;
-  height: 80px;
-  margin-right: 8px;
-}
-.place-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.place-info {
-  flex: 1;
-}
-
-/* 장소 아이템 세부 스타일 */
-.place-item {
-  cursor: move;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.place-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.place-address {
-  font-size: 13px;
-  color: #666;
-}
-
-/* 선택된 장소 스타일 */
-.selected-place {
+  border-radius: 0.5rem;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: grab;
   position: relative;
-  padding-left: 48px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: move;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
+.selected-place {
+  width: 400px;
+  margin-bottom: 1rem;
+  padding-left: 48px;
+}
+
+.place-item:hover,
 .selected-place:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.selected-place .order-number {
+/* 순서 번호 스타일 */
+.spot-number,
+.order-number {
+  font-family: "Pretendard-SemiBold";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6e6156;
+  font-size: 1.125rem;
+}
+
+.order-number {
   position: absolute;
   left: 12px;
   width: 24px;
   height: 24px;
-  background-color: #ECB27B;
+  background-color: #ecb27b;
   color: white;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-weight: bold;
   font-size: 14px;
 }
 
+/* 이미지 컨테이너 스타일 */
+.image-container,
+.place-image {
+  flex-shrink: 0;
+  width: 145px;
+  height: 6rem;
+  margin-right: 1rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.image-container img,
+.place-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+/* 장소 정보 스타일 */
+.place-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.place-info h3,
+.place-info h4 {
+  font-family: "Pretendard-Medium";
+  font-weight: bold;
+  font-size: 1.125rem;
+  margin-bottom: 4px;
+}
+
+.place-info p,
+.place-address {
+  font-family: "Pretendard-Regular";
+  font-size: 14px;
+  color: #b4b4b4;
+}
+
+/* 태그 스타일 */
+.tag {
+  font-family: "Pretendard-SemiBold";
+  font-size: 12px;
+}
+
+/* 삭제 버튼 스타일 */
+.delete-button,
+.remove-button {
+  color: #b4b4b4;
+  padding: 0.5rem;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.delete-button:hover,
+.remove-button:hover {
+  color: #666;
+}
+
+/* 드래그 상태 */
 .selected-place.dragging {
   opacity: 0.5;
 }
@@ -919,6 +1016,7 @@ export default {
 }
 
 .day-header {
+  font-family: "Pretendard-Medium";
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -929,34 +1027,26 @@ export default {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
 }
 
+.day-header h3 .day {
+  font-family: "EliceDigitalBaeum_Bold";
+  font-size: 20px;
+  margin-right: 5px;
+}
+.day-header h3 .date {
+  font-family: "EliceDigitalBaeum_Regular";
+  font-size: 12px;
+  padding-top: 5px;
+}
 .day-header h3:hover {
   background-color: #f0f0f0;
 }
-
 .day-header-buttons {
   display: flex;
   gap: 8px;
-}
-
-/* 드래그 앤 드롭 영역 스타일 */
-.day-section::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-
-.day-section.drag-over::after {
-  opacity: 1;
 }
 
 /* 버튼 스타일 */
@@ -981,37 +1071,27 @@ export default {
 }
 
 .toggle-button:hover i {
-  color: #ECB27B;
+  color: #ecb27b;
 }
 
-/* 액션 버튼 스타일 */
-.action-buttons {
-  display: flex;
-  gap: 8px;
+/* 기타 버튼 스타일 */
+.view-all-button {
+  margin-left: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 6px 12px;
+  background-color: #ecb27b;
+  color: white;
 }
 
-.remove-button,
-.clear-button,
-.view-all-button,
-.save-button {
+.clear-button {
   border: none;
   border-radius: 4px;
   cursor: pointer;
   padding: 6px 12px;
 }
-
-.remove-button {
-  background: none;
-  color: #666;
-}
-
-.clear-button {
-  background-color: #f1f1f1;
-}
-
-.view-all-button {
-  background-color: #4caf50;
-  color: white;
+.clear-button:hover {
+  color: #f44336;
 }
 
 .save-button {
@@ -1021,6 +1101,8 @@ export default {
   font-weight: 500;
   background: #2b2b2b;
   color: white;
+  border: none;
+  border-radius: 4px;
 }
 
 /* 지도 컨테이너 스타일 */
@@ -1044,50 +1126,39 @@ export default {
   min-height: 0;
 }
 
-/* selected-place 스타일 */
-.selected-place {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: white;
-  border-radius: 8px;
-  padding: 8px 12px;
-  padding-left: 48px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: move;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+/* 로딩 및 에러 상태 스타일 */
+.loading-state,
+.error-state,
+.loading-more {
+  text-align: center;
+  margin: 10px 0;
 }
 
-.selected-place:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.error-state {
+  color: #ecb27b;
 }
 
-.selected-place .order-number {
-  position: absolute;
-  left: 12px;
-  width: 24px;
-  height: 24px;
-  background-color: #f57c00;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+.loading-more {
+  padding: 16px;
   font-size: 14px;
+  color: #666;
 }
 
-.selected-place.dragging {
-  opacity: 0.5;
+/* 기타 */
+.empty-day {
+  height: 100px;
+}
+
+/* 콘텐츠 접힘 상태 */
+.content-wrapper.collapsed .middle-section,
+.content-wrapper.right-collapsed .right-section {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  opacity: 0;
 }
 
 /* 드롭 영역 스타일 */
-.day-section {
-  position: relative;
-}
-
 .day-section::after {
   content: "";
   position: absolute;
@@ -1105,39 +1176,4 @@ export default {
 .day-section.drag-over::after {
   opacity: 1;
 }
-
-/* 로딩 및 에러 상태 스타일 */
-.loading-state,
-.error-state,
-.loading-more {
-  text-align: center;
-  margin: 10px 0;
-}
-
-.error-state {
-  color: #ECB27B;
-}
-
-.loading-more {
-  padding: 16px;
-  font-size: 14px;
-  color: #666;
-}
-.tag {
-  font-family: 'Pretendard-SemiBold';
-  font-size: 12px;
-}
-
-.place-info h3,
-h4 {
-  font-family: "Pretendard-Bold";
-  font-size: 1.125rem;
-}
-
-.place-info p {
-  color: #b4b4b4;
-  font-size: 14px;
-  font-family: 'Pretendard-Regular';
-}
-
 </style>

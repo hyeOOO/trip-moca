@@ -2,7 +2,7 @@
   <div class="scroll-container">
     <!-- 첫 번째 섹션 -->
     <section class="background first-section" id="section1">
-      <navBar />
+      <navBar :indexConfig="indexControll"/>
       <div
         class="main-section"
         style="display: grid; grid-template-columns: 1fr 1fr"
@@ -13,7 +13,7 @@
           </h1>
         </div>
         <div class="box2">
-          <searchForm />
+          <searchForm @ai-loading="indexControlling"/>
         </div>
       </div>
       <div class="scroll-indicator">
@@ -33,7 +33,7 @@
 
     <!-- 세 번째 섹션 -->
     <section v-intersect class="fade-in-section" id="section3">
-      <secondContent />
+      <thirdContent />
       <div class="scroll-indicator">
         <div class="arrow arrow-first"></div>
         <div class="arrow arrow-second"></div>
@@ -42,7 +42,7 @@
 
     <!-- 네 번째 섹션 -->
     <section v-intersect class="fade-in-section" id="section4">
-      <thirdContent />
+      <secondContent />
       <div class="scroll-indicator">
         <div class="arrow arrow-first"></div>
         <div class="arrow arrow-second"></div>
@@ -85,6 +85,7 @@ export default {
       currentSection: 1,
       isAnimating: false,
       totalSections: 6,
+      indexControll: false,
     };
   },
   components: {
@@ -110,6 +111,10 @@ export default {
         document.getElementById(`section${i}`).classList.add("next");
       }
       this.isAnimating = false;
+    },
+
+    indexControlling(flag) {
+      this.indexControll = flag;
     },
 
     handleScroll(event) {
@@ -230,7 +235,7 @@ export default {
   height: 100vh;
   overflow: hidden;
   position: relative;
-  background-color: white;  /* 배경색 추가 */
+  background-color: white; /* 배경색 추가 */
 }
 
 section {
@@ -238,15 +243,15 @@ section {
   width: 100%;
   height: 100vh;
   transition: all 1s cubic-bezier(0.645, 0.045, 0.355, 1);
-  overflow: visible;
-  background-color: white;  /* 배경색 추가 */
+  transform: translateY(100%);
 }
 
 section.active {
   transform: translateY(0);
-  opacity: 1;
-  z-index: 3;  /* fade-in-section보다 높게 설정 */
-  background-color: white;
+}
+
+section:first-child {
+  transform: translateY(0); /* 첫 번째 섹션은 처음부터 보이게 */
 }
 
 section:not(.active):not(.fade-in-section) {
@@ -318,7 +323,6 @@ section.prev {
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
   cursor: pointer;
 }
 
