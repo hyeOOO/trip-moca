@@ -58,6 +58,8 @@
 |<img src="https://avatars.githubusercontent.com/u/165285610?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/127578678?v=4" width="150" height="150"/>|
 |:-:|:-:|
 |hyewon<br/>[@hyeOOO](https://github.com/hyeOOO)|서성우<br/>[@bamtol2](https://github.com/bamtol2)|
+|메인 백엔드 개발<br/>|메인 프론트 개발<br/>|
+|백엔드 전체 개발, UI/UX 디자인, 인기 여행 페이지, 회원가입/로그인 페이지, 마이페이지, 카드도감 페이지<br/>|메인 페이지, 여행 계획 페이지, AI 모카 페이지, 여행 계획 편집 페이지<br/>|
 
 
 ## ⚙️ 기술 스택
@@ -70,6 +72,8 @@
   - 사용자 정보, 여행 계획, 장소 정보 등 영구 데이터 저장
 - **Redis**
   - refresh Token 관리
+- **MongoDB**
+  - 인기 검색어 구현
 
 ### Frontend
 - **Vue.js**
