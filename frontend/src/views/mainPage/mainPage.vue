@@ -2,7 +2,7 @@
   <div class="scroll-container">
     <!-- 첫 번째 섹션 -->
     <section class="background first-section" id="section1">
-      <navBar :indexConfig="indexControll"/>
+      <navBar :indexConfig="indexControll" />
       <div
         class="main-section"
         style="display: grid; grid-template-columns: 1fr 1fr"
@@ -13,7 +13,7 @@
           </h1>
         </div>
         <div class="box2">
-          <searchForm @ai-loading="indexControlling"/>
+          <searchForm @ai-loading="indexControlling" />
         </div>
       </div>
       <div class="scroll-indicator">
@@ -62,6 +62,16 @@
     <section v-intersect class="fade-in-section" id="section6">
       <footInfo />
     </section>
+
+    <!-- 최상단 이동 버튼 -->
+    <button
+      v-show="showTopButton"
+      @click="scrollToTop"
+      class="top-button"
+      :class="{ 'white-button': currentSection !== 1 }"
+    >
+      <div class="arrow-up"></div>
+    </button>
   </div>
 </template>
 
@@ -86,6 +96,7 @@ export default {
       isAnimating: false,
       totalSections: 6,
       indexControll: false,
+      showTopButton: false, // 추가: 최상단 이동 버튼 표시 여부
     };
   },
   components: {
@@ -98,23 +109,41 @@ export default {
     searchForm,
   },
   mounted() {
-    window.addEventListener("wheel", this.handleScroll, { passive: false });
     this.initializeSections();
+    window.addEventListener("wheel", this.handleScroll, { passive: false });
   },
   beforeUnmount() {
     window.removeEventListener("wheel", this.handleScroll);
   },
   methods: {
     initializeSections() {
-      document.getElementById("section1").classList.add("active");
-      for (let i = 2; i <= this.totalSections; i++) {
-        document.getElementById(`section${i}`).classList.add("next");
+      const section1 = document.getElementById("section1");
+      if (!section1) {
+        console.log("section1 not found");
+        return;
       }
+
+      section1.classList.add("active");
+
+      for (let i = 2; i <= this.totalSections; i++) {
+        const nextSection = document.getElementById(`section${i}`);
+        if (nextSection) {
+          nextSection.classList.add("next");
+        }
+      }
+
       this.isAnimating = false;
+      this.showTopButton = false;
     },
 
     indexControlling(flag) {
       this.indexControll = flag;
+    },
+
+    // 추가: 최상단으로 이동하는 메소드
+    scrollToTop() {
+      if (this.isAnimating || this.currentSection === 1) return;
+      this.scrollToSection(1);
     },
 
     handleScroll(event) {
@@ -124,7 +153,6 @@ export default {
       const delta = Math.sign(event.deltaY);
 
       if (delta > 0 && this.currentSection < this.totalSections) {
-        this.isAnimating = true;
         const currentEl = document.getElementById(
           `section${this.currentSection}`
         );
@@ -132,18 +160,21 @@ export default {
           `section${this.currentSection + 1}`
         );
 
+        if (!currentEl || !nextEl) return; // null 체크 추가
+
+        this.isAnimating = true;
         currentEl.classList.remove("active");
         currentEl.classList.add("prev");
         nextEl.classList.remove("next");
         nextEl.classList.add("active");
 
         this.currentSection++;
+        this.showTopButton = true;
 
         setTimeout(() => {
           this.isAnimating = false;
         }, 1000);
       } else if (delta < 0 && this.currentSection > 1) {
-        this.isAnimating = true;
         const currentEl = document.getElementById(
           `section${this.currentSection}`
         );
@@ -151,6 +182,9 @@ export default {
           `section${this.currentSection - 1}`
         );
 
+        if (!currentEl || !prevEl) return; // null 체크 추가
+
+        this.isAnimating = true;
         currentEl.classList.remove("active");
         currentEl.classList.add("next");
         prevEl.classList.remove("prev");
@@ -162,35 +196,53 @@ export default {
           this.isAnimating = false;
         }, 1000);
       }
-      // Footer에 도달했을 때 스크롤 인디케이터 숨기기
-      if (this.currentSection === this.totalSections) {
-        document.querySelector(".scroll-indicator").style.display = "none";
-      } else {
-        document.querySelector(".scroll-indicator").style.display = "block";
+
+      if (this.currentSection === 1) {
+        this.showTopButton = false;
+      }
+
+      const scrollIndicator = document.querySelector(".scroll-indicator");
+      if (scrollIndicator) {
+        scrollIndicator.style.display =
+          this.currentSection === this.totalSections ? "none" : "block";
       }
     },
 
     scrollToSection(sectionNumber) {
       if (this.isAnimating || this.currentSection === sectionNumber) return;
 
-      this.isAnimating = true;
       const currentEl = document.getElementById(
         `section${this.currentSection}`
       );
       const targetEl = document.getElementById(`section${sectionNumber}`);
 
-      currentEl.classList.remove("active");
-      targetEl.classList.add("active");
+      if (!currentEl || !targetEl) return;
 
-      if (sectionNumber > this.currentSection) {
-        currentEl.classList.add("prev");
-        targetEl.classList.remove("next");
-      } else {
-        currentEl.classList.add("next");
-        targetEl.classList.remove("prev");
+      this.isAnimating = true;
+
+      // 현재 섹션과 목표 섹션 사이의 모든 섹션 상태 초기화
+      for (let i = 1; i <= this.totalSections; i++) {
+        const section = document.getElementById(`section${i}`);
+        if (section) {
+          section.classList.remove("active", "prev", "next");
+          if (i > sectionNumber) {
+            section.classList.add("next");
+          } else if (i < sectionNumber) {
+            section.classList.add("prev");
+          }
+        }
       }
 
+      // 목표 섹션을 active로 설정
+      targetEl.classList.add("active");
+
       this.currentSection = sectionNumber;
+
+      if (sectionNumber === 1) {
+        this.showTopButton = false;
+      } else {
+        this.showTopButton = true;
+      }
 
       setTimeout(() => {
         this.isAnimating = false;
@@ -231,11 +283,12 @@ export default {
 .fade-in-section.visible {
   opacity: 1;
 }
+
 .scroll-container {
   height: 100vh;
   overflow: hidden;
   position: relative;
-  background-color: white; /* 배경색 추가 */
+  background-color: white;
 }
 
 section {
@@ -251,7 +304,7 @@ section.active {
 }
 
 section:first-child {
-  transform: translateY(0); /* 첫 번째 섹션은 처음부터 보이게 */
+  transform: translateY(0);
 }
 
 section:not(.active):not(.fade-in-section) {
@@ -360,6 +413,48 @@ section.prev {
 .arrow:after {
   transform: rotate(-45deg) translateX(23%);
   transform-origin: top right;
+}
+
+/* 최상단 이동 버튼 스타일 */
+.top-button {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  background-color: #ecb27b;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.top-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.white-button {
+  background-color: white;
+  border: 2px solid #ecb27b;
+}
+
+.arrow-up {
+  width: 20px;
+  height: 20px;
+  border-left: 3px solid white;
+  border-top: 3px solid white;
+  transform: rotate(45deg);
+  margin-top: 5px;
+}
+
+.white-button .arrow-up {
+  border-color: #ecb27b;
 }
 
 @keyframes arrow-movement {
