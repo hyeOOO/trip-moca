@@ -149,7 +149,7 @@
                   dragStartSelected($event, place, dayIndex - 1, index)
                 "
                 @dragover.prevent
-                @drop.stop="onDrop($event, dayIndex - 1, index)"
+                @drop.stop="onDropReorder($event, dayIndex - 1, index)"
               >
                 <div class="order-number">{{ index + 1 }}</div>
                 <div class="image-container">
@@ -307,7 +307,6 @@ export default {
     },
 
     async fetchAttractions(page = 0, searchQuery = "") {
-      // 이미 데이터를 가져오는 중이거나 마지막 페이지인 경우 중단
       if (!this.areaCode || this.isFetching || (page > 0 && this.isLastPage)) {
         return;
       }
@@ -329,11 +328,9 @@ export default {
           },
         });
 
-        // 검색어가 변경되었거나 첫 페이지인 경우 데이터 초기화
         if (page === 0) {
           this.places = response.data.content;
         } else {
-          // 중복 데이터 방지를 위한 체크
           const newPlaces = response.data.content.filter(
             (newPlace) =>
               !this.places.some(
@@ -386,7 +383,6 @@ export default {
     },
 
     handleScroll(event) {
-      // 스크롤 디바운스 처리
       if (this.scrollTimeout) {
         clearTimeout(this.scrollTimeout);
       }
@@ -395,7 +391,6 @@ export default {
         const target = event.target;
         const { scrollTop, clientHeight, scrollHeight } = target;
 
-        // 스크롤이 바닥에 가까워졌을 때 다음 페이지 로드
         if (
           !this.isLastPage &&
           !this.isFetching &&
@@ -406,7 +401,7 @@ export default {
             this.searchQuery.trim()
           );
         }
-      }, 200); // 200ms 디바운스
+      }, 200);
     },
 
     getContentTypeColor(contentType) {
@@ -423,7 +418,6 @@ export default {
       return colorMap[contentType] || "#ecb27b";
     },
 
-    // Drag and Drop methods
     dragStart(event, place) {
       this.isSelectedPlaceDrag = false;
       event.dataTransfer.setData(
@@ -437,6 +431,9 @@ export default {
 
     dragStartSelected(event, place, dayIndex, placeIndex) {
       this.isSelectedPlaceDrag = true;
+      this.draggedDay = dayIndex;
+      this.draggedIndex = placeIndex;
+
       event.dataTransfer.setData(
         "text/plain",
         JSON.stringify({
@@ -446,34 +443,35 @@ export default {
           isNew: false,
         })
       );
+
+      event.target.classList.add("dragging");
     },
 
-    onDragPlace(event, dayIndex, targetIndex) {
+    onDragEnd(event) {
+      event.target.classList.remove("dragging");
+      this.resetDragState();
+    },
+
+    onDrop(event, dayIndex) {
       event.preventDefault();
-      event.stopPropagation();
+
+      // 이미 선택된 장소의 드래그 앤 드롭인 경우 처리하지 않음
+      if (this.isSelectedPlaceDrag) {
+        return;
+      }
 
       try {
         const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-        const { place, fromDay, fromIndex, isNew } = data;
+        const place = data.place;
 
-        const currentPlaces = [...(this.selectedPlacesByDay[dayIndex] || [])];
+        // 새로운 장소 추가인 경우에만 실행
+        if (data.isNew) {
+          const newPlacesByDay = { ...this.selectedPlacesByDay };
 
-        if (!isNew) {
-          if (fromDay !== dayIndex) {
-            const fromPlaces = [...(this.selectedPlacesByDay[fromDay] || [])];
-            fromPlaces.splice(fromIndex, 1);
-            this.selectedPlacesByDay[fromDay] = fromPlaces;
-
-            if (targetIndex !== undefined) {
-              currentPlaces.splice(targetIndex, 0, place);
-            } else {
-              currentPlaces.push(place);
-            }
-          } else if (targetIndex !== undefined) {
-            currentPlaces.splice(fromIndex, 1);
-            currentPlaces.splice(targetIndex, 0, place);
+          if (!newPlacesByDay[dayIndex]) {
+            newPlacesByDay[dayIndex] = [];
           }
-        } else {
+
           if (!place.latitude && place.mapy) {
             place.latitude = place.mapy;
           }
@@ -481,35 +479,60 @@ export default {
             place.longitude = place.mapx;
           }
 
-          if (targetIndex !== undefined) {
-            currentPlaces.splice(targetIndex, 0, place);
-          } else {
-            currentPlaces.push(place);
-          }
-        }
+          newPlacesByDay[dayIndex] = [
+            ...newPlacesByDay[dayIndex],
+            {
+              ...place,
+              sequence: newPlacesByDay[dayIndex].length,
+              memo: "",
+            },
+          ];
 
-        this.selectedPlacesByDay[dayIndex] = currentPlaces;
-        this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
-        this.resetDragState();
+          this.selectedPlacesByDay = newPlacesByDay;
+        }
       } catch (error) {
-        console.error("Error in onDragPlace:", error);
+        console.error("Error in onDrop:", error);
       }
     },
 
     onDropReorder(event, dayIndex, targetIndex) {
+      event.preventDefault();
       event.stopPropagation();
 
-      if (!this.isSelectedPlaceDrag) return;
+      if (!this.isSelectedPlaceDrag) {
+        return;
+      }
 
-      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-      const { fromDay, fromIndex } = data;
+      try {
+        const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        const { fromDay, fromIndex, place } = data;
 
-      if (fromDay === dayIndex && fromIndex !== targetIndex) {
-        const places = [...this.selectedPlacesByDay[dayIndex]];
-        const [removed] = places.splice(fromIndex, 1);
-        places.splice(targetIndex, 0, removed);
-        this.selectedPlacesByDay[dayIndex] = places;
-        this.selectedPlacesByDay = { ...this.selectedPlacesByDay };
+        if (fromDay === dayIndex) {
+          // 같은 날짜 내에서의 순서 변경
+          const places = [...(this.selectedPlacesByDay[dayIndex] || [])];
+          places.splice(fromIndex, 1);
+          places.splice(targetIndex, 0, place);
+
+          this.selectedPlacesByDay = {
+            ...this.selectedPlacesByDay,
+            [dayIndex]: places,
+          };
+        } else {
+          // 다른 날짜로의 이동
+          const fromPlaces = [...(this.selectedPlacesByDay[fromDay] || [])];
+          const toPlaces = [...(this.selectedPlacesByDay[dayIndex] || [])];
+
+          fromPlaces.splice(fromIndex, 1);
+          toPlaces.splice(targetIndex, 0, place);
+
+          this.selectedPlacesByDay = {
+            ...this.selectedPlacesByDay,
+            [fromDay]: fromPlaces,
+            [dayIndex]: toPlaces,
+          };
+        }
+      } catch (error) {
+        console.error("Error in onDropReorder:", error);
       }
 
       this.resetDragState();
@@ -520,30 +543,42 @@ export default {
       this.draggedDay = null;
       this.draggedIndex = null;
       this.isSelectedPlaceDrag = false;
+
+      document.querySelectorAll(".dragging").forEach((el) => {
+        el.classList.remove("dragging");
+      });
     },
 
-    onDrop(event, dayIndex) {
-      const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-      const place = data.place;
-      const newPlacesByDay = { ...this.selectedPlacesByDay };
-
-      if (!newPlacesByDay[dayIndex]) {
-        newPlacesByDay[dayIndex] = [];
-      }
-
-      newPlacesByDay[dayIndex] = [
-        ...newPlacesByDay[dayIndex],
-        {
-          ...place,
-          sequence: newPlacesByDay[dayIndex].length,
-          memo: "",
-        },
-      ];
-
-      this.selectedPlacesByDay = newPlacesByDay;
+    removePlace(dayIndex, place) {
+      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
+        dayIndex
+      ].filter((p) => p.attractionId !== place.attractionId);
     },
 
-    // Navigation and UI methods
+    clearDay(dayIndex) {
+      this.selectedPlacesByDay[dayIndex] = [];
+    },
+
+    getImageUrl(imageUrl) {
+      return (
+        imageUrl ||
+        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
+      );
+    },
+
+    getTripDate(dayIndex) {
+      if (!this.startDate) return "";
+      const date = new Date(this.startDate);
+      date.setDate(date.getDate() + dayIndex);
+      return date;
+    },
+
+    formatDate(date) {
+      if (!date) return "";
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      return `(${days[date.getDay()]})`;
+    },
+
     checkAndNavigateToSavePlan() {
       const hasSelectedPlaces = Object.values(this.selectedPlacesByDay).some(
         (places) => places && places.length > 0
@@ -592,36 +627,6 @@ export default {
       }
     },
 
-    removePlace(dayIndex, place) {
-      this.selectedPlacesByDay[dayIndex] = this.selectedPlacesByDay[
-        dayIndex
-      ].filter((p) => p.attractionId !== place.attractionId);
-    },
-
-    clearDay(dayIndex) {
-      this.selectedPlacesByDay[dayIndex] = [];
-    },
-
-    getImageUrl(imageUrl) {
-      return (
-        imageUrl ||
-        "https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/no-image.png"
-      );
-    },
-
-    getTripDate(dayIndex) {
-      if (!this.startDate) return "";
-      const date = new Date(this.startDate);
-      date.setDate(date.getDate() + dayIndex);
-      return date;
-    },
-
-    formatDate(date) {
-      if (!date) return "";
-      const days = ["일", "월", "화", "수", "목", "금", "토"];
-      return `(${days[date.getDay()]})`;
-    },
-
     toggleCollapse() {
       this.isCollapsed = !this.isCollapsed;
       setTimeout(() => {
@@ -649,7 +654,6 @@ export default {
     },
 
     async handleSearch() {
-      // 검색 시 상태 초기화
       this.currentPage = 0;
       this.isLastPage = false;
       this.places = [];
@@ -669,14 +673,12 @@ export default {
   },
 
   mounted() {
-    // 컴포넌트 마운트 시 초기 데이터 로드 및 스크롤 이벤트 리스너 설정
     this.fetchAttractions();
     this.middleSectionRef = this.$el.querySelector(".middle-section");
     if (this.middleSectionRef) {
       this.middleSectionRef.addEventListener("scroll", this.handleScroll);
     }
   },
-
   beforeUnmount() {
     // 컴포넌트 언마운트 시 이벤트 리스너 및 타이머 정리
     if (this.middleSectionRef) {
