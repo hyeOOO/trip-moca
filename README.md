@@ -1,5 +1,5 @@
 # 🍫 TRIP MOCA (여행 계획 서비스)
-![thumnail](https://github.com/user-attachments/assets/68c88985-262f-4f1d-9618-454b95b19768)
+![thumnail](https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/tripmoca_thumnail.png)
 ## 📝 프로젝트 소개
 > *"AI랑 여행 계획 뚝딱! 여행하고 카드 받고 TRIP MOCA(모으다 카드를!)✨"*
 
