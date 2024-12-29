@@ -1,5 +1,7 @@
 # 🍫 TRIP MOCA (여행 계획 서비스)
 ![thumnail](https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/tripmoca_thumnail.png)
+
+https://youtu.be/FSi6VjUQT_E
 ## 📝 프로젝트 소개
 > *"AI랑 여행 계획 뚝딱! 여행하고 카드 받고 TRIP MOCA(모으다 카드를!)✨"*
 
@@ -58,7 +60,7 @@
 |<img src="https://avatars.githubusercontent.com/u/165285610?v=4" width="150" height="150"/>|<img src="https://avatars.githubusercontent.com/u/127578678?v=4" width="150" height="150"/>|
 |:-:|:-:|
 |hyewon<br/>[@hyeOOO](https://github.com/hyeOOO)|서성우<br/>[@bamtol2](https://github.com/bamtol2)|
-|메인 백엔드 개발<br/>|메인 프론트 개발<br/>|
+|풀스택 개발<br/>|프론트 개발<br/>|
 |백엔드 전체 개발, UI/UX 디자인, 인기 여행 페이지, 회원가입/로그인 페이지, 마이페이지, 카드도감 페이지<br/>|메인 페이지, 여행 계획 페이지, AI 모카 페이지, 여행 계획 편집 페이지<br/>|
 
 
