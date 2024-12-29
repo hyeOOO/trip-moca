@@ -65,7 +65,7 @@ https://youtu.be/FSi6VjUQT_E
 
 
 ## ⚙️ 기술 스택
-[![stackticon](https://firebasestorage.googleapis.com/v0/b/stackticon-81399.appspot.com/o/images%2F1731252800943?alt=media&token=2d8aa63e-74a0-491e-84a9-2fa314debd65)](https://github.com/msdio/stackticon)
+[![stackticon](https://firebasestorage.googleapis.com/v0/b/stackticon-81399.appspot.com/o/images%2F1735488119577?alt=media&token=aa96d96b-2d56-4ad0-a2ad-71a1642cbd3d)](https://github.com/msdio/stackticon)
 ### Backend
 - **Spring Boot**
   - Spring Security를 활용한 인증/인가 구현
