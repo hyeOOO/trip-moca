@@ -2,7 +2,7 @@
 ![thumnail](https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/tripmoca_thumnail.png)
 
 ### 🔗 URL
-https://trip-moca.netlify.app/main
+[https://trip-moca.netlify.app/](https://trip-moca.netlify.app/)
 
 ## 🎥 소개 영상
 https://youtu.be/FSi6VjUQT_E
