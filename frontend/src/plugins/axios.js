@@ -12,9 +12,12 @@ export const setRouterGetter = (routerFn) => {
   getRouter = routerFn;
 };
 
+// 환경 변수에서 API URL 가져오기
+const API_URL = process.env.VUE_APP_API_URL || 'http://localhost:8081';
+
 // axios 인스턴스 생성
 const api = axios.create({
-  baseURL: 'http://localhost:8081',
+  baseURL: API_URL,
   timeout: 180000, // 3분으로 설정
 });
 
@@ -37,7 +40,6 @@ api.interceptors.response.use(
   (response) => {
     const newToken = response.headers['authorization'];
     const tokenRenewed = response.headers['token-renewed'];
-
     if (tokenRenewed === 'true' && newToken) {
       const token = newToken.replace('Bearer ', '');
       const authStore = getAuthStore?.();
@@ -45,14 +47,12 @@ api.interceptors.response.use(
         authStore.updateToken(token);
       }
     }
-
     return response;
   },
   async (error) => {
     // 에러 응답이 있고, status가 401일 때만 처리
     if (error.response) {
       const { status } = error.response;
-
       if (status === 401) {
         const authStore = getAuthStore?.();
         const router = getRouter?.();
@@ -63,11 +63,9 @@ api.interceptors.response.use(
           router.push('/main');
         }
       }
-
       // 에러 응답이 있는 경우 해당 에러를 그대로 전달
       return Promise.reject(error);
     }
-
     // 그 외의 경우 (네트워크 에러 등)
     return Promise.reject(error);
   }
