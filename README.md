@@ -1,5 +1,9 @@
+
+> 
 ![첫페이지__1_](https://enjoy-trip-static-files.s3.ap-northeast-2.amazonaws.com/tripmoca_thumnail.png)
 
+> 📲 [바로가기](https://trip-moca.netlify.app/) 
+> 
 <br />
 
 ## 📌 목차
@@ -25,7 +29,7 @@
 
 > 🔗 [노션 링크](https://messy-duckling-7d6.notion.site/A-Penetration-Project-1221453abf47801f86d4fe47332d69bd?source=copy_link)
 
-> 📲 [배포 URL](https://trip-moca.netlify.app/)
+> 📲 [배포 URL](https://trip-moca.netlify.app/) https://trip-moca.netlify.app/
 
 ### 🧳 "AI랑 여행 계획 뚝딱! 여행하고 카드 받고, TRIP MOCA(모으다 카드를!)"
 
